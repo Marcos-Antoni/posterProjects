@@ -1,0 +1,11 @@
+.git
+node_modules
+vendor
+public/build
+storage/logs/*
+database/*.sqlite
+tests
+.env
+.env.*
+.atl
+Dockerfile
