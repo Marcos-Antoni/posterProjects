@@ -1,9 +1,11 @@
 import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core';
 import { closestCenter, DndContext, DragOverlay } from '@dnd-kit/core';
-import { Head, usePage } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 
+import { index as backlogIndex } from '@/actions/App/Http/Controllers/BacklogController';
+import { index as labelsIndex } from '@/actions/App/Http/Controllers/LabelController';
 import { BoardColumn } from '@/components/board/board-column';
 import { CreateColumnDialog } from '@/components/board/create-column-dialog';
 import { IssueCardContent } from '@/components/board/issue-card';
@@ -94,11 +96,26 @@ export default function Board({
                         </p>
                     </div>
 
-                    <SprintSelector
-                        sprints={sprints}
-                        selectedSprintId={selectedSprintId}
-                        activeSprintId={activeSprintId}
-                    />
+                    <div className="flex items-center gap-4">
+                        <Link
+                            href={backlogIndex.url({ project: project.key })}
+                            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                            Backlog
+                        </Link>
+                        <Link
+                            href={labelsIndex.url({ project: project.key })}
+                            className="text-sm text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                            Etiquetas
+                        </Link>
+
+                        <SprintSelector
+                            sprints={sprints}
+                            selectedSprintId={selectedSprintId}
+                            activeSprintId={activeSprintId}
+                        />
+                    </div>
                 </div>
 
                 <DndContext
