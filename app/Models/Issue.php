@@ -6,6 +6,7 @@ use App\Enums\IssuePriority;
 use App\Enums\IssueType;
 use Database\Factories\IssueFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -54,6 +55,15 @@ class Issue extends Model
 {
     /** @use HasFactory<IssueFactory> */
     use HasFactory;
+
+    /**
+     * The human-readable `key` accessor is fundamental to how issues are
+     * identified everywhere in the UI (board cards, deep links, comments),
+     * so it's always included when an issue is serialized to JSON.
+     *
+     * @var list<string>
+     */
+    protected $appends = ['key'];
 
     /**
      * Get the attributes that should be cast.
@@ -153,5 +163,96 @@ class Issue extends Model
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    /**
+     * The next `position` value that appends an issue to the bottom of the
+     * given column, scoped to the same sprint filter (or backlog when
+     * `$sprintId` is `null`) so quick-added cards land where they're
+     * currently visible on the board.
+     */
+    public static function nextPositionInColumn(int $boardColumnId, ?int $sprintId): int
+    {
+        $maxPosition = self::scopedToColumnAndSprint($boardColumnId, $sprintId)->max('position');
+
+        return $maxPosition === null ? 0 : $maxPosition + 1;
+    }
+
+    /**
+     * Inserts `$movingIssue` into the given `(board_column_id, sprint_id)`
+     * scope at `$targetPosition` (0-indexed, clamped to the scope's
+     * bounds), renumbering every other issue in the scope sequentially
+     * around it. Drives drag-and-drop: works for both a same-column
+     * reorder and a cross-column move — `$movingIssue`'s own current row
+     * is excluded from the sibling list before the insert, so it doesn't
+     * matter whether it currently belongs to this scope or not. Never
+     * touches `sprint_id` — the caller is responsible for closing the gap
+     * in the origin scope first when moving across columns (see
+     * {@see closeGapInScope()}).
+     */
+    public static function reorderScope(int $boardColumnId, ?int $sprintId, self $movingIssue, int $targetPosition): void
+    {
+        $siblings = self::scopedToColumnAndSprint($boardColumnId, $sprintId)
+            ->where('id', '!=', $movingIssue->id)
+            ->orderBy('position')
+            ->lockForUpdate()
+            ->get();
+
+        $targetPosition = max(0, min($targetPosition, $siblings->count()));
+
+        $ordered = $siblings->all();
+        array_splice($ordered, $targetPosition, 0, [$movingIssue]);
+
+        foreach ($ordered as $index => $issue) {
+            /** @var self $issue */
+            if ($issue->is($movingIssue)) {
+                $movingIssue->board_column_id = $boardColumnId;
+                $movingIssue->position = $index;
+                $movingIssue->save();
+
+                continue;
+            }
+
+            if ($issue->position !== $index) {
+                $issue->update(['position' => $index]);
+            }
+        }
+    }
+
+    /**
+     * Resequences every remaining issue in the given
+     * `(board_column_id, sprint_id)` scope to consecutive positions
+     * (0, 1, 2, ...), excluding `$excludeIssueId` — the issue that just
+     * left this scope. Closes the gap left behind by a drag-and-drop move
+     * to a different column.
+     */
+    public static function closeGapInScope(int $boardColumnId, ?int $sprintId, int $excludeIssueId): void
+    {
+        $issues = self::scopedToColumnAndSprint($boardColumnId, $sprintId)
+            ->where('id', '!=', $excludeIssueId)
+            ->orderBy('position')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($issues->values() as $index => $issue) {
+            /** @var self $issue */
+            if ($issue->position !== $index) {
+                $issue->update(['position' => $index]);
+            }
+        }
+    }
+
+    /**
+     * @return Builder<self>
+     */
+    private static function scopedToColumnAndSprint(int $boardColumnId, ?int $sprintId)
+    {
+        return self::query()
+            ->where('board_column_id', $boardColumnId)
+            ->when(
+                $sprintId === null,
+                fn ($query) => $query->whereNull('sprint_id'),
+                fn ($query) => $query->where('sprint_id', $sprintId),
+            );
     }
 }
