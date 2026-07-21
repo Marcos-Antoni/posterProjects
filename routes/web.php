@@ -1,13 +1,16 @@
 <?php
 
+use App\Http\Controllers\BacklogController;
 use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\BoardController;
+use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueLabelController;
 use App\Http\Controllers\IssueMoveController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\SprintController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,9 +27,19 @@ Route::middleware('auth')->group(function (): void {
     Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
     Route::delete('projects/{project}/force', [ProjectController::class, 'forceDelete'])->name('projects.forceDelete')->withTrashed();
 
+    // Global, cross-project calendar — every issue with a due date across
+    // every project the authenticated user is a member of.
+    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+
     // Bound by key (not id) — the board and its nested routes are
     // addressed by the project's human-readable key, e.g. /projects/DEMO/board.
     Route::get('projects/{project:key}/board', [BoardController::class, 'show'])->name('projects.board');
+
+    // Read-only: sprints (collapsible, with story-point sums) + the
+    // Backlog section (sprint_id null). Reassigning an issue reuses
+    // `projects.issues.update` — see `BacklogController`.
+    Route::get('projects/{project:key}/backlog', [BacklogController::class, 'index'])->name('projects.backlog');
+
     Route::post('projects/{project:key}/issues', [IssueController::class, 'store'])->name('projects.issues.store');
 
     // scopeBindings() ties {issue} to $project->issues() — an issue id
@@ -63,17 +76,37 @@ Route::middleware('auth')->group(function (): void {
         ->scopeBindings();
 
     // Labels: any member may create a project label and attach/detach it
-    // on an issue (owner-only rename/delete management ships in T-10.5).
-    // {label} on the detach route is scoped to $issue->labels() via
-    // scopeBindings() — a label belonging to this project but not
-    // currently attached to this issue 404s.
+    // on an issue; the management list, rename, and delete below are
+    // owner only (LabelPolicy). {label} on the detach route is scoped to
+    // $issue->labels() via scopeBindings() — a label belonging to this
+    // project but not currently attached to this issue 404s.
+    Route::get('projects/{project:key}/labels', [LabelController::class, 'index'])
+        ->name('projects.labels.index');
     Route::post('projects/{project:key}/labels', [LabelController::class, 'store'])
         ->name('projects.labels.store');
+    Route::patch('projects/{project:key}/labels/{label}', [LabelController::class, 'update'])
+        ->name('projects.labels.update')
+        ->scopeBindings();
+    Route::delete('projects/{project:key}/labels/{label}', [LabelController::class, 'destroy'])
+        ->name('projects.labels.destroy')
+        ->scopeBindings();
     Route::post('projects/{project:key}/issues/{issue}/labels', [IssueLabelController::class, 'store'])
         ->name('projects.issues.labels.store')
         ->scopeBindings();
     Route::delete('projects/{project:key}/issues/{issue}/labels/{label}', [IssueLabelController::class, 'destroy'])
         ->name('projects.issues.labels.destroy')
+        ->scopeBindings();
+
+    // Sprint management (owner only, enforced by SprintPolicy). Deleting a
+    // sprint returns its issues to the backlog via `nullOnDelete()` on
+    // `issues.sprint_id` — see `SprintController::destroy()`.
+    Route::post('projects/{project:key}/sprints', [SprintController::class, 'store'])
+        ->name('projects.sprints.store');
+    Route::patch('projects/{project:key}/sprints/{sprint}', [SprintController::class, 'update'])
+        ->name('projects.sprints.update')
+        ->scopeBindings();
+    Route::delete('projects/{project:key}/sprints/{sprint}', [SprintController::class, 'destroy'])
+        ->name('projects.sprints.destroy')
         ->scopeBindings();
 
     // Column management (owner only, enforced by BoardColumnPolicy).

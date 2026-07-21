@@ -168,6 +168,28 @@ test('a member can move the issue to another sprint of the same project', functi
     expect($issue->refresh()->sprint_id)->toBe($sprint->id);
 });
 
+test('changing only the sprint appends the issue to the bottom of its new scope', function () {
+    $owner = User::factory()->create();
+    $project = Project::createWithDefaultColumns([
+        'owner_id' => $owner->id,
+        'key' => 'DEMO',
+        'name' => 'Demo',
+        'description' => null,
+    ]);
+    [$toDo] = $project->boardColumns;
+    $sprint = Sprint::factory()->for($project)->create();
+    Issue::factory()->for($project)->create(['board_column_id' => $toDo->id, 'sprint_id' => $sprint->id, 'reporter_id' => $owner->id, 'position' => 0]);
+    $issue = Issue::factory()->for($project)->create(['board_column_id' => $toDo->id, 'sprint_id' => null, 'reporter_id' => $owner->id, 'position' => 0]);
+
+    $this->actingAs($owner)->patch("/projects/{$project->key}/issues/{$issue->id}", [
+        'sprint_id' => $sprint->id,
+    ]);
+
+    $issue->refresh();
+    expect($issue->sprint_id)->toBe($sprint->id)
+        ->and($issue->position)->toBe(1);
+});
+
 test('a sprint from another project is rejected', function () {
     $owner = User::factory()->create();
     $project = Project::createWithDefaultColumns([

@@ -64,18 +64,25 @@ class IssueController extends Controller
      * Update an issue's details from the modal. Any project member may
      * edit — not owner-only. Only the fields present in the request are
      * touched (`UpdateIssueRequest` validates each with `sometimes`), so
-     * the frontend can auto-save one field at a time. When the column
-     * changes, the issue is appended to the bottom of its new
-     * `(board_column_id, sprint_id)` scope so it doesn't collide with an
-     * existing position there.
+     * the frontend can auto-save one field at a time. `position` is scoped
+     * by `(board_column_id, sprint_id)`, so the issue is appended to the
+     * bottom of its new scope whenever EITHER field changes — not just
+     * `board_column_id` — otherwise reassigning only the sprint (e.g. the
+     * backlog↔sprint move on T-10.4's backlog page, which reuses this same
+     * endpoint) would drag the old position into the new scope and collide
+     * with whatever issue already occupies it there.
      */
     public function update(UpdateIssueRequest $request, Project $project, Issue $issue): RedirectResponse
     {
         $data = $request->validated();
 
-        if (array_key_exists('board_column_id', $data) && (int) $data['board_column_id'] !== $issue->board_column_id) {
+        $boardColumnChanged = array_key_exists('board_column_id', $data) && (int) $data['board_column_id'] !== $issue->board_column_id;
+        $sprintChanged = array_key_exists('sprint_id', $data) && $data['sprint_id'] !== $issue->sprint_id;
+
+        if ($boardColumnChanged || $sprintChanged) {
+            $boardColumnId = $boardColumnChanged ? (int) $data['board_column_id'] : $issue->board_column_id;
             $sprintId = array_key_exists('sprint_id', $data) ? $data['sprint_id'] : $issue->sprint_id;
-            $data['position'] = Issue::nextPositionInColumn((int) $data['board_column_id'], $sprintId);
+            $data['position'] = Issue::nextPositionInColumn($boardColumnId, $sprintId);
         }
 
         $issue->update($data);
