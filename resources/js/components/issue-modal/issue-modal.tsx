@@ -35,6 +35,13 @@ type IssueModalProps = {
  * modal uses Motion's `AnimatePresence` (not the Radix `Dialog` the
  * column-management dialogs use) — closing navigates back to the board
  * without a full page reload, preserving the current sprint filter.
+ *
+ * Below `md` the panel goes fullscreen with no visible scrim (the
+ * overlay's backdrop/padding classes only apply from `md:` up) — the
+ * same close button doubles as the "back" action. The panel's own
+ * `initial`/`animate`/`exit` motion values stay identical at every
+ * breakpoint (Motion props aren't responsive like Tailwind classes); only
+ * the static layout classes vary by breakpoint.
  */
 export function IssueModal({
     projectKey,
@@ -74,7 +81,7 @@ export function IssueModal({
             {issue ? (
                 <motion.div
                     key="issue-modal-overlay"
-                    className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 pt-12 backdrop-blur-xs sm:pt-20 dark:bg-black/50"
+                    className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto md:bg-black/30 md:p-4 md:pt-20 md:backdrop-blur-xs md:dark:bg-black/50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
@@ -177,7 +184,7 @@ function IssueModalPanel({
             role="dialog"
             aria-modal="true"
             aria-label={`${issue.key} — ${issue.title}`}
-            className="flex max-h-[calc(100vh-6rem)] w-full max-w-2xl flex-col gap-4 overflow-y-auto rounded-xl bg-popover p-5 text-sm text-popover-foreground shadow-lg ring-1 ring-foreground/10"
+            className="flex h-full w-full flex-col gap-4 overflow-y-auto bg-popover p-5 text-sm text-popover-foreground md:h-auto md:max-h-[calc(100vh-6rem)] md:max-w-2xl md:rounded-xl md:shadow-lg md:ring-1 md:ring-foreground/10"
             initial={{ opacity: 0, y: 16, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 8, scale: 0.98 }}
