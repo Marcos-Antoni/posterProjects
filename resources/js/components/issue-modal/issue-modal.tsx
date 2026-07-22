@@ -74,7 +74,7 @@ export function IssueModal({
             {issue ? (
                 <motion.div
                     key="issue-modal-overlay"
-                    className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 pt-12 backdrop-blur-xs sm:pt-20"
+                    className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto bg-black/30 p-4 pt-12 backdrop-blur-xs sm:pt-20 dark:bg-black/50"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
