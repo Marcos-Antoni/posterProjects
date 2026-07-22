@@ -48,6 +48,26 @@ test('the html root element has no dark class when the appearance cookie is ligh
     $response->assertSee('<html lang="en" class="">', false);
 });
 
+test('appearance shared prop falls back to system for an invalid cookie value', function () {
+    $response = $this->withUnencryptedCookie('appearance', 'hacker')->get('/login', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
+    ]);
+
+    $response->assertOk();
+    expect($response->json('props.appearance'))->toBe('system');
+});
+
+test('appearance shared prop falls back to system for an empty cookie value', function () {
+    $response = $this->withUnencryptedCookie('appearance', '')->get('/login', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
+    ]);
+
+    $response->assertOk();
+    expect($response->json('props.appearance'))->toBe('system');
+});
+
 test('the anti-fouc inline script is rendered in the head before the vite asset tags', function () {
     $response = $this->get('/login');
 

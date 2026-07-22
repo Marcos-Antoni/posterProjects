@@ -24,7 +24,10 @@ const APPEARANCE_ICONS: Record<Appearance, typeof Sun> = {
  */
 export function ThemeToggle() {
     const { appearance, updateAppearance } = useAppearance();
-    const CurrentIcon = APPEARANCE_ICONS[appearance];
+    // Defense in depth: the server allowlists `appearance` (see
+    // HandleInertiaRequests), but fall back rather than crash the icon
+    // lookup if an unexpected value ever reaches here.
+    const CurrentIcon = APPEARANCE_ICONS[appearance] ?? Monitor;
 
     return (
         <DropdownMenu>

@@ -39,8 +39,16 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        // Allowlist, not just a type hint: the cookie is client-controlled
+        // and unencrypted (see `bootstrap/app.php`), so any garbage value
+        // must collapse to the safe default instead of reaching the front
+        // end, where `ThemeToggle` looks it up in a fixed icon map.
+        $rawAppearance = $request->cookie('appearance', 'system');
+
         /** @var 'light'|'dark'|'system' $appearance */
-        $appearance = $request->cookie('appearance', 'system');
+        $appearance = in_array($rawAppearance, ['light', 'dark', 'system'], true)
+            ? $rawAppearance
+            : 'system';
 
         // The root Blade view (`app.blade.php`) reads this to set the
         // initial `.dark` class on `<html>` server-side, avoiding FOUC
