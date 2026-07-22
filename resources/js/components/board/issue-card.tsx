@@ -133,14 +133,16 @@ export function IssueCard({
         setDropNodeRef(node);
     }
 
-    // dnd-kit's PointerSensor only starts a drag once the pointer moves
-    // past the 6px activation distance (see `useBoardDnd`); a click below
-    // that threshold fires normally. If a real drag DOES start, dnd-kit
-    // itself stops propagation on the trailing `click` event (verified in
-    // `@dnd-kit/core`'s `AbstractPointerSensor.handleStart` — it adds a
-    // capture-phase `click` listener that calls `stopPropagation()` once
-    // activation constraints are met), so this handler never fires as a
-    // spurious "open" right after a completed drag.
+    // dnd-kit's MouseSensor only starts a drag once the pointer moves past
+    // the 6px activation distance, and TouchSensor only after a ~250ms
+    // long-press (see `useBoardDnd`); a click/tap below those thresholds
+    // fires normally. If a real drag DOES start, dnd-kit itself stops
+    // propagation on the trailing `click` event (verified in
+    // `@dnd-kit/core`'s `AbstractPointerSensor.handleStart` — both sensors
+    // extend this same base class, which adds a capture-phase `click`
+    // listener that calls `stopPropagation()` once activation constraints
+    // are met), so this handler never fires as a spurious "open" right
+    // after a completed drag.
     function handleOpen() {
         router.visit(show.url({ project: projectKey, issueKey: issue.key }), {
             preserveScroll: true,
@@ -161,7 +163,7 @@ export function IssueCard({
             variants={cardVariants}
             transition={{ duration: 0.18, ease: 'easeOut' }}
             className={cn(
-                'cursor-pointer touch-none',
+                'cursor-pointer touch-manipulation',
                 isDragging && 'opacity-40',
             )}
         >

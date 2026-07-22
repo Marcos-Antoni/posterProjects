@@ -1,5 +1,5 @@
 import type { DragEndEvent } from '@dnd-kit/core';
-import { PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { MouseSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { router } from '@inertiajs/react';
 
 import { move } from '@/actions/App/Http/Controllers/IssueMoveController';
@@ -40,9 +40,17 @@ type UseBoardDndOptions = {
  * "drag never touches sprint_id" rule.
  */
 export function useBoardDnd({ projectKey, columns }: UseBoardDndOptions) {
+    // Mouse and Touch are split into two dedicated sensors (instead of one
+    // PointerSensor covering both) so a touch never activates through the
+    // mouse's short activation distance before its own long-press delay
+    // elapses — see D4 in the T-11 design doc. Desktop mouse/trackpad
+    // behavior (distance: 6) is unchanged.
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: { distance: 6 },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: { delay: 250, tolerance: 8 },
         }),
     );
 
