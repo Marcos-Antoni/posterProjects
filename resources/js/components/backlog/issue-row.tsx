@@ -77,7 +77,7 @@ export function IssueRow({ projectKey, issue, sprintOptions }: IssueRowProps) {
                     }
                     onValueChange={moveTo}
                 >
-                    <SelectTrigger className="h-7 w-full shrink-0 text-xs sm:w-40">
+                    <SelectTrigger className="h-11 w-full shrink-0 text-xs sm:w-40 md:h-7">
                         <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

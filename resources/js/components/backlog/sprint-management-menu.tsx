@@ -33,7 +33,12 @@ export function SprintManagementMenu({
         <>
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button type="button" variant="ghost" size="icon-xs">
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-xs"
+                        className="size-11 md:size-6"
+                    >
                         <MoreVertical />
                         <span className="sr-only">Gestionar sprint</span>
                     </Button>

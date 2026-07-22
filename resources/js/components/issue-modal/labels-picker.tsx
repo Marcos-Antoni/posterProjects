@@ -139,6 +139,7 @@ export function LabelsPicker({
                         type="button"
                         variant="ghost"
                         size="icon-sm"
+                        className="size-11 md:size-7"
                         aria-label="Agregar etiqueta"
                     >
                         <Plus className="size-3.5" />
