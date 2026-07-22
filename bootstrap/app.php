@@ -22,6 +22,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->redirectGuestsTo(fn () => route('login'));
 
         $middleware->trustProxies(at: '*');
+
+        // The anti-FOUC inline script in `app.blade.php` reads this cookie
+        // via `document.cookie` before any JS bundle loads, so it must stay
+        // as plain text instead of Laravel's default encrypted format.
+        $middleware->encryptCookies(except: ['appearance']);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

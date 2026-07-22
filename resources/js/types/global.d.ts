@@ -11,12 +11,16 @@ declare module 'react' {
 /** The subset of `Project` fields the sidebar needs to list a user's projects. */
 export type SidebarProject = Pick<Project, 'id' | 'key' | 'name'>;
 
+/** Theme preference: `system` follows the OS/browser `prefers-color-scheme`. */
+export type Appearance = 'light' | 'dark' | 'system';
+
 declare module '@inertiajs/core' {
     export interface InertiaConfig {
         sharedPageProps: {
             name: string;
             auth: Auth;
             sidebarProjects: SidebarProject[];
+            appearance: Appearance;
             [key: string]: unknown;
         };
     }

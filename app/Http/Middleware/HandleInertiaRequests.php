@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use App\Models\Project;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\View;
 use Inertia\Middleware;
 
 class HandleInertiaRequests extends Middleware
@@ -38,12 +39,23 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
+        /** @var 'light'|'dark'|'system' $appearance */
+        $appearance = $request->cookie('appearance', 'system');
+
+        // The root Blade view (`app.blade.php`) reads this to set the
+        // initial `.dark` class on `<html>` server-side, avoiding FOUC
+        // for the `dark` case (the `system` case is resolved client-side
+        // by the inline script, since the server can't see the media
+        // query).
+        View::share('appearance', $appearance);
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
             ],
+            'appearance' => $appearance,
             'sidebarProjects' => $user
                 ? $user->projects()
                     ->orderBy('name')
