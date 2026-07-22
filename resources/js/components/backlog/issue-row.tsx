@@ -60,7 +60,12 @@ export function IssueRow({ projectKey, issue, sprintOptions }: IssueRowProps) {
                 </Link>
             </div>
 
-            <div className="flex items-center gap-2 sm:shrink-0">
+            {/* Below sm: its own row (nothing to compete with for width).
+                At sm+: `sm:contents` drops this wrapper so the badges
+                become direct flex items of the outer row again, in their
+                original desktop position between the title and the
+                select. */}
+            <div className="flex items-center gap-2 sm:contents">
                 <IssuePriorityBadge priority={issue.priority} />
 
                 {issue.story_points !== null ? (
@@ -68,31 +73,32 @@ export function IssueRow({ projectKey, issue, sprintOptions }: IssueRowProps) {
                         {issue.story_points} pts
                     </span>
                 ) : null}
-
-                <Select
-                    value={
-                        issue.sprint_id === null
-                            ? BACKLOG_VALUE
-                            : String(issue.sprint_id)
-                    }
-                    onValueChange={moveTo}
-                >
-                    <SelectTrigger className="h-11 w-full shrink-0 text-xs sm:w-40 md:h-7">
-                        <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value={BACKLOG_VALUE}>Backlog</SelectItem>
-                        {sprintOptions.map((sprint) => (
-                            <SelectItem
-                                key={sprint.id}
-                                value={String(sprint.id)}
-                            >
-                                {sprint.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
             </div>
+
+            {/* Below sm: full-width on its own row, so `w-full` never has
+                to compete with the badges above for horizontal space
+                (that competition, inside a shared flex row, was the
+                actual cause of the overflow — not `w-full` itself). */}
+            <Select
+                value={
+                    issue.sprint_id === null
+                        ? BACKLOG_VALUE
+                        : String(issue.sprint_id)
+                }
+                onValueChange={moveTo}
+            >
+                <SelectTrigger className="h-11 w-full shrink-0 text-xs sm:w-40 md:h-7">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value={BACKLOG_VALUE}>Backlog</SelectItem>
+                    {sprintOptions.map((sprint) => (
+                        <SelectItem key={sprint.id} value={String(sprint.id)}>
+                            {sprint.name}
+                        </SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
         </div>
     );
 }
