@@ -1,11 +1,17 @@
 import { usePage } from '@inertiajs/react';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useSyncExternalStore } from 'react';
 
 import type { Appearance } from '@/types/global';
 
 const COOKIE_NAME = 'appearance';
 const STORAGE_KEY = 'appearance';
 const COOKIE_MAX_AGE_SECONDS = 365 * 24 * 60 * 60;
+
+const VALID_APPEARANCES: readonly Appearance[] = ['light', 'dark', 'system'];
+
+function isAppearance(value: string | null): value is Appearance {
+    return VALID_APPEARANCES.includes(value as Appearance);
+}
 
 function prefersDark(): boolean {
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
@@ -24,20 +30,58 @@ function persistAppearance(appearance: Appearance): void {
     document.cookie = `${COOKIE_NAME}=${appearance}; path=/; max-age=${COOKIE_MAX_AGE_SECONDS}; SameSite=Lax`;
 }
 
+/** Allowlisted (same as the server-side cookie check) — garbage in localStorage falls back to null. */
+function readPersisted(): Appearance | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    return isAppearance(stored) ? stored : null;
+}
+
 /**
- * Reads/writes the user's light|dark|system preference. The initial value
- * comes from the `appearance` Inertia shared prop (set server-side by
- * `HandleInertiaRequests` from the same cookie the anti-FOUC inline script
- * reads), so there's no hydration flash. While `system` is selected,
- * listens live for OS/browser `prefers-color-scheme` changes and re-applies
- * the `.dark` class accordingly.
+ * Module-level store shared by every mounted consumer (desktop sidebar and
+ * mobile drawer both render a ThemeToggle). The mobile drawer unmounts its
+ * content on close, so per-instance useState would reset to the stale
+ * Inertia prop on every reopen and revert the theme.
+ */
+let currentAppearance: Appearance | null = null;
+const listeners = new Set<() => void>();
+
+function subscribe(listener: () => void): () => void {
+    listeners.add(listener);
+
+    return () => listeners.delete(listener);
+}
+
+function setCurrentAppearance(next: Appearance): void {
+    currentAppearance = next;
+    listeners.forEach((listener) => listener());
+}
+
+/**
+ * Reads/writes the user's light|dark|system preference. The persisted value
+ * (localStorage) wins over the `appearance` Inertia shared prop: the prop
+ * only refreshes on server visits, so it goes stale as soon as the user
+ * changes theme client-side. The prop seeds the very first read (set
+ * server-side by `HandleInertiaRequests` from the same cookie the anti-FOUC
+ * inline script reads), so there's no hydration flash. While `system` is
+ * selected, listens live for OS/browser `prefers-color-scheme` changes and
+ * re-applies the `.dark` class accordingly.
  */
 export function useAppearance() {
     const { props } = usePage();
-    const [appearance, setAppearance] = useState<Appearance>(props.appearance);
+
+    const appearance = useSyncExternalStore(
+        subscribe,
+        () => currentAppearance ?? readPersisted() ?? props.appearance,
+        () => props.appearance,
+    );
 
     const updateAppearance = useCallback((next: Appearance) => {
-        setAppearance(next);
+        setCurrentAppearance(next);
         persistAppearance(next);
         applyAppearance(next);
     }, []);
