@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { SidebarNavLink } from '@/components/sidebar/sidebar-nav-link';
 import { SidebarProjectList } from '@/components/sidebar/sidebar-project-list';
 import { SidebarUserMenu } from '@/components/sidebar/sidebar-user-menu';
+import { ThemeToggle } from '@/components/sidebar/theme-toggle';
 import { Separator } from '@/components/ui/separator';
 import { home } from '@/routes';
 import { index as projectsIndex } from '@/routes/projects';
@@ -58,7 +59,10 @@ export function Sidebar() {
 
             <Separator />
 
-            <SidebarUserMenu />
+            <div className="flex flex-col gap-1">
+                <ThemeToggle />
+                <SidebarUserMenu />
+            </div>
         </motion.aside>
     );
 }
