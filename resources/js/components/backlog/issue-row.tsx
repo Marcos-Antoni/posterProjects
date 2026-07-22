@@ -39,50 +39,60 @@ export function IssueRow({ projectKey, issue, sprintOptions }: IssueRowProps) {
     }
 
     return (
-        <div className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
-            <IssueTypeIcon
-                type={issue.type}
-                className="size-4 shrink-0 text-muted-foreground"
-            />
+        <div className="flex flex-col gap-2 rounded-lg border bg-card px-3 py-2 sm:flex-row sm:items-center sm:gap-2">
+            <div className="flex min-w-0 items-center gap-2 sm:flex-1">
+                <IssueTypeIcon
+                    type={issue.type}
+                    className="size-4 shrink-0 text-muted-foreground"
+                />
 
-            <Link
-                href={show.url({ project: projectKey, issueKey: issue.key })}
-                className="flex min-w-0 flex-1 items-center gap-2 hover:underline"
-            >
-                <span className="shrink-0 text-xs font-medium text-muted-foreground">
-                    {issue.key}
-                </span>
-                <span className="truncate text-sm">{issue.title}</span>
-            </Link>
+                <Link
+                    href={show.url({
+                        project: projectKey,
+                        issueKey: issue.key,
+                    })}
+                    className="flex min-w-0 flex-1 items-center gap-2 hover:underline"
+                >
+                    <span className="shrink-0 text-xs font-medium text-muted-foreground">
+                        {issue.key}
+                    </span>
+                    <span className="truncate text-sm">{issue.title}</span>
+                </Link>
+            </div>
 
-            <IssuePriorityBadge priority={issue.priority} />
+            <div className="flex items-center gap-2 sm:shrink-0">
+                <IssuePriorityBadge priority={issue.priority} />
 
-            {issue.story_points !== null ? (
-                <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
-                    {issue.story_points} pts
-                </span>
-            ) : null}
+                {issue.story_points !== null ? (
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium text-muted-foreground">
+                        {issue.story_points} pts
+                    </span>
+                ) : null}
 
-            <Select
-                value={
-                    issue.sprint_id === null
-                        ? BACKLOG_VALUE
-                        : String(issue.sprint_id)
-                }
-                onValueChange={moveTo}
-            >
-                <SelectTrigger className="h-7 w-40 shrink-0 text-xs">
-                    <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value={BACKLOG_VALUE}>Backlog</SelectItem>
-                    {sprintOptions.map((sprint) => (
-                        <SelectItem key={sprint.id} value={String(sprint.id)}>
-                            {sprint.name}
-                        </SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                <Select
+                    value={
+                        issue.sprint_id === null
+                            ? BACKLOG_VALUE
+                            : String(issue.sprint_id)
+                    }
+                    onValueChange={moveTo}
+                >
+                    <SelectTrigger className="h-7 w-full shrink-0 text-xs sm:w-40">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={BACKLOG_VALUE}>Backlog</SelectItem>
+                        {sprintOptions.map((sprint) => (
+                            <SelectItem
+                                key={sprint.id}
+                                value={String(sprint.id)}
+                            >
+                                {sprint.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
         </div>
     );
 }
