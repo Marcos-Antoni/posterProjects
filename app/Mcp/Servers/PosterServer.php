@@ -11,6 +11,10 @@ use App\Mcp\Tools\Comments\DeleteComment;
 use App\Mcp\Tools\Comments\UpdateComment;
 use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
+use App\Mcp\Tools\Habits\ListHabits;
+use App\Mcp\Tools\Habits\LogHabitEntry;
+use App\Mcp\Tools\Habits\ShowHabit;
+use App\Mcp\Tools\Habits\TodayHabits;
 use App\Mcp\Tools\Habits\UnarchiveHabit;
 use App\Mcp\Tools\Habits\UpdateHabit;
 use App\Mcp\Tools\Issues\CreateIssue;
@@ -87,5 +91,9 @@ class PosterServer extends Server
         UpdateHabit::class,
         ArchiveHabit::class,
         UnarchiveHabit::class,
+        TodayHabits::class,
+        ListHabits::class,
+        ShowHabit::class,
+        LogHabitEntry::class,
     ];
 }
