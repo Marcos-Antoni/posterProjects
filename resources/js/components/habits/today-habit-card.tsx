@@ -2,6 +2,7 @@ import { Form } from '@inertiajs/react';
 import { Check, Clock, Plus } from 'lucide-react';
 
 import { store as storeEntry } from '@/actions/App/Http/Controllers/HabitEntryController';
+import { recurrenceSummary } from '@/components/habits/habit-labels';
 import { Button } from '@/components/ui/button';
 import {
     Card,
@@ -29,30 +30,6 @@ export type TodayHabit = Omit<
     week_recorded_days: number | null;
 };
 
-const WEEKDAY_SHORT_LABELS: Record<number, string> = {
-    1: 'Lun',
-    2: 'Mar',
-    3: 'Mié',
-    4: 'Jue',
-    5: 'Vie',
-    6: 'Sáb',
-    7: 'Dom',
-};
-
-function recurrenceLabel(habit: TodayHabit): string {
-    if (habit.recurrence_type === 'daily') {
-        return 'Todos los días';
-    }
-
-    if (habit.recurrence_type === 'specific_weekdays') {
-        return (habit.weekdays ?? [])
-            .map((weekday) => WEEKDAY_SHORT_LABELS[weekday])
-            .join(' · ');
-    }
-
-    return `${habit.times_per_week}× por semana`;
-}
-
 /**
  * One habit on the "Today" view: today's progress plus the quick-log
  * control (a done button for yes/no habits, an amount input for
@@ -75,7 +52,7 @@ export function TodayHabitCard({ habit }: { habit: TodayHabit }) {
                     )}
                 </CardTitle>
                 <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span>{recurrenceLabel(habit)}</span>
+                    <span>{recurrenceSummary(habit)}</span>
                     {habit.planned_time !== null && (
                         <span className="flex items-center gap-1">
                             <Clock className="size-3.5" />
