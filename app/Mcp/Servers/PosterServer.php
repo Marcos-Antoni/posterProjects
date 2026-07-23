@@ -2,6 +2,10 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\BoardColumns\CreateBoardColumn;
+use App\Mcp\Tools\BoardColumns\DeleteBoardColumn;
+use App\Mcp\Tools\BoardColumns\ReorderBoardColumn;
+use App\Mcp\Tools\BoardColumns\UpdateBoardColumn;
 use App\Mcp\Tools\Comments\CreateComment;
 use App\Mcp\Tools\Comments\DeleteComment;
 use App\Mcp\Tools\Comments\UpdateComment;
@@ -71,5 +75,9 @@ class PosterServer extends Server
         CreateSprint::class,
         UpdateSprint::class,
         DeleteSprint::class,
+        CreateBoardColumn::class,
+        UpdateBoardColumn::class,
+        ReorderBoardColumn::class,
+        DeleteBoardColumn::class,
     ];
 }
