@@ -301,7 +301,7 @@ class Habit extends Model
      * plain (UTC-midnight) Carbon so date comparisons never drift on
      * timezone offsets.
      */
-    public function todayLocalDate(): Carbon
+    public static function todayLocalDate(): Carbon
     {
         return Carbon::parse(now()->setTimezone(Config::string('habits.timezone'))->toDateString());
     }

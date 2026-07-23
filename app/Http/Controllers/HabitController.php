@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\RecurrenceType;
 use App\Http\Requests\StoreHabitRequest;
 use App\Http\Requests\UpdateHabitRequest;
 use App\Models\Habit;
 use App\Models\HabitDay;
+use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +35,76 @@ class HabitController extends Controller
     }
 
     /**
+     * Display the "Today" view: every active habit scheduled on the
+     * current UTC-6 day, with its progress for the day and — for
+     * weekly-quota habits — how many days of the current Monday-based
+     * week already have a record.
+     */
+    public function today(Request $request): Response
+    {
+        Gate::authorize('viewAny', Habit::class);
+
+        $today = Habit::todayLocalDate();
+        $weekStart = $today->clone()->startOfWeek(CarbonInterface::MONDAY);
+
+        $habits = $request->user()
+            ->habits()
+            ->whereNull('archived_at')
+            ->with(['days' => fn ($query) => $query->whereBetween(
+                'entry_date',
+                [$weekStart->toDateString(), $today->toDateString()],
+            )])
+            ->orderBy('name')
+            ->get()
+            ->filter(fn (Habit $habit): bool => $habit->isScheduledOn($today))
+            ->values()
+            ->map(fn (Habit $habit): array => [
+                'id' => $habit->id,
+                'name' => $habit->name,
+                'habit_type' => $habit->habit_type,
+                'unit' => $habit->unit,
+                'daily_target' => $habit->daily_target,
+                'recurrence_type' => $habit->recurrence_type,
+                'weekdays' => $habit->weekdays,
+                'times_per_week' => $habit->times_per_week,
+                'planned_time' => $habit->planned_time,
+                'today' => $this->todayProgress($habit, $today),
+                'week_recorded_days' => $habit->recurrence_type === RecurrenceType::TimesPerWeek
+                    ? $habit->days->count()
+                    : null,
+            ]);
+
+        return Inertia::render('habits/today', [
+            'habits' => $habits->all(),
+            'date' => $today->toDateString(),
+        ]);
+    }
+
+    /**
+     * The habit's persisted aggregate for today, or null when nothing
+     * has been logged yet. Reads the eager-loaded current-week days.
+     *
+     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, planned_delta_minutes: int|null}|null
+     */
+    private function todayProgress(Habit $habit, CarbonInterface $today): ?array
+    {
+        $row = $habit->days->first(
+            fn (HabitDay $day): bool => $day->entry_date->isSameDay($today),
+        );
+
+        if ($row === null) {
+            return null;
+        }
+
+        return [
+            'accumulated_amount' => $row->accumulated_amount,
+            'completion_percent' => $row->completion_percent,
+            'completed' => $row->completed,
+            'planned_delta_minutes' => $row->planned_delta_minutes,
+        ];
+    }
+
+    /**
      * Display a habit's history: streaks, completion for the selected
      * period, and the daily series (date, percent, planned delta) the
      * evolution chart consumes. Everything is computed on read — no
@@ -44,7 +116,7 @@ class HabitController extends Controller
 
         $periodDays = min(365, max(7, $request->integer('days', 30)));
 
-        $to = $habit->todayLocalDate();
+        $to = Habit::todayLocalDate();
         $from = $to->clone()->subDays($periodDays - 1);
 
         $dayRows = $habit->days()

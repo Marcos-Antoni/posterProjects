@@ -81,3 +81,40 @@ export type Comment = {
     created_at: string | null;
     updated_at: string | null;
 };
+
+export type HabitType = 'yes_no' | 'quantitative';
+
+export type RecurrenceType = 'daily' | 'specific_weekdays' | 'times_per_week';
+
+export type Habit = {
+    id: number;
+    user_id: number;
+    name: string;
+    habit_type: HabitType;
+    unit: string | null;
+    daily_target: number | null;
+    recurrence_type: RecurrenceType;
+    /** ISO-8601 weekday numbers, 1 (Monday) to 7 (Sunday). */
+    weekdays: number[] | null;
+    times_per_week: number | null;
+    /** Time of day "HH:MM:SS" in the feature's fixed UTC-6 zone. */
+    planned_time: string | null;
+    /** Set once the habit is archived. Archived habits keep their history. */
+    archived_at: string | null;
+    created_at: string | null;
+    updated_at: string | null;
+};
+
+export type HabitDay = {
+    id: number;
+    habit_id: number;
+    /** The day in the feature's fixed UTC-6 zone, "YYYY-MM-DD". */
+    entry_date: string;
+    accumulated_amount: number;
+    /** Persisted as recorded — may be under or over 100. */
+    completion_percent: number;
+    completed: boolean;
+    planned_delta_minutes: number | null;
+    created_at: string | null;
+    updated_at: string | null;
+};

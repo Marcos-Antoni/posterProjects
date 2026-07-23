@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Calendar, LayoutGrid } from 'lucide-react';
+import { Calendar, LayoutGrid, Repeat } from 'lucide-react';
 
 import { SidebarNavLink } from '@/components/sidebar/sidebar-nav-link';
 import { SidebarProjectList } from '@/components/sidebar/sidebar-project-list';
@@ -7,6 +7,7 @@ import { SidebarUserMenu } from '@/components/sidebar/sidebar-user-menu';
 import { ThemeToggle } from '@/components/sidebar/theme-toggle';
 import { Separator } from '@/components/ui/separator';
 import { home } from '@/routes';
+import { today as habitsToday } from '@/routes/habits';
 import { index as projectsIndex } from '@/routes/projects';
 
 /**
@@ -36,6 +37,13 @@ export function SidebarContent() {
                     active={url.startsWith('/projects')}
                 >
                     Proyectos
+                </SidebarNavLink>
+                <SidebarNavLink
+                    href={habitsToday()}
+                    icon={<Repeat className="size-4" />}
+                    active={url.startsWith('/habits')}
+                >
+                    Hábitos
                 </SidebarNavLink>
                 <SidebarNavLink
                     href="/calendar"
