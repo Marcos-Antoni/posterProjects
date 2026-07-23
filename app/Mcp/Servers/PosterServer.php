@@ -2,6 +2,13 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Projects\ArchiveProject;
+use App\Mcp\Tools\Projects\CreateProject;
+use App\Mcp\Tools\Projects\ForceDeleteProject;
+use App\Mcp\Tools\Projects\ListProjects;
+use App\Mcp\Tools\Projects\ListTrashedProjects;
+use App\Mcp\Tools\Projects\RestoreProject;
+use App\Mcp\Tools\Projects\UpdateProject;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -18,5 +25,13 @@ class PosterServer extends Server
      *
      * @var array<int, class-string<Tool>>
      */
-    protected array $tools = [];
+    protected array $tools = [
+        ListProjects::class,
+        CreateProject::class,
+        UpdateProject::class,
+        ArchiveProject::class,
+        ListTrashedProjects::class,
+        RestoreProject::class,
+        ForceDeleteProject::class,
+    ];
 }
