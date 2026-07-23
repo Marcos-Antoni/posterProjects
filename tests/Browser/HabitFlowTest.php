@@ -62,25 +62,14 @@ test('a user creates a quantitative habit, logs an entry, views the detail page,
 });
 
 /**
- * Pinned regression test for a real bug this suite's browser coverage
- * uncovered: `HabitEntryController::store()` (and the identical pattern in
- * `App\Mcp\Tools\Habits\LogHabitEntry`) guards the logged amount with
- * `is_int($amount) ? $amount : 1`. That check is only ever true when the
- * value already arrives as a native PHP int — true for `PosterServer::actingAs()`
- * unit tests and for MCP tool calls (their JSON-RPC arguments round-trip
- * through `json_decode`, which preserves numeric JSON types), but never
- * true for a real browser submission: Inertia's `<Form>` reads field
- * values via the native `FormData` API, which stringifies every value —
- * confirmed with a plain Feature-style POST of `['amount' => '15']`
- * (a string, matching real HTTP semantics), which persists
- * `accumulated_amount = 1` instead of 15.
- *
- * Net effect: every quantitative habit entry logged through the actual
- * web UI silently records 1, no matter what the user types. This test
- * encodes the *intended* behavior (partial entries accumulate, and the
- * percent can exceed 100) and is skipped until the guard is fixed —
- * e.g. `is_numeric($amount) ? (int) $amount : 1`. Un-skip it once that
- * lands; no other change to this test should be needed.
+ * Regression test for a bug this suite's browser coverage uncovered:
+ * the entry amount used to be guarded with `is_int($amount)`, which is
+ * never true for a real browser submission — Inertia's `<Form>` reads
+ * field values via the native `FormData` API, which stringifies every
+ * value — so the web UI silently logged 1 no matter what the user
+ * typed. The guard now casts numeric input instead; this test pins the
+ * intended behavior end to end (partial entries accumulate and the
+ * percent can exceed 100).
  */
 test('a user logs partial entries through the ui past the daily target and sees the overshoot', function () {
     $user = User::factory()->create();
@@ -110,4 +99,4 @@ test('a user logs partial entries through the ui past the daily target and sees 
 
     $page->click('Read')
         ->assertSee('Racha actual');
-})->skip('BUG: HabitEntryController::store() (app/Http/Controllers/HabitEntryController.php:20) logs amount=1 for every real browser submission because the validated amount always arrives as a string, and is_int() on it is always false — see the docblock above this test.');
+});

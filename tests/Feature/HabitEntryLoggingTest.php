@@ -51,6 +51,19 @@ test('partial entries accumulate into the day and the real percent is persisted'
         ->and($habit->entries()->count())->toBe(3);
 });
 
+test('a string amount is cast, matching what real form submissions send', function () {
+    // Browser submissions (FormData) always deliver the amount as a
+    // string; regression for the guard that used to log 1 in that case.
+    $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create();
+
+    $this->actingAs($user)->post("/habits/{$habit->id}/entries", ['amount' => '15'])->assertRedirect();
+
+    $day = $habit->days()->firstOrFail();
+    expect($day->accumulated_amount)->toBe(15)
+        ->and($day->completion_percent)->toBe(75);
+});
+
 test('the day is completed exactly at the target and the percent can exceed 100', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create();

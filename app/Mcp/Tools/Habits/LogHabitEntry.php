@@ -47,7 +47,10 @@ class LogHabitEntry extends Tool
         // Same call as `HabitEntryController::store()` — the UTC-6 rollup
         // transaction lives entirely in `Habit::recordEntry()`.
         $amount = $validated['amount'] ?? null;
-        $habit->recordEntry(is_int($amount) ? $amount : 1);
+
+        // Same cast as HabitEntryController: the `integer` rule lets
+        // numeric strings through, so is_int() would silently log 1.
+        $habit->recordEntry(is_numeric($amount) ? (int) $amount : 1);
 
         $today = Habit::todayLocalDate();
         $day = $habit->days()->where('entry_date', $today->toDateString())->firstOrFail();

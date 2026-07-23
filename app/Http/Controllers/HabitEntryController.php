@@ -17,7 +17,10 @@ class HabitEntryController extends Controller
     {
         $amount = $request->validated('amount');
 
-        $habit->recordEntry(is_int($amount) ? $amount : 1);
+        // The `integer` rule accepts numeric strings without casting them,
+        // and real browser submissions (FormData) always send strings — so
+        // the value must be cast, not type-checked with is_int().
+        $habit->recordEntry(is_numeric($amount) ? (int) $amount : 1);
 
         return back();
     }
