@@ -52,4 +52,12 @@ class HabitPolicy
     {
         return $habit->user_id === $user->id;
     }
+
+    /**
+     * Only the owner may record entries against a habit.
+     */
+    public function logEntry(User $user, Habit $habit): bool
+    {
+        return $habit->user_id === $user->id;
+    }
 }

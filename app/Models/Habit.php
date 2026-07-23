@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\DB;
 
 /**
  * @property int $id
@@ -84,5 +86,63 @@ class Habit extends Model
     public function days(): HasMany
     {
         return $this->hasMany(HabitDay::class);
+    }
+
+    /**
+     * Record a partial entry now and transactionally roll it into the
+     * habit-day of the current UTC-6 day: accumulated amount, the real
+     * completion percent (kept as recorded — under or over 100), the
+     * completed flag, and — for the first entry of the day of a habit
+     * with a planned time — the planned-vs-actual delta in minutes.
+     *
+     * The day row is claimed with `INSERT ... ON CONFLICT DO NOTHING`
+     * and then re-read under `lockForUpdate`, so concurrent entries
+     * against the same day serialize instead of losing increments
+     * (same locking pattern as `Project::allocateNextIssueNumber()`).
+     */
+    public function recordEntry(int $amount): HabitEntry
+    {
+        return DB::transaction(function () use ($amount): HabitEntry {
+            $entry = $this->entries()->create([
+                'amount' => $amount,
+                'logged_at' => now(),
+            ]);
+
+            $localTime = $entry->logged_at->clone()->setTimezone(Config::string('habits.timezone'));
+            $entryDate = $localTime->toDateString();
+
+            $claimedDay = HabitDay::query()->insertOrIgnore([
+                'habit_id' => $this->id,
+                'entry_date' => $entryDate,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]) === 1;
+
+            /** @var HabitDay $day */
+            $day = $this->days()
+                ->where('entry_date', $entryDate)
+                ->lockForUpdate()
+                ->firstOrFail();
+
+            $target = $this->habit_type === HabitType::Quantitative
+                ? max(1, (int) $this->daily_target)
+                : 1;
+
+            $accumulated = $day->accumulated_amount + $amount;
+
+            $day->accumulated_amount = $accumulated;
+            $day->completion_percent = (int) round($accumulated / $target * 100);
+            $day->completed = $accumulated >= $target;
+
+            if ($claimedDay && $this->planned_time !== null) {
+                $plannedTime = $localTime->clone()->setTimeFromTimeString($this->planned_time);
+
+                $day->planned_delta_minutes = (int) round($plannedTime->diffInMinutes($localTime));
+            }
+
+            $day->save();
+
+            return $entry;
+        });
     }
 }

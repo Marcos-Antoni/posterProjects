@@ -6,6 +6,7 @@ use App\Http\Controllers\BoardController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
 use App\Http\Controllers\HabitController;
+use App\Http\Controllers\HabitEntryController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueLabelController;
 use App\Http\Controllers\IssueMoveController;
@@ -40,6 +41,7 @@ Route::middleware('auth')->group(function (): void {
     Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
     Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
     Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
+    Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
 
     // Bound by key (not id) — the board and its nested routes are
     // addressed by the project's human-readable key, e.g. /projects/DEMO/board.
