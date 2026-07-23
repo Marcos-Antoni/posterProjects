@@ -22,6 +22,9 @@ use App\Mcp\Tools\Projects\ListProjects;
 use App\Mcp\Tools\Projects\ListTrashedProjects;
 use App\Mcp\Tools\Projects\RestoreProject;
 use App\Mcp\Tools\Projects\UpdateProject;
+use App\Mcp\Tools\Sprints\CreateSprint;
+use App\Mcp\Tools\Sprints\DeleteSprint;
+use App\Mcp\Tools\Sprints\UpdateSprint;
 use App\Mcp\Tools\Views\BacklogView;
 use App\Mcp\Tools\Views\BoardView;
 use App\Mcp\Tools\Views\CalendarView;
@@ -65,5 +68,8 @@ class PosterServer extends Server
         DeleteLabel::class,
         AttachIssueLabel::class,
         DetachIssueLabel::class,
+        CreateSprint::class,
+        UpdateSprint::class,
+        DeleteSprint::class,
     ];
 }
