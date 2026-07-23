@@ -243,6 +243,37 @@ class Issue extends Model
     }
 
     /**
+     * Resolves a human-readable issue key ("PROJ-123") against a project
+     * already known to the caller. Splits on the LAST "-" (project keys
+     * never contain one — see `StoreProjectRequest`'s regex), so this is
+     * safe even if a future key format changes. Returns `null` (never
+     * throws or aborts) whenever the key is malformed, its prefix doesn't
+     * match `$project`, or no issue has that number in this project —
+     * callers decide how to react (e.g. `abort_if(..., 404)` on the web,
+     * an MCP error response for tools).
+     */
+    public static function resolveByKey(Project $project, string $issueKey): ?self
+    {
+        $lastDashPosition = strrpos($issueKey, '-');
+
+        if ($lastDashPosition === false) {
+            return null;
+        }
+
+        $prefix = substr($issueKey, 0, $lastDashPosition);
+        $numberPart = substr($issueKey, $lastDashPosition + 1);
+
+        if ($prefix !== $project->key || $numberPart === '' || ! ctype_digit($numberPart)) {
+            return null;
+        }
+
+        return self::query()
+            ->where('project_id', $project->id)
+            ->where('number', (int) $numberPart)
+            ->first();
+    }
+
+    /**
      * @return Builder<self>
      */
     private static function scopedToColumnAndSprint(int $boardColumnId, ?int $sprintId)

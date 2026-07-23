@@ -2,6 +2,10 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Issues\CreateIssue;
+use App\Mcp\Tools\Issues\MoveIssue;
+use App\Mcp\Tools\Issues\ShowIssue;
+use App\Mcp\Tools\Issues\UpdateIssue;
 use App\Mcp\Tools\Projects\ArchiveProject;
 use App\Mcp\Tools\Projects\CreateProject;
 use App\Mcp\Tools\Projects\ForceDeleteProject;
@@ -39,5 +43,9 @@ class PosterServer extends Server
         BoardView::class,
         BacklogView::class,
         CalendarView::class,
+        CreateIssue::class,
+        UpdateIssue::class,
+        MoveIssue::class,
+        ShowIssue::class,
     ];
 }

@@ -92,36 +92,20 @@ class IssueController extends Controller
 
     /**
      * Resolves `{issueKey}` ("PROJ-123") against the project already bound
-     * from the URL. Splits on the LAST "-" (project keys never contain one
-     * — see `StoreProjectRequest`'s regex), so this is safe even if a
-     * future key format changes. 404s (never 500s) whenever the key is
-     * malformed, the prefix doesn't match the URL's project, or no issue
-     * has that number in this project.
+     * from the URL, via `Issue::resolveByKey()`. 404s (never 500s)
+     * whenever the key is malformed, the prefix doesn't match the URL's
+     * project, or no issue has that number in this project.
      */
     private function resolveIssue(Project $project, string $issueKey): Issue
     {
-        $lastDashPosition = strrpos($issueKey, '-');
-
-        abort_if($lastDashPosition === false, 404);
-
-        $prefix = substr($issueKey, 0, $lastDashPosition);
-        $numberPart = substr($issueKey, $lastDashPosition + 1);
-
-        abort_if($prefix !== $project->key, 404);
-        abort_if($numberPart === '' || ! ctype_digit($numberPart), 404);
-
-        $issue = Issue::query()
-            ->where('project_id', $project->id)
-            ->where('number', (int) $numberPart)
-            ->with([
-                'labels:id,name',
-                'assignee:id,name',
-                'reporter:id,name',
-                'parent:id,project_id,number,title',
-                'children' => fn ($query) => $query->orderBy('position'),
-                'comments' => fn ($query) => $query->orderBy('created_at')->with('author:id,name'),
-            ])
-            ->first();
+        $issue = Issue::resolveByKey($project, $issueKey)?->load([
+            'labels:id,name',
+            'assignee:id,name',
+            'reporter:id,name',
+            'parent:id,project_id,number,title',
+            'children' => fn ($query) => $query->orderBy('position'),
+            'comments' => fn ($query) => $query->orderBy('created_at')->with('author:id,name'),
+        ]);
 
         abort_if($issue === null, 404);
 
