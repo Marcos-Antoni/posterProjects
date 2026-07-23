@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import { Check, Clock, Plus } from 'lucide-react';
 
 import { store as storeEntry } from '@/actions/App/Http/Controllers/HabitEntryController';
@@ -12,6 +12,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { show } from '@/routes/habits';
 import type { Habit } from '@/types/models';
 
 export type HabitTodayProgress = {
@@ -43,7 +44,12 @@ export function TodayHabitCard({ habit }: { habit: TodayHabit }) {
         <Card className={completed ? 'ring-emerald-500/40' : undefined}>
             <CardHeader>
                 <CardTitle className="flex items-center justify-between gap-2">
-                    <span className="truncate">{habit.name}</span>
+                    <Link
+                        href={show(habit.id)}
+                        className="truncate underline-offset-4 hover:underline"
+                    >
+                        {habit.name}
+                    </Link>
                     {completed && (
                         <span className="flex shrink-0 items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                             <Check className="size-4" />

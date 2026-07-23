@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, Link } from '@inertiajs/react';
 import { Archive, ArchiveRestore, Clock } from 'lucide-react';
 
 import {
@@ -18,6 +18,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { show } from '@/routes/habits';
 import type { Habit } from '@/types/models';
 
 /**
@@ -31,7 +32,14 @@ export function ManageHabitCard({ habit }: { habit: Habit }) {
     return (
         <Card size="sm" className={archived ? 'opacity-75' : undefined}>
             <CardHeader>
-                <CardTitle className="truncate">{habit.name}</CardTitle>
+                <CardTitle className="truncate">
+                    <Link
+                        href={show(habit.id)}
+                        className="underline-offset-4 hover:underline"
+                    >
+                        {habit.name}
+                    </Link>
+                </CardTitle>
                 <CardDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span>{habitTypeLabels[habit.habit_type]}</span>
                     {habit.habit_type === 'quantitative' && (
