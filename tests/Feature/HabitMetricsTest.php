@@ -168,6 +168,24 @@ test('empty days in the in-progress week never break the times per week streak',
     expect($habit->currentStreak())->toBe(3);
 });
 
+test('a sunday under quota does not break the streak while it is still today', function () {
+    // Quota 3 met the previous week; the current week only has 1 record
+    // and today IS its closing Sunday. The week is still in progress
+    // until it is strictly in the past, so the streak survives the
+    // whole day even though the quota can no longer be met.
+    $this->travelTo(Carbon::parse('2026-07-19 18:00:00', 'UTC'));
+
+    $habit = Habit::factory()->timesPerWeek(3)->create();
+    createDays($habit, [
+        '2026-07-06' => [],
+        '2026-07-08' => [],
+        '2026-07-10' => [],
+        '2026-07-14' => [],
+    ]);
+
+    expect($habit->currentStreak())->toBe(4);
+});
+
 test('a recorded but uncompleted day still counts toward the weekly quota', function () {
     // Quota 2 last week: one full day and one partial day — the week
     // still closes fulfilled, so the current-week day extends the run.
