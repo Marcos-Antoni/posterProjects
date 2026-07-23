@@ -21,6 +21,14 @@ declare module '@inertiajs/core' {
             auth: Auth;
             sidebarProjects: SidebarProject[];
             appearance: Appearance;
+            /**
+             * One-shot session flashes. `plainMcpToken` is only present on
+             * the visit right after generating an MCP token — it is never
+             * persisted nor retrievable again.
+             */
+            flash: {
+                plainMcpToken: string | null;
+            };
             [key: string]: unknown;
         };
     }

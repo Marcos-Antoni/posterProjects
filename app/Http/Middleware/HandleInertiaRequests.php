@@ -64,6 +64,13 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user,
             ],
             'appearance' => $appearance,
+            // One-shot flash: only ever present on the request right
+            // after regenerating the MCP token (see McpTokenController).
+            // The closure defers session access so the value is consumed
+            // exactly once and never re-serialized into later visits.
+            'flash' => [
+                'plainMcpToken' => fn (): ?string => $request->session()->get('plainMcpToken'),
+            ],
             'sidebarProjects' => $user
                 ? $user->projects()
                     ->orderBy('name')

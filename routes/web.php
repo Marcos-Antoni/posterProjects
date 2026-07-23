@@ -12,6 +12,7 @@ use App\Http\Controllers\IssueLabelController;
 use App\Http\Controllers\IssueMoveController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\SprintController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -32,6 +33,12 @@ Route::middleware('auth')->group(function (): void {
     // Global, cross-project calendar — every issue with a due date across
     // every project the authenticated user is a member of.
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+
+    // Settings — currently only the MCP token page. The token is a
+    // single Sanctum PAT: regenerating kills the previous one, and the
+    // plain text travels in a one-shot session flash (never a prop).
+    Route::get('settings/mcp-token', [McpTokenController::class, 'show'])->name('settings.mcp-token.show');
+    Route::post('settings/mcp-token', [McpTokenController::class, 'store'])->name('settings.mcp-token.store');
 
     // Habits are personal to the authenticated user — never project
     // scoped. There is intentionally NO destroy route: habits can only
