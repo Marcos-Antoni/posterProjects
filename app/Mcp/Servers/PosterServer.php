@@ -9,6 +9,9 @@ use App\Mcp\Tools\Projects\ListProjects;
 use App\Mcp\Tools\Projects\ListTrashedProjects;
 use App\Mcp\Tools\Projects\RestoreProject;
 use App\Mcp\Tools\Projects\UpdateProject;
+use App\Mcp\Tools\Views\BacklogView;
+use App\Mcp\Tools\Views\BoardView;
+use App\Mcp\Tools\Views\CalendarView;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -33,5 +36,8 @@ class PosterServer extends Server
         ListTrashedProjects::class,
         RestoreProject::class,
         ForceDeleteProject::class,
+        BoardView::class,
+        BacklogView::class,
+        CalendarView::class,
     ];
 }
