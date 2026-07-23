@@ -37,6 +37,7 @@ Route::middleware('auth')->group(function (): void {
     // scoped. There is intentionally NO destroy route: habits can only
     // be archived (and reactivated), their history is never deleted.
     Route::get('habits/manage', [HabitController::class, 'index'])->name('habits.index');
+    Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
     Route::post('habits', [HabitController::class, 'store'])->name('habits.store');
     Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
     Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
