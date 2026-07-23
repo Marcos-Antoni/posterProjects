@@ -1,0 +1,95 @@
+<?php
+
+namespace App\Mcp\Tools\Comments;
+
+use App\Http\Requests\UpdateCommentRequest;
+use App\Mcp\Support\ReplaysFormRequest;
+use App\Mcp\Support\ResolvesAuthenticatedUser;
+use App\Mcp\Support\ResourceLinker;
+use App\Models\Issue;
+use App\Models\Project;
+use Illuminate\Contracts\JsonSchema\JsonSchema;
+use Illuminate\JsonSchema\Types\Type;
+use Laravel\Mcp\Request;
+use Laravel\Mcp\Response;
+use Laravel\Mcp\Server\Attributes\Description;
+use Laravel\Mcp\Server\Tool;
+
+#[Description('Edit a comment\'s body. Author only — not even the project owner can edit another member\'s comment.')]
+class UpdateComment extends Tool
+{
+    use ResolvesAuthenticatedUser;
+
+    public function __construct(
+        private ReplaysFormRequest $formRequests,
+        private ResourceLinker $links,
+    ) {}
+
+    /**
+     * Handle the tool request.
+     */
+    public function handle(Request $request): Response
+    {
+        $user = $this->authenticatedUser($request);
+
+        $project = Project::query()->where('key', $request->get('project_key'))->first();
+
+        if ($project === null) {
+            return Response::error("Project not found: {$request->get('project_key')}");
+        }
+
+        $issue = Issue::resolveByKey($project, (string) $request->get('issue_key'));
+
+        if ($issue === null) {
+            return Response::error("Issue not found: {$request->get('issue_key')}");
+        }
+
+        $comment = $issue->comments()->whereKey($request->get('comment_id'))->first();
+
+        if ($comment === null) {
+            return Response::error("Comment not found: {$request->get('comment_id')}");
+        }
+
+        $validated = $this->formRequests->replay(
+            UpdateCommentRequest::class,
+            $request->all(),
+            $user,
+            ['project' => $project, 'issue' => $issue, 'comment' => $comment],
+        )->validated();
+
+        $comment->update($validated);
+        $comment->setRelation('issue', $issue);
+        $issue->setRelation('project', $project);
+
+        return Response::json([
+            'comment' => [
+                'id' => $comment->id,
+                'body' => $comment->body,
+                'url' => $this->links->comment($comment),
+            ],
+        ]);
+    }
+
+    /**
+     * Get the tool's input schema.
+     *
+     * @return array<string, Type>
+     */
+    public function schema(JsonSchema $schema): array
+    {
+        return [
+            'project_key' => $schema->string()
+                ->description('Key of the issue\'s project (e.g. "PROJ").')
+                ->required(),
+            'issue_key' => $schema->string()
+                ->description('Key of the comment\'s issue (e.g. "PROJ-123").')
+                ->required(),
+            'comment_id' => $schema->integer()
+                ->description('Id of the comment to edit. Must belong to the issue and to the caller.')
+                ->required(),
+            'body' => $schema->string()
+                ->description('New comment text.')
+                ->required(),
+        ];
+    }
+}

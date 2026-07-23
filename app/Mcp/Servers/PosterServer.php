@@ -2,6 +2,9 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Comments\CreateComment;
+use App\Mcp\Tools\Comments\DeleteComment;
+use App\Mcp\Tools\Comments\UpdateComment;
 use App\Mcp\Tools\Issues\CreateIssue;
 use App\Mcp\Tools\Issues\MoveIssue;
 use App\Mcp\Tools\Issues\ShowIssue;
@@ -47,5 +50,8 @@ class PosterServer extends Server
         UpdateIssue::class,
         MoveIssue::class,
         ShowIssue::class,
+        CreateComment::class,
+        UpdateComment::class,
+        DeleteComment::class,
     ];
 }
