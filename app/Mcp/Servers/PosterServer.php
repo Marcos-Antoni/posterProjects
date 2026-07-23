@@ -9,6 +9,10 @@ use App\Mcp\Tools\BoardColumns\UpdateBoardColumn;
 use App\Mcp\Tools\Comments\CreateComment;
 use App\Mcp\Tools\Comments\DeleteComment;
 use App\Mcp\Tools\Comments\UpdateComment;
+use App\Mcp\Tools\Habits\ArchiveHabit;
+use App\Mcp\Tools\Habits\CreateHabit;
+use App\Mcp\Tools\Habits\UnarchiveHabit;
+use App\Mcp\Tools\Habits\UpdateHabit;
 use App\Mcp\Tools\Issues\CreateIssue;
 use App\Mcp\Tools\Issues\MoveIssue;
 use App\Mcp\Tools\Issues\ShowIssue;
@@ -79,5 +83,9 @@ class PosterServer extends Server
         UpdateBoardColumn::class,
         ReorderBoardColumn::class,
         DeleteBoardColumn::class,
+        CreateHabit::class,
+        UpdateHabit::class,
+        ArchiveHabit::class,
+        UnarchiveHabit::class,
     ];
 }
