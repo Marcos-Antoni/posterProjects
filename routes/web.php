@@ -5,6 +5,7 @@ use App\Http\Controllers\BoardColumnController;
 use App\Http\Controllers\BoardController;
 use App\Http\Controllers\CalendarController;
 use App\Http\Controllers\CommentController;
+use App\Http\Controllers\HabitController;
 use App\Http\Controllers\IssueController;
 use App\Http\Controllers\IssueLabelController;
 use App\Http\Controllers\IssueMoveController;
@@ -30,6 +31,15 @@ Route::middleware('auth')->group(function (): void {
     // Global, cross-project calendar — every issue with a due date across
     // every project the authenticated user is a member of.
     Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
+
+    // Habits are personal to the authenticated user — never project
+    // scoped. There is intentionally NO destroy route: habits can only
+    // be archived (and reactivated), their history is never deleted.
+    Route::get('habits/manage', [HabitController::class, 'index'])->name('habits.index');
+    Route::post('habits', [HabitController::class, 'store'])->name('habits.store');
+    Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
+    Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
+    Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
 
     // Bound by key (not id) — the board and its nested routes are
     // addressed by the project's human-readable key, e.g. /projects/DEMO/board.
