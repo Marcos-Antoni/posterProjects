@@ -9,6 +9,12 @@ use App\Mcp\Tools\Issues\CreateIssue;
 use App\Mcp\Tools\Issues\MoveIssue;
 use App\Mcp\Tools\Issues\ShowIssue;
 use App\Mcp\Tools\Issues\UpdateIssue;
+use App\Mcp\Tools\Labels\AttachIssueLabel;
+use App\Mcp\Tools\Labels\CreateLabel;
+use App\Mcp\Tools\Labels\DeleteLabel;
+use App\Mcp\Tools\Labels\DetachIssueLabel;
+use App\Mcp\Tools\Labels\ListLabels;
+use App\Mcp\Tools\Labels\RenameLabel;
 use App\Mcp\Tools\Projects\ArchiveProject;
 use App\Mcp\Tools\Projects\CreateProject;
 use App\Mcp\Tools\Projects\ForceDeleteProject;
@@ -53,5 +59,11 @@ class PosterServer extends Server
         CreateComment::class,
         UpdateComment::class,
         DeleteComment::class,
+        ListLabels::class,
+        CreateLabel::class,
+        RenameLabel::class,
+        DeleteLabel::class,
+        AttachIssueLabel::class,
+        DetachIssueLabel::class,
     ];
 }
