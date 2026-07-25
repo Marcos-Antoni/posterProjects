@@ -1,0 +1,46 @@
+# openspec/config.yaml
+schema: spec-driven
+
+context: |
+  Tech stack: Laravel 13 + Pest 4 + Inertia/React with Vite. Single-owner app, no public registration
+    (the owner is created by an artisan command).
+  Architecture: a JIRA-style project tracker (projects, sprints, board columns, issues with a
+    one-level hierarchy, labels, comments) plus a habit tracker, plus an MCP server that exposes the
+    whole surface to Claude over HTTP with Sanctum PAT auth.
+  Testing: Pest feature tests per domain under tests/Feature, browser E2E under tests/Browser.
+    The browser suite is what caught the quantitative-entry cast bug in T-14, so keep it.
+  Style: Spanish UI copy and Spanish validation messages; English identifiers and comments.
+    Habit days are anchored to UTC-6, never to UTC.
+
+# Testing capabilities. Written by sdd-init, read by sdd-apply and sdd-verify.
+# `testing.strict_tdd` is the SINGLE source of truth for Strict TDD Mode.
+testing:
+  strict_tdd: true
+  test_command: "php artisan test"
+  build_command: "npm run build"
+  coverage_threshold: 0
+
+rules:
+  proposal:
+    - Include rollback plan for risky changes
+  specs:
+    - Use Given/When/Then for scenarios
+    - Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)
+  design:
+    - Include sequence diagrams for complex flows
+    - Document architecture decisions with rationale
+  tasks:
+    - Group by phase, use hierarchical numbering
+    - Keep tasks completable in one session
+  apply:
+    guidelines:
+      - Follow existing code patterns
+      - Every MCP tool must enforce the same authorization as its web counterpart
+      - Anchor habit day math to UTC-6, never to UTC
+      - Scope route bindings so cross-project identifiers resolve to 404, not to a leak
+  verify:
+    guidelines:
+      - Run the configured test and build commands before reporting
+      - Do not skip the browser suite when touching forms that submit amounts
+  archive:
+    - Warn before merging destructive deltas
