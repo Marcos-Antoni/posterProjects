@@ -15,6 +15,10 @@
     {
       "name": "Auth",
       "description": "Credentials-to-token exchange, identity, and revocation for the mobile bearer surface."
+    },
+    {
+      "name": "Projects",
+      "description": "Read-only project list and detail for the posterMobile client. Writes are a separate change."
     }
   ],
   "paths": {
@@ -131,6 +135,134 @@
         }
       }
     },
+    "/api/v1/projects": {
+      "get": {
+        "operationId": "listProjects",
+        "tags": ["Projects"],
+        "summary": "List the authenticated owner's active projects",
+        "description": "Returns the requesting user's active (non-archived) projects, scoped by membership, ordered by name then id. Requires the `mobile` ability. There is no pagination envelope today: `data` is always the complete result set. Forward-compatibility rule for the client: if a future response omits `meta`, `data` is still the complete set — there is no next page. If `meta` is present, the last page is reached when `meta.current_page === meta.last_page` (equivalently `links.next === null`). A client written against this rule never breaks and never has to assume the response has exactly one key.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "The member's active projects, ordered by name.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectCollectionResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "id": 1,
+                      "key": "DEMO",
+                      "name": "Demo",
+                      "description": "Sample project",
+                      "issues_count": 3,
+                      "updated_at": "2026-07-21T07:48:51+00:00",
+                      "archived": false
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project}": {
+      "get": {
+        "operationId": "getProject",
+        "tags": ["Projects"],
+        "summary": "Resolve a single project by key, active or archived",
+        "description": "Resolves `{project}` against the project's `key` column for any project the requesting user is a member of, including a soft-deleted (archived) one — a stale link to an archived project still resolves so the client can render a meaningful state instead of a dead end. Requires the `mobile` ability. Unknown key, non-member key, and force-deleted key are indistinguishable: all three respond `404` with the identical generic body, never `403` — the response never discloses whether an inaccessible key exists.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project, active or archived.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ProjectResponse" },
+                "example": {
+                  "data": {
+                    "id": 1,
+                    "key": "DEMO",
+                    "name": "Demo",
+                    "description": "Sample project",
+                    "issues_count": 3,
+                    "updated_at": "2026-07-21T07:48:51+00:00",
+                    "archived": false
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "No project with this key is resolvable for the requesting user: the key never existed, belongs to a project the user is not a member of, or was permanently force-deleted. These three causes are intentionally indistinguishable.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logout": {
       "post": {
         "operationId": "logoutMobile",
@@ -212,6 +344,43 @@
         "required": ["data"],
         "properties": {
           "data": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "Project": {
+        "type": "object",
+        "required": ["id", "key", "name", "description", "issues_count", "updated_at", "archived"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
+          "key": { "type": "string", "description": "The addressable identifier, e.g. DEMO." },
+          "name": { "type": "string" },
+          "description": { "type": "string", "nullable": true },
+          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate; never triggers a query per project." },
+          "updated_at": { "type": "string", "format": "date-time", "nullable": true },
+          "archived": { "type": "boolean", "description": "True only when the project is soft-deleted." }
+        }
+      },
+      "ProjectResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/Project" }
+        }
+      },
+      "ProjectCollectionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Project" }
+          }
+        }
+      },
+      "NotFoundResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string", "example": "Recurso no encontrado." }
         }
       },
       "ValidationErrorResponse": {
