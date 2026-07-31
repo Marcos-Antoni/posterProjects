@@ -106,3 +106,16 @@ test('an mcp-only token is refused at api v1 user', function () {
 
     $response->assertStatus(403);
 });
+
+test('a pre-existing wildcard-ability token also reaches api v1 user', function () {
+    $user = User::factory()->create();
+    // No explicit abilities ⇒ defaults to ['*']. This asserts the accepted,
+    // documented residual: a token minted before this change satisfies the
+    // mobile ability too, until the owner regenerates it. Pinned by a test so
+    // the blast radius cannot change silently.
+    $token = $user->createToken('mcp')->plainTextToken;
+
+    $response = $this->getJson('/api/v1/user', mcpHeaders($token));
+
+    $response->assertOk();
+});

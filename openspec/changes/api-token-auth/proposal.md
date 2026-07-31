@@ -91,8 +91,8 @@ establishes is inherited by the eight resource changes that follow, so it must b
 Revert the branch merge. There are **no migrations and no schema changes**, so nothing to un-migrate.
 Reverting restores: `routes/api.php` deleted, `bootstrap/app.php` (`api:` entry, aliases, render
 closure) to origin, `AppServiceProvider` limiter removed, `openapi/v1.json` deleted,
-`McpTokenController.php:46,48` back to unscoped `tokens()->delete()` + `createToken('mcp')`, and
-`routes/ai.php:29` back to plain `auth:sanctum`.
+`McpTokenController.php:25,46,48` back to unscoped — **the read at line 25 as well as the write at
+line 46** — and `routes/ai.php:29` back to plain `auth:sanctum`.
 
 - **Web session auth is untouched by design** — `routes/auth.php`, `AuthenticatedSessionController`,
   `app/Http/Requests/Auth/LoginRequest.php`, and `config/auth.php` are not modified, so revert cannot
