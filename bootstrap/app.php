@@ -10,6 +10,8 @@ use Illuminate\Http\Request;
 use Laravel\Sanctum\Exceptions\MissingAbilityException;
 use Laravel\Sanctum\Http\Middleware\CheckAbilities;
 use Laravel\Sanctum\Http\Middleware\CheckForAnyAbility;
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -55,7 +57,27 @@ return Application::configure(basePath: dirname(__DIR__))
             ? response()->json(['message' => 'No autenticado.'], 401)->header('WWW-Authenticate', 'Bearer')
             : null);
 
-        $exceptions->render(fn (MissingAbilityException $e, Request $request) => $request->is('api/*')
-            ? response()->json(['message' => 'Este token no tiene permiso para usar esta API.'], 403)
+        // Typed on AccessDeniedHttpException, NOT on MissingAbilityException.
+        // Handler::prepareException() runs before renderViaCallbacks() and
+        // rewrites any status-less AuthorizationException into an
+        // AccessDeniedHttpException, so a callback typed on the Sanctum
+        // exception never matches and the client would receive the framework
+        // default ("Invalid ability provided.") instead of the documented
+        // Spanish body. The original is chained as `previous`, which is how we
+        // stay narrow and leave other 403 sources alone.
+        $exceptions->render(function (AccessDeniedHttpException $e, Request $request) {
+            if (! $request->is('api/*') || ! $e->getPrevious() instanceof MissingAbilityException) {
+                return null;
+            }
+
+            return response()->json(['message' => 'Este token no tiene permiso para usar esta API.'], 403);
+        });
+
+        // ModelNotFoundException is rewritten the same way, and the resulting
+        // message carries the Eloquent model FQCN. convertExceptionToArray()
+        // returns an HTTP exception's message verbatim even with debug off, so
+        // without this the API would disclose internal class names.
+        $exceptions->render(fn (NotFoundHttpException $e, Request $request) => $request->is('api/*')
+            ? response()->json(['message' => 'Recurso no encontrado.'], 404)
             : null);
     })->create();

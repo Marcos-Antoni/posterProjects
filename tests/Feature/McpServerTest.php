@@ -105,6 +105,10 @@ test('an mcp-only token is refused at api v1 user', function () {
     $response = $this->getJson('/api/v1/user', mcpHeaders($token));
 
     $response->assertStatus(403);
+    // The body is part of the contract, not an implementation detail:
+    // openapi/v1.json promises this exact Spanish message, and the mobile
+    // client renders whatever the server sends.
+    $response->assertExactJson(['message' => 'Este token no tiene permiso para usar esta API.']);
 });
 
 test('a pre-existing wildcard-ability token also reaches api v1 user', function () {
