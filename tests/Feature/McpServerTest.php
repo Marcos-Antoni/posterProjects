@@ -77,3 +77,32 @@ test('a revoked token stops authenticating immediately', function () {
 
     expect($response->headers->get('WWW-Authenticate'))->toStartWith('Bearer');
 });
+
+test('a pre-existing wildcard-ability token still reaches mcp', function () {
+    $user = User::factory()->create();
+    // No explicit abilities ⇒ defaults to ['*'], the shape of every token
+    // minted before this change.
+    $token = $user->createToken('mcp')->plainTextToken;
+
+    $response = $this->postJson('/mcp', mcpInitializePayload(), mcpHeaders($token));
+
+    $response->assertOk();
+});
+
+test('a mobile-only token is refused at mcp', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken('mobile', ['mobile'])->plainTextToken;
+
+    $response = $this->postJson('/mcp', mcpInitializePayload(), mcpHeaders($token));
+
+    $response->assertStatus(403);
+});
+
+test('an mcp-only token is refused at api v1 user', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken('mcp', ['mcp'])->plainTextToken;
+
+    $response = $this->getJson('/api/v1/user', mcpHeaders($token));
+
+    $response->assertStatus(403);
+});

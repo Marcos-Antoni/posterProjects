@@ -26,4 +26,4 @@ use Laravel\Mcp\Facades\Mcp;
 |
 */
 
-Mcp::web('/mcp', PosterServer::class)->middleware('auth:sanctum');
+Mcp::web('/mcp', PosterServer::class)->middleware(['auth:sanctum', 'abilities:mcp']);

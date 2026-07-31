@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\TokenName;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
@@ -23,16 +24,25 @@ test('the page reports no token before one is generated', function () {
     $response->assertJsonPath('props.flash.plainMcpToken', null);
 });
 
-test('generating a token stores a single pat and flashes the plain text once', function () {
+test('generating a token stores a single mcp pat, leaves a coexisting mobile token untouched, and flashes the plain text once', function () {
     $user = User::factory()->create();
+    // A mobile token (minted by `POST /api/v1/login`) may coexist with the
+    // MCP token — this delta narrows the uniqueness invariant to the `mcp`
+    // name specifically, so it must survive generation untouched.
+    $mobileToken = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value]);
 
     $response = $this->actingAs($user)->post('/settings/mcp-token');
 
     $response->assertRedirect('/settings/mcp-token');
     $response->assertSessionHas('plainMcpToken');
 
-    expect($user->tokens()->count())->toBe(1)
-        ->and($user->tokens()->first()->name)->toBe('mcp');
+    expect($user->tokens()->where('name', TokenName::Mcp->value)->count())->toBe(1)
+        ->and($user->tokens()->where('name', TokenName::Mcp->value)->first()->name)->toBe(TokenName::Mcp->value);
+
+    $survivingMobile = PersonalAccessToken::query()->find($mobileToken->accessToken->id);
+    expect($survivingMobile)->not->toBeNull()
+        ->and($survivingMobile->name)->toBe(TokenName::Mobile->value)
+        ->and($survivingMobile->abilities)->toBe([TokenName::Mobile->value]);
 
     // The visit right after the redirect carries the one-shot flash...
     $headers = [
@@ -51,6 +61,26 @@ test('generating a token stores a single pat and flashes the plain text once', f
     $later->assertOk();
     $later->assertJsonPath('props.flash.plainMcpToken', null);
     $later->assertJsonPath('props.token.created_at', fn ($value) => is_string($value));
+});
+
+test('the mcp token page reports the mcp token even when a mobile token is minted more recently', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)->post('/settings/mcp-token');
+    $mcpToken = $user->tokens()->where('name', TokenName::Mcp->value)->sole();
+
+    // Advance the clock so the mobile token is unambiguously the most
+    // recent row — an unscoped `latest()` read would return this one.
+    $this->travel(1)->minute();
+    $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value]);
+
+    $response = $this->actingAs($user)->get('/settings/mcp-token', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
+    ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('props.token.created_at', $mcpToken->created_at->toISOString());
 });
 
 test('regenerating kills the previous token immediately', function () {

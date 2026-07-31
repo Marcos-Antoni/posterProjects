@@ -66,19 +66,19 @@ R9 OpenAPI Contract. mcp-server delta: D1 Exactly One MCP Token (modified) · D2
 
 ## Phase 1: API Surface, Ability Boundary & McpTokenController Scoping (Commit 1/3)
 
-- [ ] 1.1 RED — create `tests/Feature/ApiAuthTest.php`: mint→use→logout→dead [R1,R2,R3]; single-active-mobile-token on re-login [R4]; 401+`WWW-Authenticate`, 422 bad creds, 429 on 6th attempt [R6,R7]. Fails: no routes yet.
-- [ ] 1.2 Create `app/Enums/TokenName.php` — backed string enum `Mcp='mcp'`, `Mobile='mobile'` (name + ability source of truth).
-- [ ] 1.3 GREEN — `bootstrap/app.php`: add `api: routes/api.php`, `apiPrefix: 'api/v1'`; register `abilities`/`ability` middleware aliases (NOT framework defaults) [R5]; add `api/*`-scoped renders for `AuthenticationException` (401 + bearer header) and `MissingAbilityException` (403) [R7], returning `null` for non-`api/*` so `redirectGuestsTo` and `/mcp`'s 401 stay untouched.
-- [ ] 1.4 GREEN — create `routes/api.php` (login/user/logout), `App\Http\Controllers\Api\V1\AuthController` (`Auth::validate()`+`getLastAttempted()`, never `Auth::attempt()`), `App\Http\Requests\Api\V1\LoginRequest` (Spanish messages, reused copy), `App\Http\Resources\UserResource` (id/name/email only). `user`+`logout` get `['auth:sanctum','abilities:mobile']`; `login` gets `throttle:api-login` only [R1,R2,R3,R5].
-- [ ] 1.5 GREEN — `AppServiceProvider::boot()`: call `configureRateLimiting()`; `RateLimiter::for('api-login')` with 5/min `email|ip` + 10/min `ip`, Spanish 429 via `Limit::response()` [R6].
-- [ ] 1.6 Run `php artisan test --compact --filter=ApiAuthTest` — confirm 1.1 green.
-- [ ] 1.7 RED — extend `tests/Feature/McpServerTest.php`: `['*']` token still 200s at `/mcp`; `mobile`-only token gets 403 at `/mcp`; `mcp`-only token gets 403 at `GET /api/v1/user` [R5,D2]. Second assertion fails: no ability check on `/mcp` yet.
-- [ ] 1.8 GREEN — `routes/ai.php:29`: add `abilities:mcp` to the existing middleware array (order preserved). Confirm 1.7 green.
-- [ ] 1.9 Non-negotiable — `McpTokenController::show()` line 26: scope `tokens()->latest()->first()` to `tokens()->where('name', TokenName::Mcp)->latest()->first()` [D1]. Missing this leaks the mobile token's metadata onto the MCP settings page.
-- [ ] 1.10 `McpTokenController::store()` line 46: scope delete to `tokens()->where('name', TokenName::Mcp)->delete()`; line 48: `createToken(TokenName::Mcp->value, [TokenName::Mcp->value])` [D1].
-- [ ] 1.11 Non-negotiable, deliberate rewrite — `tests/Feature/McpTokenTest.php:26`: assert count of `mcp`-named tokens is 1, stored name is `mcp`, and a pre-existing `mobile` token survives generate/regenerate unmodified. Never delete or loosen the uniqueness assertion [D1].
-- [ ] 1.12 Add scenario (`McpTokenTest.php` or `ApiAuthTest.php`): minting `mobile` via `POST /api/v1/login` leaves an existing `mcp` token intact, and vice versa [R4,D1].
-- [ ] 1.13 Run `php artisan test --compact` — full suite green, browser suite unmodified and unaffected.
+- [x] 1.1 RED — create `tests/Feature/ApiAuthTest.php`: mint→use→logout→dead [R1,R2,R3]; single-active-mobile-token on re-login [R4]; 401+`WWW-Authenticate`, 422 bad creds, 429 on 6th attempt [R6,R7]. Fails: no routes yet.
+- [x] 1.2 Create `app/Enums/TokenName.php` — backed string enum `Mcp='mcp'`, `Mobile='mobile'` (name + ability source of truth).
+- [x] 1.3 GREEN — `bootstrap/app.php`: add `api: routes/api.php`, `apiPrefix: 'api/v1'`; register `abilities`/`ability` middleware aliases (NOT framework defaults) [R5]; add `api/*`-scoped renders for `AuthenticationException` (401 + bearer header) and `MissingAbilityException` (403) [R7], returning `null` for non-`api/*` so `redirectGuestsTo` and `/mcp`'s 401 stay untouched.
+- [x] 1.4 GREEN — create `routes/api.php` (login/user/logout), `App\Http\Controllers\Api\V1\AuthController` (`Auth::validate()`+`getLastAttempted()`, never `Auth::attempt()`), `App\Http\Requests\Api\V1\LoginRequest` (Spanish messages, reused copy), `App\Http\Resources\UserResource` (id/name/email only). `user`+`logout` get `['auth:sanctum','abilities:mobile']`; `login` gets `throttle:api-login` only [R1,R2,R3,R5].
+- [x] 1.5 GREEN — `AppServiceProvider::boot()`: call `configureRateLimiting()`; `RateLimiter::for('api-login')` with 5/min `email|ip` + 10/min `ip`, Spanish 429 via `Limit::response()` [R6].
+- [x] 1.6 Run `php artisan test --compact --filter=ApiAuthTest` — confirm 1.1 green.
+- [x] 1.7 RED — extend `tests/Feature/McpServerTest.php`: `['*']` token still 200s at `/mcp`; `mobile`-only token gets 403 at `/mcp`; `mcp`-only token gets 403 at `GET /api/v1/user` [R5,D2]. Second assertion fails: no ability check on `/mcp` yet.
+- [x] 1.8 GREEN — `routes/ai.php:29`: add `abilities:mcp` to the existing middleware array (order preserved). Confirm 1.7 green.
+- [x] 1.9 Non-negotiable — `McpTokenController::show()` line 26: scope `tokens()->latest()->first()` to `tokens()->where('name', TokenName::Mcp)->latest()->first()` [D1]. Missing this leaks the mobile token's metadata onto the MCP settings page.
+- [x] 1.10 `McpTokenController::store()` line 46: scope delete to `tokens()->where('name', TokenName::Mcp)->delete()`; line 48: `createToken(TokenName::Mcp->value, [TokenName::Mcp->value])` [D1].
+- [x] 1.11 Non-negotiable, deliberate rewrite — `tests/Feature/McpTokenTest.php:26`: assert count of `mcp`-named tokens is 1, stored name is `mcp`, and a pre-existing `mobile` token survives generate/regenerate unmodified. Never delete or loosen the uniqueness assertion [D1].
+- [x] 1.12 Add scenario (`McpTokenTest.php` or `ApiAuthTest.php`): minting `mobile` via `POST /api/v1/login` leaves an existing `mcp` token intact, and vice versa [R4,D1].
+- [x] 1.13 Run `php artisan test --compact` — full suite green, browser suite unmodified and unaffected.
 
 ## Phase 2: Web Revoke Surface For The Mobile Token (Commit 2/3)
 
