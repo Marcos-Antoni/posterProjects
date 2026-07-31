@@ -1,0 +1,255 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "posterProjects Mobile API",
+    "version": "1.0.0",
+    "description": "Stateless bearer-token surface at /api/v1, consumed by the posterMobile Flutter client. Tokens are Laravel Sanctum personal access tokens named `mobile` with the `mobile` ability, separate from the web session app and the `/mcp` bearer surface (which uses the `mcp` ability). This document describes the surface as implemented, including the exact JSON error contract."
+  },
+  "servers": [
+    {
+      "url": "/",
+      "description": "Relative to the application origin. Paths below already include the full /api/v1 prefix."
+    }
+  ],
+  "tags": [
+    {
+      "name": "Auth",
+      "description": "Credentials-to-token exchange, identity, and revocation for the mobile bearer surface."
+    }
+  ],
+  "paths": {
+    "/api/v1/login": {
+      "post": {
+        "operationId": "loginMobile",
+        "tags": ["Auth"],
+        "summary": "Exchange credentials for a mobile bearer token",
+        "description": "Validates the owner's email and password without starting a web session (Auth::validate(), never Auth::attempt()). On success, revokes every prior token named `mobile` before minting a new one named `mobile` with exactly the `mobile` ability. A pre-existing `mcp` token is never touched. Throttled by the named limiter `api-login`: 5 attempts per minute keyed by `email|ip`, and 10 attempts per minute keyed by `ip` alone; both successful and failed attempts count toward each limit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials valid. Returns the plain-text token; it is never shown again.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" },
+                "example": { "token": "1|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN" }
+              }
+            }
+          },
+          "422": {
+            "description": "Missing/invalid fields, or a recognized-but-wrong email/password pair. Bad credentials are reported under the `email` field, reusing the existing Spanish copy.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "examples": {
+                  "bad_credentials": {
+                    "summary": "Wrong password (or unknown email)",
+                    "value": {
+                      "message": "Estas credenciales no coinciden con nuestros registros.",
+                      "errors": { "email": ["Estas credenciales no coinciden con nuestros registros."] }
+                    }
+                  },
+                  "missing_fields": {
+                    "summary": "Missing email and password",
+                    "value": {
+                      "message": "El correo electrónico es obligatorio.",
+                      "errors": {
+                        "email": ["El correo electrónico es obligatorio."],
+                        "password": ["La contraseña es obligatoria."]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "6th attempt within the one-minute window for the same email+IP, or 11th for the same IP.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the limiter resets.",
+                "schema": { "type": "integer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ThrottledResponse" },
+                "example": { "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/user": {
+      "get": {
+        "operationId": "getAuthenticatedMobileUser",
+        "tags": ["Auth"],
+        "summary": "Return the authenticated owner",
+        "description": "Requires a bearer token carrying the `mobile` ability (or the legacy wildcard `['*']` ability). Exposes exactly id, name, and email — no other user attribute.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "The owner's identity.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UserResponse" },
+                "example": { "data": { "id": 1, "name": "Marco", "email": "marco@example.com" } }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/logout": {
+      "post": {
+        "operationId": "logoutMobile",
+        "tags": ["Auth"],
+        "summary": "Revoke the presenting token",
+        "description": "Revokes only the token used to authenticate the request, via currentAccessToken(). Every other token (of either name) is left untouched. Requires the `mobile` ability.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "204": {
+            "description": "Token revoked. No body."
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "Sanctum personal access token",
+        "description": "Plain-text Sanctum token minted by POST /api/v1/login, sent as `Authorization: Bearer <token>`. Carries the `mobile` ability (or the legacy wildcard `['*']`)."
+      }
+    },
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "required": ["email", "password"],
+        "properties": {
+          "email": { "type": "string", "format": "email" },
+          "password": { "type": "string", "format": "password" }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Plain-text Sanctum token. Shown once; not recoverable afterward."
+          }
+        }
+      },
+      "User": {
+        "type": "object",
+        "required": ["id", "name", "email"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" },
+          "email": { "type": "string", "format": "email" }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/User" }
+        }
+      },
+      "ValidationErrorResponse": {
+        "type": "object",
+        "required": ["message", "errors"],
+        "properties": {
+          "message": { "type": "string", "description": "The first validation error message." },
+          "errors": {
+            "type": "object",
+            "description": "Field name to array of error messages.",
+            "additionalProperties": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      },
+      "UnauthenticatedResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string", "example": "No autenticado." }
+        }
+      },
+      "ForbiddenResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string", "example": "Este token no tiene permiso para usar esta API." }
+        }
+      },
+      "ThrottledResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": { "type": "string", "description": "Spanish throttle message including the retry delay in seconds." }
+        }
+      }
+    }
+  }
+}

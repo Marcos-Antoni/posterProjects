@@ -97,9 +97,9 @@ R9 OpenAPI Contract. mcp-server delta: D1 Exactly One MCP Token (modified) · D2
 
 ## Phase 3: Versioned OpenAPI Contract (Commit 3/3)
 
-- [ ] 3.1 RED — create `tests/Feature/ApiContractTest.php`: bidirectional set-equality between registered `api/*` routes and `openapi/v1.json` operations, with named diffs each direction; assert every documented op except `POST /api/v1/login` declares `security: [{"bearerAuth": []}]` [R9]. Fails: no `openapi/v1.json` yet.
-- [ ] 3.2 GREEN — create `openapi/v1.json` at repo root documenting exactly `POST /api/v1/login`, `GET /api/v1/user`, `POST /api/v1/logout` and the `bearerAuth` security scheme [R9].
-- [ ] 3.3 Run `php artisan test --compact` — full suite green (final commit; includes browser suite).
+- [x] 3.1 RED — create `tests/Feature/ApiContractTest.php`: bidirectional set-equality between registered `api/*` routes and `openapi/v1.json` operations, with named diffs each direction; assert every documented op except `POST /api/v1/login` declares `security: [{"bearerAuth": []}]` [R9]. Fails: no `openapi/v1.json` yet.
+- [x] 3.2 GREEN — create `openapi/v1.json` at repo root documenting exactly `POST /api/v1/login`, `GET /api/v1/user`, `POST /api/v1/logout` and the `bearerAuth` security scheme [R9].
+- [x] 3.3 Run `php artisan test --compact` — full suite green (final commit; includes browser suite).
 
 ## Phase 4: Rollout & Rollback (operational — no code)
 

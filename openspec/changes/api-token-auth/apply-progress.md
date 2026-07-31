@@ -2,9 +2,9 @@
 
 ## Scope of this batch
 
-Phase 1 (Commit 1/3, tasks 1.1–1.13) **and Phase 2 (Commit 2/3, tasks 2.1–2.12)** are complete.
-Phase 3 (OpenAPI contract, 3.1–3.3) and Phase 4 (operational, 4.1–4.2) are explicitly out of scope
-for this batch and were not started.
+Phase 1 (Commit 1/3, tasks 1.1–1.13), Phase 2 (Commit 2/3, tasks 2.1–2.12), **and Phase 3
+(Commit 3/3, tasks 3.1–3.3)** are complete. Phase 4 (operational, 4.1–4.2) is explicitly
+out of scope — the owner performs it post-merge, no code involved.
 
 **Mode**: Strict TDD (RED → GREEN → REFACTOR, enforced per task).
 
@@ -303,29 +303,111 @@ pattern.
    explaining the mechanism. Testing-only artifact — production always serves each request from a
    fresh process, so this can never occur outside the test suite.
 
+## Phase 3 Completed Tasks
+
+- [x] 3.1 RED — `tests/Feature/ApiContractTest.php` created: two scenarios — bidirectional
+      set-equality between registered `api/*` routes and `openapi/v1.json` operations (named
+      diffs via the `expect()->toBe([], "...")` message argument, so a failure states exactly
+      which route/operation drifted, in which direction), and a per-operation `bearerAuth`
+      security check that skips only `POST api/v1/login`. Confirmed failing: both scenarios threw
+      `RuntimeException("openapi/v1.json does not exist at ...")` — `openapi/v1.json` did not
+      exist yet, the expected RED reason.
+- [x] 3.2 GREEN — `openapi/v1.json` created at the repo root (OpenAPI 3.0.3, hand-authored JSON,
+      no dependency). Documents exactly the three registered routes: `POST /api/v1/login`,
+      `GET /api/v1/user`, `POST /api/v1/logout`, plus the `bearerAuth` `securitySchemes` entry
+      (`type: http`, `scheme: bearer`). `GET /api/v1/user` and `POST /api/v1/logout` both declare
+      `security: [{"bearerAuth": []}]`; `POST /api/v1/login` declares none (bootstraps the
+      credential exchange). Confirmed `ApiContractTest` GREEN: 2/2 passed, 4 assertions.
+- [x] 3.3 Full suite run — `php artisan test --compact` → **437 tests, 431 passed, 6 failed**. The
+      6 failures are byte-for-byte the pre-existing baseline set (`AppearanceTest`, `HabitFlowTest`
+      ×2, `McpTokenFlowTest`, `SmokeTest`, `MobileTokenRevokeFlowTest` — same test names, same
+      failure messages as the Phase 2 run). +2 tests vs. Phase 2's 435 total, both new and both
+      passing (`ApiContractTest`'s two scenarios). No 7th failure introduced.
+
+## Phase 3 Files Changed
+
+| File | Action | What Was Done |
+|---|---|---|
+| `tests/Feature/ApiContractTest.php` | Created | Two scenarios: bidirectional route↔doc set-equality with named diffs; per-operation `bearerAuth` security assertion (login excepted) |
+| `openapi/v1.json` | Created | Hand-authored OpenAPI 3.0.3 document for `POST /api/v1/login`, `GET /api/v1/user`, `POST /api/v1/logout`; `bearerAuth` security scheme; documents the real 200/204/401/403/422/429 shapes implemented in Phase 1, including `WWW-Authenticate: Bearer` and `Retry-After` |
+
+## Phase 3 TDD Cycle Evidence
+
+| Task | Test File | Layer | Safety Net | RED | GREEN | TRIANGULATE | REFACTOR |
+|---|---|---|---|---|---|---|---|
+| 3.1 | `tests/Feature/ApiContractTest.php` | Feature | N/A (new file) | ✅ Written — confirmed failing for the expected reason (`openapi/v1.json` missing) | ✅ Passed (3.2: 2/2, 4 assertions) | ✅ 2 scenarios (bidirectional set-equality; per-operation security) | ➖ None needed |
+| 3.2 | `tests/Feature/ApiContractTest.php` | Feature | (from 3.1) | (from 3.1) | ✅ Passed | ✅ Covered by 3.1's 2 scenarios | ➖ None needed |
+
+### Phase 3 Test Summary
+- **Total tests written**: 2 (both in `ApiContractTest`).
+- **Total tests passing**: 2/2.
+- **Layers used**: Feature only — a static/contract check, no runtime client to exercise.
+- **Approval tests**: None — no existing production code refactored in this phase, only new files.
+- **Pure functions created**: 0 — the test file's helper functions (`registeredApiRouteOperations()`,
+  `openApiContract()`, `documentedApiOperations()`) are test-support utilities, not production code.
+
+## Phase 3 Work Unit Evidence
+
+| Evidence | Value |
+|---|---|
+| Focused test command and exact result | `php artisan test --compact --filter=ApiContractTest` → `2/2 passed, 4 assertions` |
+| Runtime harness command/scenario and exact result | N/A — per `tasks.md`'s Work Units table, this unit is a static contract check with no external client to exercise; `ApiContractTest` itself IS the runtime harness (it calls the real `Route::getRoutes()` router state, not a mock) |
+| Rollback boundary | Delete `openapi/v1.json` and `tests/Feature/ApiContractTest.php`. Phases 1–2 (API surface, ability boundary, web revoke surface) are untouched by this batch and stay green on revert. |
+
+## Phase 3 Deviations from Design
+
+None. `openapi/v1.json` documents exactly the three routes design.md's File Changes table lists,
+and `tests/Feature/ApiContractTest.php` implements the OpenAPI Sync Mechanism section's
+bidirectional-diff approach faithfully — with one additive, non-deviating enhancement: each
+`expect()->toBe([], "...")` call passes a descriptive message built from the actual diffed route/
+operation names, so a failure states which endpoint drifted and in which direction (registered
+route missing from the doc, vs. documented operation with no matching route), satisfying the
+"named diffs" requirement more explicitly than design.md's bare `toBe([])` example. The security
+scheme name (`bearerAuth`), the `security: [{"bearerAuth": []}]` shape, and the login exception
+match design.md and `specs/api-auth/spec.md`'s Requirement "Versioned OpenAPI Contract Document"
+exactly.
+
+One documentation-accuracy note, not a code deviation: the 422 response in `openapi/v1.json` shows
+two illustrative examples (bad-credentials and missing-fields) because `LoginRequest::authenticate()`
+routes bad credentials through the same `errors.email` shape as a validation failure (confirmed by
+reading `app/Http/Requests/Api/V1/LoginRequest.php` and `ApiAuthTest.php`'s assertions) — the
+document describes this real, single response shape rather than inventing a separate "401 bad
+credentials" status the code does not produce.
+
+## Phase 3 Issues Found
+
+None. `openapi/v1.json` and `ApiContractTest` introduced zero new failures; the full-suite failure
+count stayed at exactly 6 (the pre-existing baseline), matching Phase 1's and Phase 2's identical
+baseline comparisons. No new dependency was added — `json_decode`/`File::get()` only, no
+`symfony/yaml`, no Scribe/Scramble/l5-swagger.
+
 ## Remaining Tasks
 
-- [ ] Phase 3: 3.1–3.3 (`openapi/v1.json` + `ApiContractTest`) — not started, separate commit.
-- [ ] Phase 4: 4.1–4.2 (operational rollout/rollback) — not started, post-merge/no-code.
+- [ ] Phase 4: 4.1–4.2 (operational rollout/rollback) — not started, post-merge/no-code, performed
+      by the owner directly (regenerate the MCP token from `settings/mcp-token`; document the
+      `personal_access_tokens` rollback step in the PR description).
 
 ## Workload / PR Boundary
 
 - Mode: `size:exception` (recorded by the owner 2026-07-30) — single branch, 3 atomic commits.
-- Current work unit: Unit 2 of 3 complete (web revoke surface for the mobile token + browser E2E).
-  Unit 1 of 3 (API surface, ability boundary, `McpTokenController` scoping) was already committed
-  at `7c64640` before this batch started.
-- Boundary: starts from Phase 1's committed state (`7c64640` on `feat/api-token-auth`); ends with
-  Phase 2's code + tests — routes, `MobileTokenController`, `mobile-token.tsx`, the sidebar item,
-  `MobileTokenTest` (5/5 green), and `MobileTokenRevokeFlowTest` (environment-red, documented).
+- Current work unit: Unit 3 of 3 complete (`openapi/v1.json` + `ApiContractTest`). Units 1 and 2
+  are already committed at `7c64640` and `3fd5223` respectively on `feat/api-token-auth`.
+- Boundary: starts from Phase 2's committed state (`3fd5223` on `feat/api-token-auth`); ends with
+  Phase 3's two new files — `openapi/v1.json` and `tests/Feature/ApiContractTest.php`.
   **Not committed** — left in the working tree per instructions; the orchestrator/owner reviews
   and commits.
-- Estimated review budget impact: ~334 changed/added lines (8 + 8 modified in `routes/web.php` and
-  `sidebar-user-menu.tsx`, plus 47 + 141 + 80 + 50 new lines across the controller, page, and two
-  test files), close to the ~240 forecast in `tasks.md`'s Work Units table, within the
-  `size:exception` envelope for the total ~780-line change.
+- Estimated review budget impact: 341 changed/added lines (255 in `openapi/v1.json` + 86 in
+  `ApiContractTest.php`, per `git diff --stat`), above the ~170 forecast in `tasks.md`'s Work Units
+  table — the hand-authored JSON carries more descriptive text (per-response examples, schema
+  descriptions) than the estimate anticipated. Still within the owner's recorded `size:exception`
+  envelope for the total change: commit 1 (~370) + commit 2 (~334 actual) + commit 3 (341 actual)
+  ≈ 1045 lines across 3 commits, each independently reviewable and each leaving the suite green,
+  which is the exception's actual justification (commit-level segmentation, not the raw total).
+  Flagging the per-commit overage transparently rather than silently absorbing it.
 
 ## Status
 
-13/13 Phase 1 tasks complete (committed at `7c64640`). 12/12 Phase 2 tasks complete (uncommitted,
-in the working tree). 25/28 total tasks across the three-phase change. Ready for owner review of
-Commit 2/3, then Phase 3 apply (`openapi/v1.json` + `ApiContractTest`).
+13/13 Phase 1 tasks complete (committed at `7c64640`). 12/12 Phase 2 tasks complete (committed at
+`3fd5223`). 3/3 Phase 3 tasks complete (uncommitted, in the working tree). 28/28 code tasks across
+the three-phase change are done; only Phase 4's 2 operational, no-code tasks remain, owned by the
+project maintainer post-merge. Ready for owner review of Commit 3/3, then `sdd-verify`.
