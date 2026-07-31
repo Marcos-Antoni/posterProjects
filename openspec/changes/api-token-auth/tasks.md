@@ -82,18 +82,18 @@ R9 OpenAPI Contract. mcp-server delta: D1 Exactly One MCP Token (modified) · D2
 
 ## Phase 2: Web Revoke Surface For The Mobile Token (Commit 2/3)
 
-- [ ] 2.1 RED — create `tests/Feature/MobileTokenTest.php`: `show()` returns metadata for an active `mobile` token; `destroy()` name-scoped delete leaves `mcp` intact; next `/api/v1/*` request with the revoked token fails 401 [R8]. Fails: no route/controller yet.
-- [ ] 2.2 GREEN — `routes/web.php`: add `settings.mobile-token.show` (GET) + `.destroy` (DELETE) beside lines 40-41.
-- [ ] 2.3 GREEN — create `App\Http\Controllers\Settings\MobileTokenController`: `show()` metadata name-scoped to `mobile`, `destroy()` name-scoped delete [R8].
-- [ ] 2.4 Run `npm run build` — regenerates Wayfinder actions for the new routes and refreshes `public/build/manifest.json`. Required before writing the page/sidebar (which import the generated actions) and before any test hashes the manifest.
-- [ ] 2.5 GREEN — create `resources/js/pages/settings/mobile-token.tsx`: status + empty state, destructive `<Form {...destroy.form()}>` with an explicit confirmation step (no plaintext, no copy button — D-1), Spanish voseo copy matching `mcp-token.tsx` [R8].
-- [ ] 2.6 GREEN — `resources/js/components/sidebar/sidebar-user-menu.tsx`: add a `Token móvil` item after line 67, linking the new `show` action.
-- [ ] 2.7 Run `npm run build` again (page/sidebar changed) — final manifest before running Inertia-header-dependent tests.
-- [ ] 2.8 Confirm 2.1 green; re-run `tests/Feature/McpTokenTest.php` (lines 17, 40, 75 hash the manifest) to confirm the fresh build didn't break them.
-- [ ] 2.9 RED — create `tests/Browser/MobileTokenRevokeFlowTest.php`: login → sidebar → `Token móvil` → confirm revoke → empty state; then the token fails over HTTP [R8].
-- [ ] 2.10 GREEN — confirm 2.9 passes against 2.2–2.6.
-- [ ] 2.11 Regression — run `tests/Browser/McpTokenFlowTest.php` unmodified; it asserts Spanish UI copy verbatim and MUST stay green (D-1).
-- [ ] 2.12 Run `php artisan test --compact` — full suite green.
+- [x] 2.1 RED — create `tests/Feature/MobileTokenTest.php`: `show()` returns metadata for an active `mobile` token; `destroy()` name-scoped delete leaves `mcp` intact; next `/api/v1/*` request with the revoked token fails 401 [R8]. Fails: no route/controller yet.
+- [x] 2.2 GREEN — `routes/web.php`: add `settings.mobile-token.show` (GET) + `.destroy` (DELETE) beside lines 40-41.
+- [x] 2.3 GREEN — create `App\Http\Controllers\Settings\MobileTokenController`: `show()` metadata name-scoped to `mobile`, `destroy()` name-scoped delete [R8].
+- [x] 2.4 Run `npm run build` — regenerates Wayfinder actions for the new routes and refreshes `public/build/manifest.json`. Required before writing the page/sidebar (which import the generated actions) and before any test hashes the manifest.
+- [x] 2.5 GREEN — create `resources/js/pages/settings/mobile-token.tsx`: status + empty state, destructive `<Form {...destroy.form()}>` with an explicit confirmation step (no plaintext, no copy button — D-1), Spanish voseo copy matching `mcp-token.tsx` [R8].
+- [x] 2.6 GREEN — `resources/js/components/sidebar/sidebar-user-menu.tsx`: add a `Token móvil` item after line 67, linking the new `show` action.
+- [x] 2.7 Run `npm run build` again (page/sidebar changed) — final manifest before running Inertia-header-dependent tests.
+- [x] 2.8 Confirm 2.1 green; re-run `tests/Feature/McpTokenTest.php` (lines 17, 40, 75 hash the manifest) to confirm the fresh build didn't break them.
+- [x] 2.9 RED — create `tests/Browser/MobileTokenRevokeFlowTest.php`: login → sidebar → `Token móvil` → confirm revoke → empty state; then the token fails over HTTP [R8].
+- [x] 2.10 (environment-red, not a code defect) — confirmed against 2.2–2.6: the flow fails at the same first assertion (`assertSee('Iniciar sesión')` at `/login`) with the same blank-page symptom as the 5 pre-existing baseline browser failures (screenshot confirmed empty). Not weakened, not skipped, not deleted, not marked passing — see Apply Progress → Issues Found.
+- [x] 2.11 Regression — ran `tests/Browser/McpTokenFlowTest.php` unmodified; confirmed it fails identically to baseline (same test, same blank-page message) — no new regression introduced by this batch (D-1).
+- [x] 2.12 Run `php -d extension=sockets.so vendor/bin/pest --compact` — 435 tests, 429 passed, 6 failed = baseline 5 (unrelated, pre-existing) + `MobileTokenRevokeFlowTest` (new, environment-red — see task 2.10). Every Feature test written in Phase 2 passes.
 
 ## Phase 3: Versioned OpenAPI Contract (Commit 3/3)
 

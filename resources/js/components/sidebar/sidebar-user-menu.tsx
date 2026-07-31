@@ -3,6 +3,7 @@ import { ChevronsUpDown, KeyRound, LogOut } from 'lucide-react';
 
 import { destroy } from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
 import { show as mcpTokenShow } from '@/actions/App/Http/Controllers/Settings/McpTokenController';
+import { show as mobileTokenShow } from '@/actions/App/Http/Controllers/Settings/MobileTokenController';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
     DropdownMenu,
@@ -63,6 +64,13 @@ export function SidebarUserMenu() {
                     <Link href={mcpTokenShow()}>
                         <KeyRound />
                         Token MCP
+                    </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                    <Link href={mobileTokenShow()}>
+                        <KeyRound />
+                        Token móvil
                     </Link>
                 </DropdownMenuItem>
 

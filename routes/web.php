@@ -13,6 +13,7 @@ use App\Http\Controllers\IssueMoveController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Settings\McpTokenController;
+use App\Http\Controllers\Settings\MobileTokenController;
 use App\Http\Controllers\SprintController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -39,6 +40,13 @@ Route::middleware('auth')->group(function (): void {
     // plain text travels in a one-shot session flash (never a prop).
     Route::get('settings/mcp-token', [McpTokenController::class, 'show'])->name('settings.mcp-token.show');
     Route::post('settings/mcp-token', [McpTokenController::class, 'store'])->name('settings.mcp-token.store');
+
+    // The mobile token is minted on the phone via `POST /api/v1/login` —
+    // its plain text never reaches a browser. This sibling page only
+    // shows status and revokes; see MobileTokenController and design.md
+    // decision D-1 for why this is not unified with settings/mcp-token.
+    Route::get('settings/mobile-token', [MobileTokenController::class, 'show'])->name('settings.mobile-token.show');
+    Route::delete('settings/mobile-token', [MobileTokenController::class, 'destroy'])->name('settings.mobile-token.destroy');
 
     // Habits are personal to the authenticated user — never project
     // scoped. There is intentionally NO destroy route: habits can only
