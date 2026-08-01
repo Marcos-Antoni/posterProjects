@@ -107,6 +107,60 @@
         }
       }
     },
+    "/api/v1/qr-login": {
+      "post": {
+        "operationId": "redeemQrLoginPass",
+        "tags": ["Auth"],
+        "summary": "Redeem a QR login pass for a mobile bearer token",
+        "description": "Exchanges a short-lived, single-use QR pass (minted by an authenticated browser session at POST settings/mobile-token/qr) for a token byte-identical to POST /api/v1/login's: named `mobile`, ability `['mobile']`. Revokes every prior token named `mobile` before minting the new one; a pre-existing `mcp` token is never touched. Unauthenticated by design — the pass itself is the credential. Consumption is a single conditional UPDATE keyed on `affected === 1`; unknown, expired, already-consumed, and malformed pass values are indistinguishable and all produce the same 422 body (see the api-qr-login spec's 'Uniform Redemption Failure' requirement). Throttled by the named limiter `api-qr-redeem`: 10 attempts per minute keyed by IP alone, since no identity exists before a pass is validated.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/QrLoginRequest" }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Pass valid, unconsumed, and unexpired. Returns the plain-text token; it is never shown again.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LoginResponse" },
+                "example": { "token": "2|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN" }
+              }
+            }
+          },
+          "422": {
+            "description": "The pass value is unknown, expired, already consumed, or malformed. All four causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/QrLoginFailureResponse" },
+                "example": {
+                  "message": "El código QR no es válido o expiró.",
+                  "errors": { "token": ["El código QR no es válido o expiró."] }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "11th redemption attempt from the same IP within one minute.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the limiter resets.",
+                "schema": { "type": "integer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ThrottledResponse" },
+                "example": { "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos." }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/user": {
       "get": {
         "operationId": "getAuthenticatedMobileUser",
@@ -768,6 +822,35 @@
           "token": {
             "type": "string",
             "description": "Plain-text Sanctum token. Shown once; not recoverable afterward."
+          }
+        }
+      },
+      "QrLoginRequest": {
+        "type": "object",
+        "required": ["token"],
+        "properties": {
+          "token": {
+            "type": "string",
+            "pattern": "^pposter_qr_v1:[A-Za-z0-9_-]{43}$",
+            "description": "Plaintext QR pass payload, minted once by POST settings/mobile-token/qr and shown only in that response."
+          }
+        }
+      },
+      "QrLoginFailureResponse": {
+        "type": "object",
+        "description": "The single uniform failure body for POST /api/v1/qr-login. Unknown, expired, already-consumed, and malformed pass values are indistinguishable and all produce this exact body.",
+        "required": ["message", "errors"],
+        "properties": {
+          "message": { "type": "string", "enum": ["El código QR no es válido o expiró."] },
+          "errors": {
+            "type": "object",
+            "required": ["token"],
+            "properties": {
+              "token": {
+                "type": "array",
+                "items": { "type": "string", "enum": ["El código QR no es válido o expiró."] }
+              }
+            }
           }
         }
       },

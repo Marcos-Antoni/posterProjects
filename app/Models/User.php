@@ -63,4 +63,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(Habit::class);
     }
+
+    /**
+     * QR login passes minted for this user, live and consumed alike.
+     *
+     * @return HasMany<QrLoginPass, $this>
+     */
+    public function qrLoginPasses(): HasMany
+    {
+        return $this->hasMany(QrLoginPass::class);
+    }
 }

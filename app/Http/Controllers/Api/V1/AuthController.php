@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Enums\TokenName;
+use App\Http\Controllers\Api\V1\Concerns\IssuesMobileToken;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\LoginRequest;
 use App\Http\Resources\UserResource;
@@ -12,20 +12,16 @@ use Illuminate\Http\Response;
 
 class AuthController extends Controller
 {
+    use IssuesMobileToken;
+
     /**
-     * Exchange valid credentials for a `mobile`-ability bearer token.
-     * Revokes every previous token named `mobile` first, so at most one
-     * exists per owner. A token named `mcp` is never touched here.
+     * Exchange valid credentials for a `mobile`-ability bearer token. See
+     * `IssuesMobileToken::issueMobileToken()` for the revoke-then-mint
+     * shape shared with `POST /api/v1/qr-login`.
      */
     public function login(LoginRequest $request): JsonResponse
     {
-        $user = $request->authenticate();
-
-        $user->tokens()->where('name', TokenName::Mobile->value)->delete();
-
-        $token = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value]);
-
-        return response()->json(['token' => $token->plainTextToken]);
+        return $this->issueMobileToken($request->authenticate());
     }
 
     /**

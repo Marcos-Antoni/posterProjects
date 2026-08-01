@@ -60,6 +60,14 @@ class AppServiceProvider extends ServiceProvider
      * Two composite limits apply to every login attempt (successful or
      * not): 5/min keyed by `email|ip`, and 10/min keyed by `ip` alone —
      * strictly stricter than the web login, which has only the first.
+     *
+     * `api-qr-redeem` and `qr-login-mint` support the QR login pass flow
+     * (design.md "Rate limiting"). `api-qr-redeem` is keyed on IP alone —
+     * the only identity that exists before a pass is validated — and
+     * deliberately not on the presented token, which would hand an
+     * attacker a fresh bucket per guess. `qr-login-mint` is keyed on the
+     * authenticated user id, with an IP fallback purely defensive against
+     * a null key silently becoming a global limiter.
      */
     protected function configureRateLimiting(): void
     {
@@ -71,6 +79,14 @@ class AppServiceProvider extends ServiceProvider
                 ->by($request->ip())
                 ->response($this->throttled(...)),
         ]);
+
+        RateLimiter::for('api-qr-redeem', fn (Request $request): Limit => Limit::perMinute(10)
+            ->by($request->ip())
+            ->response($this->throttled(...)));
+
+        RateLimiter::for('qr-login-mint', fn (Request $request): Limit => Limit::perMinute(20)
+            ->by((string) ($request->user()?->id ?? $request->ip()))
+            ->response($this->throttled(...)));
     }
 
     /**

@@ -5,12 +5,21 @@ use App\Http\Controllers\Api\V1\BoardColumnController;
 use App\Http\Controllers\Api\V1\IssueController;
 use App\Http\Controllers\Api\V1\LabelController;
 use App\Http\Controllers\Api\V1\ProjectController;
+use App\Http\Controllers\Api\V1\QrLoginController;
 use App\Http\Controllers\Api\V1\SprintController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('login', [AuthController::class, 'login'])
     ->middleware('throttle:api-login')
     ->name('api.v1.login');
+
+// Unauthenticated by design: a phone presents the plaintext QR pass to
+// redeem a `mobile` token, mirroring `login` above. See design.md and the
+// `api-auth` spec delta for why this is the second (and only other)
+// exemption in ApiContractTest's bearerAuth check.
+Route::post('qr-login', [QrLoginController::class, 'redeem'])
+    ->middleware('throttle:api-qr-redeem')
+    ->name('api.v1.qr-login');
 
 Route::middleware(['auth:sanctum', 'abilities:mobile'])->group(function (): void {
     Route::get('user', [AuthController::class, 'user'])->name('api.v1.user');

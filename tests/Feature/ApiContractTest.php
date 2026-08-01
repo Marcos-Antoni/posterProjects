@@ -66,14 +66,20 @@ test('every registered api route is documented, and every documented operation h
     );
 });
 
-test('every documented operation except login declares bearer auth security', function () {
+test('every documented operation except the unauthenticated token issuers declares bearer auth security', function () {
     $paths = openApiContract()['paths'] ?? [];
+
+    // Unauthenticated token-issuing operations declare no security; every
+    // other operation must declare bearerAuth. See the `api-auth` spec.
+    // Stays a whitelist, never a predicate — a third unsecured endpoint
+    // still fails this assertion.
+    $unauthenticatedTokenIssuers = ['POST api/v1/login', 'POST api/v1/qr-login'];
 
     foreach ($paths as $path => $operations) {
         foreach ($operations as $method => $operation) {
             $key = strtoupper($method).' '.ltrim((string) $path, '/');
 
-            if ($key === 'POST api/v1/login') {
+            if (in_array($key, $unauthenticatedTokenIssuers, true)) {
                 continue;
             }
 

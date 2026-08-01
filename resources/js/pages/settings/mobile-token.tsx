@@ -4,6 +4,7 @@ import type { ReactElement } from 'react';
 import { useState } from 'react';
 
 import { destroy } from '@/actions/App/Http/Controllers/Settings/MobileTokenController';
+import QrLoginCard from '@/components/settings/qr-login-card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -26,9 +27,13 @@ type MobileTokenProps = {
 /**
  * Settings page for the mobile app's personal access token. Unlike
  * `settings/mcp-token`, this page never mints or displays a plain-text
- * token: the token is minted on the phone via `POST /api/v1/login` and
- * its plaintext never reaches a browser (design.md decision D-1), so
- * there is no flash, no plaintext input, and no copy button here — only
+ * *token*: the token itself is minted on the phone — either via
+ * `POST /api/v1/login` or by redeeming a short-lived QR *pass* at
+ * `POST /api/v1/qr-login` — and its plaintext never reaches a browser
+ * (design.md decision D-1). The QR card above (`qr-login-card.tsx`) does
+ * mint and briefly display that pass, gated behind an explicit click so a
+ * drive-by visit never mints one; the token itself still has no flash, no
+ * plaintext input, and no copy button on this page. Below the card: token
  * status and a destructive revoke action behind an explicit confirm step.
  */
 export default function MobileToken({ token }: MobileTokenProps) {
@@ -52,12 +57,13 @@ export default function MobileToken({ token }: MobileTokenProps) {
                         Token móvil
                     </h1>
                     <p className="text-sm text-muted-foreground">
-                        Este token lo genera la app móvil al iniciar sesión
-                        con tu email y contraseña — nunca se muestra acá.
-                        Desde esta página solo podés ver su estado y
-                        revocarlo.
+                        Este token lo genera la app móvil al iniciar sesión con
+                        tu email y contraseña — nunca se muestra acá. Desde esta
+                        página solo podés ver su estado y revocarlo.
                     </p>
                 </div>
+
+                <QrLoginCard />
 
                 <div className="flex flex-col gap-4 rounded-lg border p-4">
                     <div className="flex items-center gap-3">
@@ -101,12 +107,11 @@ export default function MobileToken({ token }: MobileTokenProps) {
                                         ¿Revocar el token móvil?
                                     </DialogTitle>
                                     <DialogDescription>
-                                        La app deja de autenticar de
-                                        inmediato. Los tokens no expiran
-                                        solos, así que esta acción no se
-                                        puede deshacer — vas a necesitar
-                                        iniciar sesión de nuevo desde el
-                                        teléfono.
+                                        La app deja de autenticar de inmediato.
+                                        Los tokens no expiran solos, así que
+                                        esta acción no se puede deshacer — vas a
+                                        necesitar iniciar sesión de nuevo desde
+                                        el teléfono.
                                     </DialogDescription>
                                 </DialogHeader>
 

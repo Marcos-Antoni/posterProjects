@@ -14,6 +14,7 @@ use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
+use App\Http\Controllers\Settings\MobileTokenQrController;
 use App\Http\Controllers\SprintController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -41,12 +42,24 @@ Route::middleware('auth')->group(function (): void {
     Route::get('settings/mcp-token', [McpTokenController::class, 'show'])->name('settings.mcp-token.show');
     Route::post('settings/mcp-token', [McpTokenController::class, 'store'])->name('settings.mcp-token.store');
 
-    // The mobile token is minted on the phone via `POST /api/v1/login` —
-    // its plain text never reaches a browser. This sibling page only
-    // shows status and revokes; see MobileTokenController and design.md
-    // decision D-1 for why this is not unified with settings/mcp-token.
+    // The mobile *token* is minted on the phone — via `POST /api/v1/login`
+    // or by redeeming a QR *pass* (below) at `POST /api/v1/qr-login` — and
+    // its plain text never reaches a browser. This sibling page shows
+    // status, mints the short-lived QR pass, and revokes; see
+    // MobileTokenController and design.md decision D-1 for why this is not
+    // unified with settings/mcp-token.
     Route::get('settings/mobile-token', [MobileTokenController::class, 'show'])->name('settings.mobile-token.show');
     Route::delete('settings/mobile-token', [MobileTokenController::class, 'destroy'])->name('settings.mobile-token.destroy');
+
+    // QR login pass: mints a short-lived, single-use credential the phone
+    // redeems at POST /api/v1/qr-login. Plain JSON, never Inertia props —
+    // see design.md "Interfaces / Contracts" for why the plaintext must
+    // never ride on a prop (back-navigation would resurrect it).
+    Route::post('settings/mobile-token/qr', [MobileTokenQrController::class, 'store'])
+        ->middleware('throttle:qr-login-mint')
+        ->name('settings.mobile-token.qr.store');
+    Route::get('settings/mobile-token/qr/status', [MobileTokenQrController::class, 'status'])
+        ->name('settings.mobile-token.qr.status');
 
     // Habits are personal to the authenticated user — never project
     // scoped. There is intentionally NO destroy route: habits can only
