@@ -23,6 +23,14 @@
     {
       "name": "Issues",
       "description": "Read-only, board-ordered issue list and single-issue detail, nested under a project and addressed by the human key. Writes are a separate change, gated on board-column/sprint discovery."
+    },
+    {
+      "name": "Board Columns",
+      "description": "Read-only board-column vocabulary for a project, ordered by position. The client composes a full board from this collection plus GET /issues?sprint={id}, grouping issues by board_column_id — there is no nested /board endpoint."
+    },
+    {
+      "name": "Sprints",
+      "description": "Read-only sprint vocabulary for a project, newest first, each with a server-computed state and an issues_count. The board composes from board-columns + sprints + GET /issues?sprint={id}; the response here is the complete set because an absent meta means data is complete."
     }
   ],
   "paths": {
@@ -482,6 +490,149 @@
         }
       }
     },
+    "/api/v1/projects/{project}/board-columns": {
+      "get": {
+        "operationId": "listProjectBoardColumns",
+        "tags": ["Board Columns"],
+        "summary": "List a project's board columns, ordered by position",
+        "description": "Returns the complete, unpaginated set of `{project}`'s board columns ordered by position — no tiebreaker needed, position is unique within a project. An empty column (no issues assigned) is still returned. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's board columns, position-ordered, complete set.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/BoardColumnCollectionResponse" },
+                "example": {
+                  "data": [
+                    { "id": 1, "name": "To Do", "position": 0, "updated_at": "2026-07-21T07:48:51+00:00" },
+                    { "id": 2, "name": "In Progress", "position": 1, "updated_at": "2026-07-21T07:48:51+00:00" },
+                    { "id": 3, "name": "Done", "position": 2, "updated_at": "2026-07-21T07:48:51+00:00" }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project}/sprints": {
+      "get": {
+        "operationId": "listProjectSprints",
+        "tags": ["Sprints"],
+        "summary": "List a project's sprints, newest first, with computed state",
+        "description": "Returns the complete, unpaginated set of `{project}`'s sprints ordered by start_date descending, id descending as the mandatory tiebreaker (start_date is a date and may repeat). Each sprint carries a server-computed `state` (`future` when start_date is after today, `completed` when end_date is before today, `active` otherwise — both bounds inclusive, anchored to today() in the application timezone, UTC) and an eager `issues_count` aggregate. The client's default sprint is the first element with `state: \"active\"`, matching the web board's pick for identical data. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's sprints, newest first, complete set.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/SprintCollectionResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "id": 3,
+                      "name": "Sprint 4",
+                      "goal": "Ship the board",
+                      "start_date": "2026-07-28",
+                      "end_date": "2026-08-10",
+                      "state": "active",
+                      "issues_count": 12,
+                      "updated_at": "2026-08-01T10:22:31+00:00"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logout": {
       "post": {
         "operationId": "logoutMobile",
@@ -745,6 +896,52 @@
         "required": ["data"],
         "properties": {
           "data": { "$ref": "#/components/schemas/IssueDetail" }
+        }
+      },
+      "BoardColumn": {
+        "type": "object",
+        "description": "Exactly these 4 fields, no more, no fewer. Deliberately no issues_count: a column's count is meaningless without a sprint filter, since one column holds issues from every sprint at once.",
+        "required": ["id", "name", "position", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
+          "name": { "type": "string" },
+          "position": { "type": "integer", "description": "Order within the project's board. Unique per project at the database level, so no tiebreaker is needed." },
+          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "BoardColumnCollectionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/BoardColumn" }
+          }
+        }
+      },
+      "Sprint": {
+        "type": "object",
+        "description": "Exactly these 8 fields, no more, no fewer. state is computed server-side from today() in the application timezone (UTC) — never sent by the client, never a device-clock computation.",
+        "required": ["id", "name", "goal", "start_date", "end_date", "state", "issues_count", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
+          "name": { "type": "string" },
+          "goal": { "type": "string", "nullable": true },
+          "start_date": { "type": "string", "format": "date", "description": "YYYY-MM-DD, never a timestamp." },
+          "end_date": { "type": "string", "format": "date", "description": "YYYY-MM-DD, never a timestamp." },
+          "state": { "type": "string", "enum": ["future", "active", "completed"] },
+          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate; never triggers a query per sprint." },
+          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "SprintCollectionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Sprint" }
+          }
         }
       },
       "NotFoundResponse": {

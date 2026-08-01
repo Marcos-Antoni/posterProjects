@@ -2,17 +2,19 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Http\Controllers\Api\V1\Concerns\ResolvesProjectByKey;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ListProjectIssuesRequest;
 use App\Http\Resources\IssueDetailResource;
 use App\Http\Resources\IssueResource;
 use App\Models\Issue;
-use App\Models\Project;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 class IssueController extends Controller
 {
+    use ResolvesProjectByKey;
+
     /**
      * List `{project}`'s issues, board-ordered and paginated.
      *
@@ -103,16 +105,5 @@ class IssueController extends Controller
         $resolvedIssue->children->each(fn (Issue $child) => $child->setRelation('project', $resolvedProject));
 
         return new IssueDetailResource($resolvedIssue);
-    }
-
-    /**
-     * Resolve `{project}` (a `key`, not an id) among the projects the
-     * requesting user is a member of. Deliberately omits `withTrashed()`
-     * (unlike `ProjectController::show`): an archived project's issues
-     * 404, matching the web behaviour this API exposes.
-     */
-    private function resolveProject(Request $request, string $projectKey): Project
-    {
-        return $request->user()->projects()->where('projects.key', $projectKey)->firstOrFail();
     }
 }
