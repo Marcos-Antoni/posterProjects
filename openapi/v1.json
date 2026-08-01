@@ -31,6 +31,10 @@
     {
       "name": "Sprints",
       "description": "Read-only sprint vocabulary for a project, newest first, each with a server-computed state and an issues_count. The board composes from board-columns + sprints + GET /issues?sprint={id}; the response here is the complete set because an absent meta means data is complete."
+    },
+    {
+      "name": "Labels",
+      "description": "Read-only label catalogue for a project, ordered by name, each with an eager issues_count. An issue's labels already ride on every issue row, but a zero-issue label is otherwise unreachable in the API; the response here is the complete set because an absent meta means data is complete."
     }
   ],
   "paths": {
@@ -633,6 +637,73 @@
         }
       }
     },
+    "/api/v1/projects/{project}/labels": {
+      "get": {
+        "operationId": "listProjectLabels",
+        "tags": ["Labels"],
+        "summary": "List a project's label catalogue, ordered by name",
+        "description": "Returns the complete, unpaginated set of `{project}`'s labels ordered by name ascending — no tiebreaker needed, name is unique within a project. A label attached to no issues is still returned, with issues_count: 0 — the row an issue's embedded labels can never surface. issues_count is an eager withCount aggregate, never a per-row query. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's labels, name-ordered, complete set.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/LabelCollectionResponse" },
+                "example": {
+                  "data": [
+                    { "id": 4, "name": "backend", "issues_count": 3, "updated_at": "2026-08-01T10:22:31+00:00" },
+                    { "id": 9, "name": "urgent", "issues_count": 0, "updated_at": "2026-08-01T10:22:31+00:00" }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logout": {
       "post": {
         "operationId": "logoutMobile",
@@ -941,6 +1012,27 @@
           "data": {
             "type": "array",
             "items": { "$ref": "#/components/schemas/Sprint" }
+          }
+        }
+      },
+      "Label": {
+        "type": "object",
+        "description": "Exactly these 4 fields, no more, no fewer. No color, no project_id (the URL already carries the project), no nested issues.",
+        "required": ["id", "name", "issues_count", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
+          "name": { "type": "string" },
+          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate (withCount); never triggers a query per label. 0 for a label attached to no issues." },
+          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "LabelCollectionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Label" }
           }
         }
       },
