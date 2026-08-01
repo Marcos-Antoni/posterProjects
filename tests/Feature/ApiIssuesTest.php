@@ -267,6 +267,30 @@ test('a non members project issues are not found, never forbidden', function () 
     assertIssueNotFound($response);
 });
 
+test('an unknown project key on the list endpoint is not found', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value])->plainTextToken;
+
+    $response = $this->getJson('/api/v1/projects/NOPE/issues', apiBearerHeaders($token));
+
+    assertIssueNotFound($response);
+});
+
+test('an archived projects issue list is not found despite the project itself resolving with archived true', function () {
+    $user = User::factory()->create();
+    $token = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value])->plainTextToken;
+    $project = createMemberProject($user, ['key' => 'ARCHIVEDLIST']);
+    $projectKey = $project->key;
+    $project->delete();
+
+    $projectResponse = $this->getJson("/api/v1/projects/{$projectKey}", apiBearerHeaders($token));
+    $projectResponse->assertOk();
+    expect($projectResponse->json('data.archived'))->toBeTrue();
+
+    $listResponse = $this->getJson("/api/v1/projects/{$projectKey}/issues", apiBearerHeaders($token));
+    assertIssueNotFound($listResponse);
+});
+
 test('the list query count does not grow with issue count, and eager-loaded values are correct', function () {
     Model::preventLazyLoading();
 
