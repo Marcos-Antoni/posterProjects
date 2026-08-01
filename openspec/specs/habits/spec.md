@@ -66,15 +66,46 @@ accumulate into one habit day", "entries are stamped with the current utc timest
 ### Requirement: Entries Accumulate With A Persisted Real Percent
 
 The system MUST accumulate partial entries into the day and persist the real completion percent. A
-day MUST be considered completed exactly at the target, and the percent MAY exceed 100. A yes/no
-habit MUST complete with a single check-in and MUST NOT take an amount. A quantitative habit MUST
-require a positive integer amount, and a string amount MUST be cast (matching what real form
-submissions send). Increments MUST be read from the locked row, never from stale in-memory models.
+day's completion is a **high-water mark, not a live recomputation**: `completed` becomes `true` the
+moment the day's accumulated amount first reaches the target, and it MUST NOT revert to `false`
+afterward for any reason, including a later decrement or a target raised on the habit after the day
+was recorded. The persisted `peak_amount` column tracks the highest `accumulated_amount` the day has
+ever reached; `completed` is true whenever it was already true OR `peak_amount >= target`. The percent
+MAY exceed 100 and tracks `accumulated_amount` (not `peak_amount`), so it MAY drop on a decrement even
+while `completed` stays `true`. A yes/no habit MUST complete with a single check-in and MUST NOT take
+an amount. A quantitative habit MUST require a positive integer amount, and a string amount MUST be
+cast (matching what real form submissions send). Increments MUST be read from the locked row, never
+from stale in-memory models.
 
-*Verified by: `tests/Feature/HabitEntryLoggingTest.php` (15 scenarios, notably "partial entries
-accumulate into the day and the real percent is persisted", "the day is completed exactly at the
-target and the percent can exceed 100", "a string amount is cast, matching what real form submissions
-send", "increments are read from the locked row, not from stale in-memory models").*
+**Maintainer note — do not "fix" this by recomputing `completed` from `accumulated_amount`.**
+`completed` MUST always be recomputed from `peak_amount` (`peak_amount >= target`), never from
+`accumulated_amount` alone. A `habit_days` row can legitimately hold `accumulated_amount: 0` and
+`completed: true` at the same time — `peak_amount` on that same row is what explains why. This is the
+entire reason the column exists: before it, `completed` was not recomputable at all without erasing
+every legitimately completed day that was later decremented. A backfill or batch job that
+"corrects" `completed` from `accumulated_amount` instead of `peak_amount` would silently destroy real
+streaks — this is the failure this requirement, and the column, exist to prevent.
+
+The system MUST support decrementing a habit day's accumulated amount by one, correcting an
+over-tap. A decrement MUST NOT reduce `accumulated_amount` below zero: at zero, a decrement MUST be
+rejected rather than silently no-op. `accumulated_amount` is declared `unsignedInteger` in the
+migration, but on PostgreSQL this offers no protection: Laravel's Postgres grammar drops the
+`unsigned` modifier, the column is a plain `int4`, and `-1` would store silently — the zero floor is
+therefore application code, enforced under the row lock, not a schema guarantee. A decrement MUST NOT
+lower `peak_amount`, and MUST NOT be able to un-complete a day that already reached its target
+(sticky completion, above). A decrement MUST NOT write to the `habit_entries` ledger — the ledger is
+an append-only log of actions, not of results, so the entry count and the day's final accumulated
+amount MAY disagree after a decrement. `peak_amount` MUST always be less than or equal to the SUM of
+that day's `habit_entries`, with equality holding only on days that were never decremented — a
+decrement is exactly what can drive `peak_amount` strictly below that sum. Decrements MUST be
+evaluated against the row locked inside the same transaction, so two concurrent decrements against an
+accumulated amount of `1` MUST leave `0`, never `-1`.
+
+*Verified by: `tests/Feature/HabitEntryLoggingTest.php` (accumulation, the string-amount cast, the
+locked-row read, decrement, the zero floor, concurrent decrements, sticky completion surviving a
+`currentStreak()` recomputation, and the `peak_amount <= SUM(habit_entries)` /
+`accumulated_amount <= peak_amount` invariants), the migration-backfill test (`peak_amount` clamp
+preserves `completed` for legacy rows whose target changed after the day was recorded).*
 
 > The string-cast scenario exists because of a real production bug found by the browser E2E during
 > T-14: quantitative entries were saving 1 instead of the typed amount.
@@ -105,6 +136,34 @@ send", "increments are read from the locked row, not from stale in-memory models
 - GIVEN a quantitative habit
 - WHEN an entry is logged without a positive integer amount
 - THEN the request MUST be rejected with a validation error
+
+#### Scenario: A decrement corrects an over-tap without erasing history
+
+- GIVEN a quantitative habit with target 5 and accumulated amount 3
+- WHEN the accumulated amount is decremented
+- THEN the accumulated amount SHALL become 2
+- AND the `habit_entries` ledger SHALL be unchanged
+
+#### Scenario: Decrementing a completed day does not un-complete it
+
+- GIVEN a habit day already completed, with accumulated amount at or above target
+- WHEN the accumulated amount is decremented
+- THEN the day SHALL remain `completed: true`
+- AND the current streak SHALL be unaffected
+
+#### Scenario: A decrement is rejected at zero
+
+- GIVEN a habit day with accumulated amount 0
+- WHEN a decrement is attempted
+- THEN the operation SHALL be rejected
+- AND the accumulated amount SHALL remain 0
+
+#### Scenario: Two concurrent decrements from one never go negative
+
+- GIVEN a habit day with accumulated amount 1
+- WHEN two decrements are evaluated concurrently against the locked row
+- THEN the final accumulated amount SHALL be 0
+- AND never -1
 
 ### Requirement: Planned-Versus-Actual Delta
 
