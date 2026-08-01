@@ -42,7 +42,9 @@ export default function QrLoginCard() {
     const [consumedAt, setConsumedAt] = useState<string | null>(null);
     const [consumedIp, setConsumedIp] = useState<string | null>(null);
 
-    const mintHttp = useHttp<Record<string, never>, QrPassMint>({});
+    const mintHttp = useHttp<{ acknowledge_consumed: boolean }, QrPassMint>({
+        acknowledge_consumed: false,
+    });
     const statusHttp = useHttp<Record<string, never>, QrPassStatus>({});
 
     // Re-mint is poll-driven, not timer-driven (design.md "The Web Page"):
@@ -66,13 +68,19 @@ export default function QrLoginCard() {
         qrCodeToString(response.payload, { type: 'svg' }).then(setQrSvg);
     };
 
-    const mint = async () => {
+    // `acknowledgeConsumed` must only ever be `true` when the owner
+    // deliberately clicks past the consumed notice (see the button in the
+    // `consumed` branch below). Every other caller — the idle/expired
+    // buttons and the poll-driven re-mint — calls `mint()` with no
+    // argument, so a poll, a prefetch, or a page refresh can never send it.
+    const mint = async (acknowledgeConsumed = false) => {
         if (mintingRef.current) {
             return;
         }
 
         mintingRef.current = true;
         setState('minting');
+        mintHttp.setData('acknowledge_consumed', acknowledgeConsumed);
 
         try {
             const response = await mintHttp.post(MINT_URL);
@@ -151,7 +159,7 @@ export default function QrLoginCard() {
                     type="button"
                     variant="outline"
                     className="self-start"
-                    onClick={mint}
+                    onClick={() => mint()}
                 >
                     <QrCode />
                     Mostrar código QR
@@ -168,6 +176,15 @@ export default function QrLoginCard() {
                     {consumedAt ? ` a las ${formatDateTime(consumedAt)}` : ''}
                     {consumedIp ? ` desde ${consumedIp}` : ''}.
                 </p>
+                <Button
+                    type="button"
+                    variant="outline"
+                    className="self-start"
+                    onClick={() => mint(true)}
+                >
+                    <QrCode />
+                    Regenerar código QR
+                </Button>
             </div>
         );
     }
@@ -182,7 +199,7 @@ export default function QrLoginCard() {
                     type="button"
                     variant="outline"
                     className="self-start"
-                    onClick={mint}
+                    onClick={() => mint()}
                 >
                     <QrCode />
                     Mostrar código QR

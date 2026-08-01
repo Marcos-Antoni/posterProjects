@@ -145,3 +145,42 @@ further polling.
 - WHEN the owner's browser next polls the pass status
 - THEN the page SHALL show that a session was started, with the time and the redeeming IP
 - AND polling SHALL stop
+
+### Requirement: Owner Acknowledgement Mints Past A Consumed Pass
+
+`POST settings/mobile-token/qr` MUST NOT mint a fresh pass over a consumed latest pass unless the
+request explicitly carries `acknowledge_consumed`. Without that flag, the endpoint MUST behave
+exactly as in the previous requirement: write nothing and report `state: consumed`, so an automatic
+or incidental re-mint (a status poll, a prefetch, a page refresh) can never silently discard the
+consumption notice. WHEN the flag is present, the endpoint MUST mint a fresh pass exactly as it
+would over an unconsumed latest pass, and the previously consumed row MUST remain in the database,
+unmodified, as an audit record — only a subsequent unconsumed pass created by that owner is deleted
+before the fresh one is inserted.
+
+The `settings/mobile-token` page MUST offer the owner an explicit action, reachable only from the
+consumed state's UI, that sends this flag. No other code path (the status poll, the countdown timer,
+a page load, or a re-mint triggered by nearing expiry) MAY send it.
+
+#### Scenario: A plain mint over a consumed pass writes nothing
+
+- GIVEN an owner whose latest pass is already consumed
+- WHEN `POST settings/mobile-token/qr` is called without `acknowledge_consumed`
+- THEN the response SHALL be `200` reporting `state: consumed` with no `payload`
+- AND no `qr_login_passes` row SHALL be written or modified
+
+#### Scenario: An acknowledged mint over a consumed pass mints a fresh pass and keeps the audit trail
+
+- GIVEN an owner whose latest pass is already consumed
+- WHEN `POST settings/mobile-token/qr` is called with `acknowledge_consumed: true`
+- THEN the response SHALL be `200` with a fresh plaintext pass payload and its expiry, exactly as an
+  ordinary mint
+- AND the previously consumed row SHALL remain in the database with its original `consumed_at` and
+  `consumed_ip` unchanged
+- AND the new pass SHALL be the only unconsumed `qr_login_passes` row for that owner
+
+#### Scenario: The owner regenerates a pass from the consumed state in the browser
+
+- GIVEN the owner's card is showing the consumed notice
+- WHEN the owner clicks the explicit "Regenerar código QR" action
+- THEN the card SHALL mint and display a fresh pass
+- AND the consumed row from the previous pass SHALL remain unchanged in the database

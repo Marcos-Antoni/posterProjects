@@ -59,6 +59,32 @@ test('minting over an already-consumed pass writes nothing and reports the consu
     expect($pass->fresh()->consumed_at->equalTo($consumedAt))->toBeTrue();
 });
 
+test('an acknowledged mint over a consumed pass issues a fresh live pass and keeps the consumed row', function () {
+    $user = User::factory()->create();
+    $pass = QrLoginPass::factory()->for($user)->consumed()->create();
+    $consumedAt = $pass->consumed_at;
+    $consumedIp = $pass->consumed_ip;
+
+    $response = $this->actingAs($user)->postJson('/settings/mobile-token/qr', [
+        'acknowledge_consumed' => true,
+    ]);
+
+    $response->assertOk();
+    $response->assertJsonPath('state', 'live');
+    $payload = $response->json('payload');
+    expect($payload)->toBeString()->toMatch('/^pposter_qr_v1:[A-Za-z0-9_-]{43}$/');
+    expect($response->json('expires_at'))->not->toBeNull();
+
+    $this->assertDatabaseCount('qr_login_passes', 2);
+
+    $stillConsumed = $pass->fresh();
+    expect($stillConsumed->consumed_at->equalTo($consumedAt))->toBeTrue();
+    expect($stillConsumed->consumed_ip)->toBe($consumedIp);
+
+    $fresh = QrLoginPass::query()->whereNull('consumed_at')->sole();
+    expect($fresh->token_hash)->toBe(hash('sha256', $payload));
+});
+
 test('status never returns the payload, across live, consumed, expired, and none states', function () {
     $user = User::factory()->create();
 

@@ -16,21 +16,34 @@ class MobileTokenQrController extends Controller
      * `lockForUpdate()` on the latest row closes the re-mint/consume race
      * (design.md Decision 3): if a phone redeemed the pass between the
      * owner's last poll and this click, the row is already `consumed_at`
-     * non-null and this method writes nothing — a blind delete-then-insert
-     * would destroy that row and, with it, the theft-detection signal the
-     * owner is here to see. Only when the latest row is still unconsumed
-     * does this delete the owner's unconsumed passes and mint a fresh one;
-     * the delete is scoped to `whereNull('consumed_at')` so every consumed
-     * row (this owner's audit trail) is retained indefinitely.
+     * non-null. By default this method then writes nothing and reports
+     * `state: consumed` — a blind delete-then-insert would destroy that row
+     * and, with it, the theft-detection signal the owner is here to see.
+     *
+     * The owner can move past that notice deliberately by sending
+     * `acknowledge_consumed`. The card only ever sets it from the explicit
+     * "Regenerar código QR" button rendered inside the consumed state —
+     * never from the status poll, an automatic re-mint, or a page load —
+     * so a poll, a prefetch, or a refresh can never trigger it by accident.
+     * With the flag set, this method proceeds to mint a fresh pass even
+     * over a consumed latest row.
+     *
+     * Either way, the delete before minting is scoped to
+     * `whereNull('consumed_at')`, so every consumed row (this owner's audit
+     * trail) is retained indefinitely. An acknowledged mint does not erase
+     * the record of the earlier consumption; it only stops that row from
+     * being the *latest* one, so a subsequent `status()` or plain `store()`
+     * call reports the new live pass instead of resurfacing the old notice.
      */
     public function store(Request $request): JsonResponse
     {
         $user = $request->user();
+        $acknowledgeConsumed = $request->boolean('acknowledge_consumed');
 
-        return DB::transaction(function () use ($user): JsonResponse {
+        return DB::transaction(function () use ($user, $acknowledgeConsumed): JsonResponse {
             $latest = $user->qrLoginPasses()->latest('id')->lockForUpdate()->first();
 
-            if ($latest !== null && $latest->consumed_at !== null) {
+            if ($latest !== null && $latest->consumed_at !== null && ! $acknowledgeConsumed) {
                 return response()->json([
                     'state' => 'consumed',
                     'consumed_at' => $latest->consumed_at->toISOString(),

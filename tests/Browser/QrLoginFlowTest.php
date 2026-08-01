@@ -38,4 +38,15 @@ test('a user reveals the QR code, sees the countdown, and the card flips to cons
         ->assertNotPresent('[data-testid="qr-code"]')
         ->assertSee('Se inició sesión en un teléfono')
         ->assertNoJavascriptErrors();
+
+    // The owner is not stuck: clicking past the notice mints a fresh pass
+    // and leaves the previously consumed row untouched (see the
+    // `acknowledge_consumed` flag in MobileTokenQrController::store).
+    $page->click('Regenerar código QR')
+        ->assertPresent('[data-testid="qr-code"]')
+        ->assertSee('El código expira en')
+        ->assertNoJavascriptErrors();
+
+    expect(QrLoginPass::query()->count())->toBe(2);
+    expect(QrLoginPass::query()->whereNull('consumed_at')->count())->toBe(1);
 });
