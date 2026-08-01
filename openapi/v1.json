@@ -19,6 +19,10 @@
     {
       "name": "Projects",
       "description": "Read-only project list and detail for the posterMobile client. Writes are a separate change."
+    },
+    {
+      "name": "Issues",
+      "description": "Read-only, board-ordered issue list and single-issue detail, nested under a project and addressed by the human key. Writes are a separate change, gated on board-column/sprint discovery."
     }
   ],
   "paths": {
@@ -263,6 +267,221 @@
         }
       }
     },
+    "/api/v1/projects/{project}/issues": {
+      "get": {
+        "operationId": "listProjectIssues",
+        "tags": ["Issues"],
+        "summary": "List a project's issues, board-ordered and paginated",
+        "description": "Returns `{project}`'s issues ordered by board column position, then issue position, then issue id as a mandatory tiebreaker (position is unique only within a board-column/sprint scope). Paginated: `per_page` defaults to 50 and is capped at 100 regardless of the requested value; `links.next` retains every applied query filter. `?sprint=` accepts an integer sprint id belonging to `{project}`, or the literal `backlog` for unsprinted issues; absent, every issue in the project is returned. A sprint id belonging to a different project responds `404`; a value that is neither `backlog` nor an integer responds `422`. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, unlike `GET /api/v1/projects/{project}`.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "sprint",
+            "in": "query",
+            "required": false,
+            "description": "An integer sprint id belonging to `{project}`, or the literal `backlog` for unsprinted issues. Absent returns every issue in the project.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "per_page",
+            "in": "query",
+            "required": false,
+            "description": "Items per page. Default 50, capped at 100.",
+            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "description": "Page number, 1-indexed.",
+            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The project's issues, board-ordered, one page at a time.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IssueCollectionResponse" },
+                "example": {
+                  "data": [
+                    {
+                      "id": 1,
+                      "key": "DEMO-1",
+                      "number": 1,
+                      "title": "Set up CI",
+                      "type": "task",
+                      "priority": 3,
+                      "story_points": 3,
+                      "due_date": "2026-08-15",
+                      "board_column_id": 1,
+                      "sprint_id": null,
+                      "parent_id": null,
+                      "position": 0,
+                      "assignee": { "id": 2, "name": "Ada Lovelace" },
+                      "labels": [{ "id": 1, "name": "backend" }],
+                      "updated_at": "2026-07-21T07:48:51+00:00"
+                    }
+                  ],
+                  "links": { "first": "/api/v1/projects/DEMO/issues?page=1", "last": "/api/v1/projects/DEMO/issues?page=1", "prev": null, "next": null },
+                  "meta": {
+                    "current_page": 1,
+                    "last_page": 1,
+                    "per_page": 50,
+                    "total": 1,
+                    "from": 1,
+                    "to": 1,
+                    "path": "/api/v1/projects/DEMO/issues",
+                    "links": [{ "url": null, "label": "&laquo; Previous", "page": null, "active": false }]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{project}` is unresolvable for the requesting user (unknown key, non-member key, or archived project), or `?sprint=` names a sprint belonging to a different project. Every cause is byte-identical and never discloses which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          },
+          "422": {
+            "description": "`per_page` above 100, `page` not a positive integer, or `sprint` neither `backlog` nor an integer.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "example": { "message": "El campo sprint seleccionado no es válido.", "errors": { "sprint": ["El campo sprint seleccionado no es válido."] } }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{project}/issues/{issue}": {
+      "get": {
+        "operationId": "getProjectIssue",
+        "tags": ["Issues"],
+        "summary": "Resolve a single issue by its human key",
+        "description": "Resolves `{issue}` (e.g. DEMO-123) via `Issue::resolveByKey()` against `{project}`, never route-model binding — `key` is a computed accessor, not a column. Requires the `mobile` ability. Seven distinct causes converge on the identical `404`: an unresolvable `{project}` (unknown key, non-member key, archived project), and a malformed, cross-project, or unknown `{issue}` (no dash, non-numeric/empty suffix, prefix mismatch, unknown number). None is distinguishable from the response.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "project",
+            "in": "path",
+            "required": true,
+            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "issue",
+            "in": "path",
+            "required": true,
+            "description": "The full issue key (e.g. DEMO-123) — never the numeric `id`.",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The issue, with every relation embedded.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/IssueResponse" },
+                "example": {
+                  "data": {
+                    "id": 1,
+                    "key": "DEMO-1",
+                    "number": 1,
+                    "title": "Set up CI",
+                    "type": "task",
+                    "priority": 3,
+                    "story_points": 3,
+                    "due_date": "2026-08-15",
+                    "board_column_id": 1,
+                    "sprint_id": null,
+                    "parent_id": null,
+                    "position": 0,
+                    "assignee": { "id": 2, "name": "Ada Lovelace" },
+                    "labels": [{ "id": 1, "name": "backend" }],
+                    "updated_at": "2026-07-21T07:48:51+00:00",
+                    "description": "Configure the CI pipeline.",
+                    "reporter": { "id": 3, "name": "Alan Turing" },
+                    "parent": null,
+                    "children": [{ "id": 5, "key": "DEMO-5", "title": "Add the lint step", "type": "task", "board_column_id": 1 }],
+                    "comments": [{ "id": 9, "body": "Started this.", "created_at": "2026-07-21T07:50:00+00:00", "author": { "id": 3, "name": "Alan Turing" } }]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{project}` is unresolvable for the requesting user (unknown key, non-member key, or archived project), or `{issue}` is malformed, belongs to a different project, or has no matching number in this project. All seven causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/logout": {
       "post": {
         "operationId": "logoutMobile",
@@ -374,6 +593,158 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/Project" }
           }
+        }
+      },
+      "UserRef": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" }
+        }
+      },
+      "LabelRef": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "name": { "type": "string" }
+        }
+      },
+      "Issue": {
+        "type": "object",
+        "description": "The board-card shape: exactly these 15 fields, no more, no fewer.",
+        "required": ["id", "key", "number", "title", "type", "priority", "story_points", "due_date", "board_column_id", "sprint_id", "parent_id", "position", "assignee", "labels", "updated_at"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
+          "key": { "type": "string", "description": "The addressable identifier, e.g. DEMO-123." },
+          "number": { "type": "integer", "description": "The per-project sequential number, i.e. the suffix of key." },
+          "title": { "type": "string" },
+          "type": { "type": "string", "enum": ["epic", "story", "task", "bug"] },
+          "priority": { "type": "integer", "enum": [1, 2, 3, 4, 5], "description": "1 = Highest ... 5 = Lowest." },
+          "story_points": { "type": "integer", "nullable": true },
+          "due_date": { "type": "string", "format": "date", "nullable": true },
+          "board_column_id": { "type": "integer", "format": "int64" },
+          "sprint_id": { "type": "integer", "format": "int64", "nullable": true },
+          "parent_id": { "type": "integer", "format": "int64", "nullable": true },
+          "position": { "type": "integer", "description": "Order within its board column and sprint scope. Not globally unique." },
+          "assignee": { "$ref": "#/components/schemas/UserRef", "nullable": true },
+          "labels": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/LabelRef" }
+          },
+          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
+        }
+      },
+      "PaginationLinks": {
+        "type": "object",
+        "required": ["first", "last", "prev", "next"],
+        "properties": {
+          "first": { "type": "string", "nullable": true },
+          "last": { "type": "string", "nullable": true },
+          "prev": { "type": "string", "nullable": true },
+          "next": { "type": "string", "nullable": true, "description": "Retains every applied query filter (e.g. ?sprint=). Null on the last page." }
+        }
+      },
+      "PaginationMeta": {
+        "type": "object",
+        "required": ["current_page", "last_page", "per_page", "total", "from", "to", "path"],
+        "properties": {
+          "current_page": { "type": "integer" },
+          "last_page": { "type": "integer" },
+          "per_page": { "type": "integer" },
+          "total": { "type": "integer" },
+          "from": { "type": "integer", "nullable": true },
+          "to": { "type": "integer", "nullable": true },
+          "path": { "type": "string" },
+          "links": {
+            "type": "array",
+            "description": "Laravel's default presentational page-link list. Ignorable by the client.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "url": { "type": "string", "nullable": true },
+                "label": { "type": "string" },
+                "page": { "type": "integer", "nullable": true },
+                "active": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      },
+      "IssueCollectionResponse": {
+        "type": "object",
+        "required": ["data", "links", "meta"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/Issue" }
+          },
+          "links": { "$ref": "#/components/schemas/PaginationLinks" },
+          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
+        }
+      },
+      "IssueRef": {
+        "type": "object",
+        "description": "A parent issue reference.",
+        "required": ["id", "key", "title"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "key": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      },
+      "IssueChildRef": {
+        "type": "object",
+        "description": "A child issue reference, as it appears on the parent's board-card list.",
+        "required": ["id", "key", "title", "type", "board_column_id"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "key": { "type": "string" },
+          "title": { "type": "string" },
+          "type": { "type": "string", "enum": ["epic", "story", "task", "bug"] },
+          "board_column_id": { "type": "integer", "format": "int64" }
+        }
+      },
+      "IssueComment": {
+        "type": "object",
+        "required": ["id", "body", "created_at", "author"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "body": { "type": "string" },
+          "created_at": { "type": "string", "format": "date-time", "nullable": true },
+          "author": { "$ref": "#/components/schemas/UserRef" }
+        }
+      },
+      "IssueDetail": {
+        "description": "The full single-issue shape: the 15 `Issue` fields plus description, reporter, parent, children, and comments.",
+        "allOf": [
+          { "$ref": "#/components/schemas/Issue" },
+          {
+            "type": "object",
+            "required": ["description", "reporter", "parent", "children", "comments"],
+            "properties": {
+              "description": { "type": "string", "nullable": true },
+              "reporter": { "$ref": "#/components/schemas/UserRef" },
+              "parent": { "$ref": "#/components/schemas/IssueRef", "nullable": true },
+              "children": {
+                "type": "array",
+                "items": { "$ref": "#/components/schemas/IssueChildRef" }
+              },
+              "comments": {
+                "type": "array",
+                "description": "Ordered by created_at ascending, with issue id as the tiebreaker for comments sharing a timestamp.",
+                "items": { "$ref": "#/components/schemas/IssueComment" }
+              }
+            }
+          }
+        ]
+      },
+      "IssueResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/IssueDetail" }
         }
       },
       "NotFoundResponse": {

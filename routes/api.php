@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\V1\AuthController;
+use App\Http\Controllers\Api\V1\IssueController;
 use App\Http\Controllers\Api\V1\ProjectController;
 use Illuminate\Support\Facades\Route;
 
@@ -13,4 +14,6 @@ Route::middleware(['auth:sanctum', 'abilities:mobile'])->group(function (): void
     Route::post('logout', [AuthController::class, 'logout'])->name('api.v1.logout');
     Route::get('projects', [ProjectController::class, 'index'])->name('api.v1.projects.index');
     Route::get('projects/{project}', [ProjectController::class, 'show'])->name('api.v1.projects.show');
+    Route::get('projects/{project}/issues', [IssueController::class, 'index'])->name('api.v1.projects.issues.index');
+    Route::get('projects/{project}/issues/{issue}', [IssueController::class, 'show'])->name('api.v1.projects.issues.show');
 });
