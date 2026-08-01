@@ -22,6 +22,11 @@ class HabitDayFactory extends Factory
             'habit_id' => Habit::factory(),
             'entry_date' => fake()->unique()->dateTimeBetween('-2 months', 'now')->format('Y-m-d'),
             'accumulated_amount' => 1,
+            // Closure, not a literal: resolves against `create()`/`state()`
+            // overrides, so `HabitDay::factory(['accumulated_amount' => N])`
+            // never violates the `accumulated_amount <= peak_amount`
+            // invariant without every call site having to set both.
+            'peak_amount' => fn (array $attributes): int => $attributes['accumulated_amount'],
             'completion_percent' => 100,
             'completed' => true,
             'planned_delta_minutes' => null,

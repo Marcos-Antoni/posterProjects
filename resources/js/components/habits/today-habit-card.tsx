@@ -19,6 +19,7 @@ export type HabitTodayProgress = {
     accumulated_amount: number;
     completion_percent: number;
     completed: boolean;
+    peak_amount: number;
     planned_delta_minutes: number | null;
 };
 

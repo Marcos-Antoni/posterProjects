@@ -35,6 +35,10 @@
     {
       "name": "Labels",
       "description": "Read-only label catalogue for a project, ordered by name, each with an eager issues_count. An issue's labels already ride on every issue row, but a zero-issue label is otherwise unreachable in the API; the response here is the complete set because an absent meta means data is complete."
+    },
+    {
+      "name": "Habits",
+      "description": "Today's habit list and the one-tap increment/decrement pair, anchored to the UTC-6 habit day. Creating, editing and archiving habits are web-only and are not exposed here."
     }
   ],
   "paths": {
@@ -795,6 +799,192 @@
           }
         }
       }
+    },
+    "/api/v1/habits/today": {
+      "get": {
+        "operationId": "listTodayHabits",
+        "tags": ["Habits"],
+        "summary": "List today's active, scheduled habits with each one's progress",
+        "description": "Returns every active habit scheduled for the current UTC-6 day, ordered by name, each with its persisted progress for the day flattened to zero/false when nothing has been logged yet. week_recorded_days is populated only for times_per_week habits. Requires the `mobile` ability.",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": {
+            "description": "Today's scheduled habits, name-ordered, complete set.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodayHabitCollectionResponse" },
+                "example": {
+                  "data": [
+                    { "id": 3, "date": "2026-08-01", "name": "Meditar", "habit_type": "yes_no", "unit": null, "target": 1, "accumulated_amount": 1, "completion_percent": 100, "completed": true, "peak_amount": 1, "times_per_week": null, "week_recorded_days": null },
+                    { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 3, "completion_percent": 38, "completed": false, "peak_amount": 3, "times_per_week": null, "week_recorded_days": null }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/habits/{habit}/increment": {
+      "post": {
+        "operationId": "incrementHabit",
+        "tags": ["Habits"],
+        "summary": "Tap \"sumar\": add 1 to today's aggregate",
+        "description": "The phone never sends an amount — every tap adds exactly 1 to the current UTC-6 day's accumulated_amount, recalculates completion_percent and the sticky completed flag, and returns the same shape as a GET /habits/today element (shape-identical by construction, design D-4). Not idempotent: repeating the request repeats the effect. Requires the `mobile` ability. Unknown, another user's, or archived `{habit}` all resolve to the identical generic 404.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "habit",
+            "in": "path",
+            "required": true,
+            "description": "The habit's numeric id.",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The habit's updated progress for today.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodayHabitResponse" },
+                "example": {
+                  "data": { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 4, "completion_percent": 50, "completed": false, "peak_amount": 4, "times_per_week": null, "week_recorded_days": null }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{habit}` is unresolvable for the requesting user: unknown id, another user's habit, or an archived habit. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/habits/{habit}/decrement": {
+      "post": {
+        "operationId": "decrementHabit",
+        "tags": ["Habits"],
+        "summary": "Tap \"restar\": subtract 1 from today's aggregate",
+        "description": "Corrects an over-tap: subtracts 1 from the current UTC-6 day's accumulated_amount, floored at zero, and never un-completes an already-completed day (completed is sticky — design D-1). Returns the same shape as a GET /habits/today element. Requires the `mobile` ability. Unknown, another user's, or archived `{habit}` all resolve to the identical generic 404.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          {
+            "name": "habit",
+            "in": "path",
+            "required": true,
+            "description": "The habit's numeric id.",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The habit's updated progress for today.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/TodayHabitResponse" },
+                "example": {
+                  "data": { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 2, "completion_percent": 25, "completed": false, "peak_amount": 4, "times_per_week": null, "week_recorded_days": null }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": { "type": "string", "example": "Bearer" }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
+                "example": { "message": "No autenticado." }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
+                "example": { "message": "Este token no tiene permiso para usar esta API." }
+              }
+            }
+          },
+          "404": {
+            "description": "`{habit}` is unresolvable for the requesting user: unknown id, another user's habit, or an archived habit. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
+                "example": { "message": "Recurso no encontrado." }
+              }
+            }
+          },
+          "422": {
+            "description": "Today has nothing to subtract: no `habit_days` row yet, or `accumulated_amount` is already 0.",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "example": { "message": "No hay nada que descontar hoy.", "errors": { "habit": ["No hay nada que descontar hoy."] } }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1117,6 +1307,42 @@
             "type": "array",
             "items": { "$ref": "#/components/schemas/Label" }
           }
+        }
+      },
+      "TodayHabit": {
+        "type": "object",
+        "description": "Exactly these 12 fields. The four day-derived fields (accumulated_amount, completion_percent, completed, peak_amount) are flattened to their zero/false value when nothing has been logged today — never null. peak_amount is the day's high-water mark and is load-bearing: it is the only field on the wire that explains a completed day whose accumulated_amount was corrected downward by a decrement.",
+        "required": ["id", "date", "name", "habit_type", "unit", "target", "accumulated_amount", "completion_percent", "completed", "peak_amount", "times_per_week", "week_recorded_days"],
+        "properties": {
+          "id": { "type": "integer", "format": "int64" },
+          "date": { "type": "string", "format": "date", "description": "The UTC-6 day this row belongs to, per element." },
+          "name": { "type": "string" },
+          "habit_type": { "type": "string", "enum": ["yes_no", "quantitative"] },
+          "unit": { "type": "string", "nullable": true },
+          "target": { "type": "integer", "description": "Server-computed: max(1, daily_target) for quantitative habits, 1 for yes/no." },
+          "accumulated_amount": { "type": "integer" },
+          "completion_percent": { "type": "integer", "description": "Not clamped — may exceed 100." },
+          "completed": { "type": "boolean", "description": "Sticky once true: never recomputed from accumulated_amount alone." },
+          "peak_amount": { "type": "integer", "description": "The day's high-water mark. Never drops, even when a decrement corrects accumulated_amount downward." },
+          "times_per_week": { "type": "integer", "nullable": true },
+          "week_recorded_days": { "type": "integer", "nullable": true, "description": "Days already recorded in the current Monday-based week. Populated only for times_per_week habits; null otherwise." }
+        }
+      },
+      "TodayHabitCollectionResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/TodayHabit" }
+          }
+        }
+      },
+      "TodayHabitResponse": {
+        "type": "object",
+        "required": ["data"],
+        "properties": {
+          "data": { "$ref": "#/components/schemas/TodayHabit" }
         }
       },
       "NotFoundResponse": {

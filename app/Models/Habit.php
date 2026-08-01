@@ -15,6 +15,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 /**
  * @property int $id
@@ -133,8 +134,9 @@ class Habit extends Model
             $accumulated = $day->accumulated_amount + $amount;
 
             $day->accumulated_amount = $accumulated;
+            $day->peak_amount = max($day->peak_amount, $accumulated);
             $day->completion_percent = (int) round($accumulated / $target * 100);
-            $day->completed = $accumulated >= $target;
+            $day->completed = $day->completed || $day->peak_amount >= $target;
 
             if ($claimedDay && $this->planned_time !== null) {
                 $plannedTime = $localTime->clone()->setTimeFromTimeString($this->planned_time);
@@ -145,6 +147,45 @@ class Habit extends Model
             $day->save();
 
             return $entry;
+        });
+    }
+
+    /**
+     * Subtract one from the current UTC-6 day's aggregate. Never writes to
+     * `habit_entries`: the ledger is a log of actions, not of results.
+     *
+     * The day is claimed by NOTHING — a missing row is a rejection, not a
+     * row to create, so this is `recordEntry()`'s lock discipline minus the
+     * `insertOrIgnore` claim step.
+     *
+     * The zero floor lives here and ONLY here: `accumulated_amount` is
+     * declared `unsignedInteger` but resolves to a plain `int4` on Postgres,
+     * so the database would store `-1` without complaining.
+     *
+     * @throws ValidationException when today has no row, or it is already 0.
+     */
+    public function decrementToday(): HabitDay
+    {
+        return DB::transaction(function (): HabitDay {
+            $entryDate = self::todayLocalDate()->toDateString();
+
+            $day = $this->days()->where('entry_date', $entryDate)->lockForUpdate()->first();
+
+            if ($day === null || $day->accumulated_amount < 1) {
+                throw ValidationException::withMessages(['habit' => 'No hay nada que descontar hoy.']);
+            }
+
+            $target = $this->habit_type === HabitType::Quantitative
+                ? max(1, (int) $this->daily_target)
+                : 1;
+            $accumulated = $day->accumulated_amount - 1;
+
+            $day->accumulated_amount = $accumulated;
+            $day->completion_percent = (int) round($accumulated / $target * 100);
+            $day->completed = $day->completed || $day->peak_amount >= $target;
+            $day->save();
+
+            return $day;
         });
     }
 

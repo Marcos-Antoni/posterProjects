@@ -70,7 +70,7 @@ class TodayHabits extends Tool
      * The habit's persisted aggregate for today, or null when nothing
      * has been logged yet. Reads the eager-loaded current-week days.
      *
-     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, planned_delta_minutes: int|null}|null
+     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, peak_amount: int, planned_delta_minutes: int|null}|null
      */
     private function todayProgress(Habit $habit, CarbonInterface $today): ?array
     {
@@ -86,6 +86,7 @@ class TodayHabits extends Tool
             'accumulated_amount' => $row->accumulated_amount,
             'completion_percent' => $row->completion_percent,
             'completed' => $row->completed,
+            'peak_amount' => $row->peak_amount,
             'planned_delta_minutes' => $row->planned_delta_minutes,
         ];
     }

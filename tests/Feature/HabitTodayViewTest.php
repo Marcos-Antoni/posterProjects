@@ -64,9 +64,30 @@ test('the today view exposes the day progress and the weekly quota count', funct
     expect($habits['Read']['today']['accumulated_amount'])->toBe(15)
         ->and($habits['Read']['today']['completion_percent'])->toBe(75)
         ->and($habits['Read']['today']['completed'])->toBeFalse()
+        ->and($habits['Read']['today']['peak_amount'])->toBe(15)
         ->and($habits['Read']['week_recorded_days'])->toBeNull()
         ->and($habits['Run']['today']['completed'])->toBeTrue()
         ->and($habits['Run']['week_recorded_days'])->toBe(2);
+});
+
+test('the today view exposes peak_amount, which stays put across a decrement', function () {
+    $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create(['name' => 'Read']);
+
+    $habit->recordEntry(15);
+    $habit->decrementToday();
+
+    $response = $this->actingAs($user)->get('/habits', [
+        'X-Inertia' => 'true',
+        'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
+    ]);
+
+    $response->assertOk();
+
+    $habits = collect($response->json('props.habits'))->keyBy('name');
+
+    expect($habits['Read']['today']['accumulated_amount'])->toBe(14)
+        ->and($habits['Read']['today']['peak_amount'])->toBe(15);
 });
 
 test('habits without a record today expose a null progress', function () {

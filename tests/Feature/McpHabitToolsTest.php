@@ -145,6 +145,19 @@ test('today-habits lists only habits scheduled for the current utc-6 day', funct
         ->assertDontSee(['Not today', 'Archived', "Someone else's"]);
 });
 
+test('today-habits exposes peak_amount, which stays put across a decrement', function () {
+    $this->travelTo(Carbon::parse('2026-07-22 18:00:00', 'UTC'));
+
+    $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create(['name' => 'Read']);
+    $habit->recordEntry(15);
+    $habit->decrementToday();
+
+    $response = PosterServer::actingAs($user)->tool(TodayHabits::class);
+
+    $response->assertOk()->assertSee(['"accumulated_amount":14', '"peak_amount":15']);
+});
+
 test('list-habits returns every habit including archived ones', function () {
     $user = User::factory()->create();
     Habit::factory()->for($user)->create(['name' => 'Active']);

@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\BoardColumnController;
+use App\Http\Controllers\Api\V1\HabitController;
+use App\Http\Controllers\Api\V1\HabitEntryController;
 use App\Http\Controllers\Api\V1\IssueController;
 use App\Http\Controllers\Api\V1\LabelController;
 use App\Http\Controllers\Api\V1\ProjectController;
@@ -31,4 +33,14 @@ Route::middleware(['auth:sanctum', 'abilities:mobile'])->group(function (): void
     Route::get('projects/{project}/board-columns', [BoardColumnController::class, 'index'])->name('api.v1.projects.board-columns.index');
     Route::get('projects/{project}/sprints', [SprintController::class, 'index'])->name('api.v1.projects.sprints.index');
     Route::get('projects/{project}/labels', [LabelController::class, 'index'])->name('api.v1.projects.labels.index');
+
+    // `today` MUST be registered before any `habits/{habit}` route so the
+    // literal segment never gets swallowed by the numeric habit-id pattern.
+    Route::get('habits/today', [HabitController::class, 'today'])->name('api.v1.habits.today');
+    Route::post('habits/{habit}/increment', [HabitEntryController::class, 'increment'])
+        ->whereNumber('habit')
+        ->name('api.v1.habits.increment');
+    Route::post('habits/{habit}/decrement', [HabitEntryController::class, 'decrement'])
+        ->whereNumber('habit')
+        ->name('api.v1.habits.decrement');
 });

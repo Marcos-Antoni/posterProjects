@@ -15,10 +15,17 @@ use Illuminate\Support\Carbon;
  * and the planned-vs-actual delta of the first entry of the day.
  * `entry_date` is the day in the feature's fixed UTC-6 zone.
  *
+ * `peak_amount` is the day's high-water mark: it never drops, even when
+ * `accumulated_amount` is corrected downward by a decrement. `completed`
+ * is sticky once `peak_amount` reaches the habit's target and MUST NOT be
+ * recomputed from `accumulated_amount` alone — see the `habits` spec's
+ * "Entries Accumulate With A Persisted Real Percent" requirement.
+ *
  * @property int $id
  * @property int $habit_id
  * @property Carbon $entry_date
  * @property int $accumulated_amount
+ * @property int $peak_amount
  * @property int $completion_percent
  * @property bool $completed
  * @property int|null $planned_delta_minutes
@@ -29,6 +36,7 @@ use Illuminate\Support\Carbon;
     'habit_id',
     'entry_date',
     'accumulated_amount',
+    'peak_amount',
     'completion_percent',
     'completed',
     'planned_delta_minutes',
