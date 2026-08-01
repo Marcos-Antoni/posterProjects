@@ -43,7 +43,7 @@ Chain strategy: size-exception
 - [x] 1.16 OpenAPI: add schemas `Issue`, `LabelRef`, `UserRef`, `PaginationLinks`, `PaginationMeta`, `IssueCollectionResponse`.
 - [x] 1.17 Verify: `php artisan test --compact --filter=ApiContractTest` passes (route↔document set-equality for the new list operation).
 - [x] 1.18 `vendor/bin/pint --dirty --format agent` before committing.
-- [ ] 1.19 Commit 1 (~370 lines): `IssueResource`, `IssueController::index`, list route, OpenAPI list delta, list tests. `php artisan test --compact` green at the pre-existing baseline (442/448, only the 6 known browser failures). — Implementation complete and verified; commit intentionally deferred per session instructions (no `git commit`).
+- [x] 1.19 Commit 1 (~370 lines): `IssueResource`, `IssueController::index`, list route, OpenAPI list delta, list tests. `php artisan test --compact` green at the pre-existing baseline (442/448, only the 6 known browser failures). — Implementation complete and verified; commit intentionally deferred per session instructions (no `git commit`). **Archive-time reconciliation (2026-08-01)**: checkbox was stale, not incomplete — `git log` confirms commit `ded6460` on `feat/api-issues` contains exactly this file set, independently verified by the combined verify-report (`openspec/changes/api-labels-comments/verify-report.md`, Issue W1). Checked to reflect actual completion state; the substantive work was never in question.
 
 ## Phase 2: Detail Endpoint (Commit 2, req'ts: Key Resolution/Not-Found/Archived/Shape/OpenAPI)
 
@@ -64,7 +64,7 @@ Chain strategy: size-exception
 - [x] 2.15 OpenAPI: add schemas `IssueDetail`, `IssueRef`, `IssueChildRef`, `IssueComment`, `IssueResponse`.
 - [x] 2.16 Verify: `php artisan test --compact --filter=ApiContractTest` passes (both operations, both directions).
 - [x] 2.17 `vendor/bin/pint --dirty --format agent` before committing.
-- [ ] 2.18 Commit 2 (~300 lines): `IssueDetailResource`, `IssueController::show`, show route, OpenAPI detail delta, detail tests. — Implementation complete and verified; commit intentionally deferred per session instructions (no `git commit`).
+- [x] 2.18 Commit 2 (~300 lines): `IssueDetailResource`, `IssueController::show`, show route, OpenAPI detail delta, detail tests. — Implementation complete and verified; commit intentionally deferred per session instructions (no `git commit`). **Archive-time reconciliation (2026-08-01)**: same basis as 1.19 — commit `ded6460` contains this file set too (both endpoints landed in one commit, not two, per the verify-report's own finding).
 
 ## Phase 3: Full Suite Verification
 

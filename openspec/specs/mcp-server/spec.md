@@ -32,31 +32,68 @@ bearer challenge", "a revoked token stops authenticating immediately").*
 - WHEN that token is revoked
 - THEN the very next request MUST fail to authenticate
 
-### Requirement: Exactly One Token Exists, And The Plain Text Is Shown Once
+### Requirement: Exactly One MCP Token Exists, And The Plain Text Is Shown Once
 
-The token settings page MUST report that no token exists before one is generated. Generating a token
-MUST store exactly one personal access token and MUST flash the plain text exactly once. Regenerating
-MUST kill the previous token immediately. **The plain token MUST NEVER leak into the persistent page
-prop.** Guests MUST be redirected to login.
+The token settings page MUST report that no MCP token exists before one is generated. Generating an
+MCP token MUST store exactly one personal access token named `mcp`, MUST NOT disturb any token named
+`mobile`, and MUST flash the plain text exactly once. Regenerating MUST kill the previous `mcp` token
+immediately, again without touching a `mobile` token. **The plain token MUST NEVER leak into the
+persistent page prop.** Guests MUST be redirected to login.
+
+(History: previously scoped to "a token" with no name distinction — `tokens()->delete()` removed
+every token regardless of name. Narrowed by the `api-token-auth` capability to scope specifically to
+tokens named `mcp`, since a `mobile` token minted by `POST /api/v1/login` (see the `api-auth` spec)
+must survive MCP token generation and regeneration.)
 
 *Verified by: `tests/Feature/Mcp/*` ("the page reports no token before one is generated", "generating a
 token stores a single pat and flashes the plain text once", "regenerating kills the previous token
 immediately", "the plain token never leaks into the persistent token prop"),
+`tests/Feature/McpTokenTest.php` (name-scoped uniqueness, coexistence with a `mobile` token),
 `tests/Browser/McpTokenFlowTest.php`.*
 
 #### Scenario: The plain token never persists in page state
 
-- GIVEN a token has just been generated
+- GIVEN an MCP token has just been generated
 - WHEN the page renders
 - THEN the plain text SHALL appear only in the one-time flash
 - AND the persistent token prop SHALL NOT contain it
 
-#### Scenario: Regenerating invalidates the old token at once
+#### Scenario: Regenerating invalidates the old MCP token at once
 
-- GIVEN an existing token
+- GIVEN an existing MCP token
 - WHEN the user regenerates it
-- THEN the previous token SHALL stop working immediately
-- AND exactly one token SHALL remain stored
+- THEN the previous MCP token SHALL stop working immediately
+- AND exactly one token named `mcp` SHALL remain stored
+
+#### Scenario: A mobile token survives MCP token generation
+
+- GIVEN an existing `mobile` token
+- WHEN the owner generates or regenerates the MCP token
+- THEN the `mobile` token SHALL remain valid and untouched
+- AND exactly one token named `mcp` SHALL exist
+
+### Requirement: MCP Access Requires The `mcp` Ability
+
+In addition to the existing bearer-authentication requirement ("Access Requires A Valid Bearer
+Token" above), `/mcp` MUST require the presenting token to carry the `mcp` ability. A token lacking
+it MUST be refused `403`. A token carrying the wildcard ability `['*']` — the only kind that existed
+before the `api-token-auth` capability shipped — MUST continue to authenticate, preserving the
+owner's live Claude Desktop integration without regression.
+
+*Verified by: `tests/Feature/McpServerTest.php` ("a mobile-only token is refused at /mcp", "a
+pre-existing wildcard-ability token still reaches mcp").*
+
+#### Scenario: A mobile-only token is refused at `/mcp`
+
+- GIVEN a bearer token with ability `['mobile']` only
+- WHEN it is presented to `/mcp`
+- THEN the response SHALL be `403`
+
+#### Scenario: A pre-existing wildcard token keeps working at `/mcp`
+
+- GIVEN a bearer token with ability `['*']`, minted before the `api-token-auth` capability shipped
+- WHEN it is presented to `/mcp`
+- THEN the request SHALL authenticate as before
 
 ### Requirement: Tools Enforce The Same Authorization As The Web
 
