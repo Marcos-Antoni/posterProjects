@@ -40,7 +40,7 @@ test('users can authenticate using the login screen', function () {
     // Redirects straight to /objectives (not /) so a fresh login doesn't need
     // a second hop through the root's own auth-branching redirect. (Phase 3
     // moves the landing to the Now screen.)
-    $response->assertRedirect(route('objectives.index', absolute: false));
+    $response->assertRedirect(route('now', absolute: false));
 });
 
 test('users cannot authenticate with an invalid password', function () {

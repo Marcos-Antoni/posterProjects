@@ -28,6 +28,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->redirectGuestsTo(fn () => route('login'));
+        // Phase 3: an authenticated visit to a guest-only page (login) lands on Now.
+        $middleware->redirectUsersTo(fn () => route('now'));
 
         $middleware->trustProxies(at: '*');
 

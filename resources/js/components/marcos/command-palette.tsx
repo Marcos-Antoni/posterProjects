@@ -9,6 +9,7 @@ import {
     DialogDescription,
     DialogTitle,
 } from '@/components/ui/dialog';
+import { now } from '@/routes';
 import { today as habitsToday } from '@/routes/habits';
 import {
     index as objectivesIndex,
@@ -54,6 +55,7 @@ export function CommandPalette() {
                 hint: objective.key,
                 href: objectiveShow(objective.key).url,
             })),
+            { label: 'Ahora', hint: 'Sección', href: now().url } /* phase 3 */,
             {
                 label: 'Objetivos',
                 hint: 'Sección',

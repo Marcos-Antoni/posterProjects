@@ -5,6 +5,8 @@ use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitEntryController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemDependencyController;
+use App\Http\Controllers\ItemFocusController;
+use App\Http\Controllers\NowController;
 use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\Settings\AppearanceController;
@@ -16,7 +18,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
     return $request->user()
-        ? redirect()->route('objectives.index')
+        ? redirect()->route('now') // phase 3: Now is the landing (auth spec)
         : redirect()->route('login');
 })->name('home');
 
@@ -118,6 +120,19 @@ Route::middleware('auth')->group(function (): void {
     Route::post('objectives/{objective}/items/{item}/unlocks', [ItemDependencyController::class, 'storeUnlock'])->name('objectives.items.unlocks.store');
     Route::delete('objectives/{objective}/items/{item}/unlocks/{dependent}', [ItemDependencyController::class, 'destroyUnlock'])->name('objectives.items.unlocks.destroy');
     // --- end phase 2 ---
+
+    // --- phase 3: now and execution ---
+    // "Ahora" (screen 2): the landing of every authenticated visit.
+    Route::get('now', [NowController::class, 'show'])->name('now');
+    Route::post('now/close-for-today', [NowController::class, 'closeForToday'])->name('now.close-for-today');
+
+    // Execution on one item (now-focus): start it as THE active task, stop
+    // it for today, and the "estoy trabado" fallback. `{item}` is the public
+    // key, resolved with Item::resolveByKey() (404 when foreign or retired).
+    Route::post('objectives/{objective}/items/{item}/start', [ItemFocusController::class, 'start'])->name('objectives.items.start');
+    Route::post('objectives/{objective}/items/{item}/stop', [ItemFocusController::class, 'stop'])->name('objectives.items.stop');
+    Route::post('objectives/{objective}/items/{item}/two-minute', [ItemFocusController::class, 'shrink'])->name('objectives.items.two-minute');
+    // --- end phase 3 ---
 });
 
 require __DIR__.'/auth.php';

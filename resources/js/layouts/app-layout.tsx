@@ -5,6 +5,7 @@ import { CommandPalette } from '@/components/marcos/command-palette';
 import { SettingsIcon } from '@/components/marcos/icons';
 import { Toaster } from '@/components/ui/toast';
 import { useSyncAppearance } from '@/hooks/use-appearance';
+import { now } from '@/routes';
 import { today as habitsToday } from '@/routes/habits';
 import { index as objectivesIndex } from '@/routes/objectives';
 import { show as mcpTokenShow } from '@/routes/settings/mcp-token';
@@ -17,6 +18,7 @@ type NavEntry = { label: string; href: string; match: string };
  * own line, where the mockup shows it, when its screen exists.
  */
 const NAV: NavEntry[] = [
+    { label: 'Ahora', href: now().url, match: '/now' } /* phase 3 */,
     {
         label: 'Objetivos',
         href: objectivesIndex().url,
@@ -50,8 +52,8 @@ export default function AppLayout({ children }: PropsWithChildren) {
             <header className="appbar">
                 <Link
                     className="brand"
-                    href={objectivesIndex()}
-                    aria-label="Marcos OS, ir a Objetivos"
+                    href={now()} /* phase 3: the brand goes to Ahora, as in the mockups */
+                    aria-label="Marcos OS, ir a Ahora"
                 >
                     <i aria-hidden="true" />
                     <span>Marcos OS</span>
