@@ -7,6 +7,7 @@ import { Toaster } from '@/components/ui/toast';
 import { useSyncAppearance } from '@/hooks/use-appearance';
 import { today as habitsToday } from '@/routes/habits';
 import { index as objectivesIndex } from '@/routes/objectives';
+import { index as retiredIndex } from '@/routes/retired';
 import { show as mcpTokenShow } from '@/routes/settings/mcp-token';
 
 type NavEntry = { label: string; href: string; match: string };
@@ -27,6 +28,11 @@ const NAV: NavEntry[] = [
         href: habitsToday().url,
         match: '/habits',
     } /* phase 2 (existing screen) */,
+    {
+        label: 'Retirados',
+        href: retiredIndex().url,
+        match: '/retired',
+    } /* phase 6 */,
 ];
 
 /**

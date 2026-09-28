@@ -26,6 +26,10 @@ enum Operation: string
     case UncheckItem = 'uncheck-item';
     case AddDependency = 'add-dependency';
     case RemoveDependency = 'remove-dependency';
+    // --- phase 6: retirement (major: create, retire or restore any element) ---
+    case RetireElement = 'retire-element';
+    case RestoreElement = 'restore-element';
+    // --- end phase 6 ---
 
     public function tier(): AiTier
     {

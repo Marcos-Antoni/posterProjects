@@ -4,6 +4,9 @@ namespace App\Models;
 
 use App\Enums\ItemKind;
 use App\Enums\ItemState;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
+use App\Models\Scopes\NotRetired;
 use Database\Factories\ItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -55,10 +58,12 @@ use Illuminate\Support\Facades\DB;
     'retired_at',
     'position',
 ])]
-class Item extends Model
+class Item extends Model implements Retirable
 {
     /** @use HasFactory<ItemFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -81,7 +86,7 @@ class Item extends Model
      */
     public function objective(): BelongsTo
     {
-        return $this->belongsTo(Objective::class);
+        return $this->belongsTo(Objective::class)->withoutGlobalScope(NotRetired::class);
     }
 
     /**
@@ -89,7 +94,24 @@ class Item extends Model
      */
     public function plan(): BelongsTo
     {
-        return $this->belongsTo(Plan::class);
+        return $this->belongsTo(Plan::class)->withoutGlobalScope(NotRetired::class);
+    }
+
+    /**
+     * Retired items carry `retired_at` (retirement spec).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $retired
+            ? $query->whereNotNull($this->qualifyColumn('retired_at'))
+            : $query->whereNull($this->qualifyColumn('retired_at'));
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->retired_at !== null;
     }
 
     /**

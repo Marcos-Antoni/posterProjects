@@ -43,9 +43,8 @@ final class ObjectiveTree
             ->get()
             ->each(fn (Item $item) => $item->setRelation('objective', $objective));
 
-        $retired = Item::query()
+        $retired = Item::onlyRetired()
             ->where('objective_id', $objective->id)
-            ->whereNotNull('retired_at')
             ->orderBy('number')
             ->get(['id', 'plan_id', 'title'])
             ->groupBy('plan_id');

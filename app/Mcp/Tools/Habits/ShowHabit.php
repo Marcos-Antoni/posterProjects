@@ -71,7 +71,7 @@ class ShowHabit extends Tool
                 'weekdays' => $habit->weekdays,
                 'times_per_week' => $habit->times_per_week,
                 'planned_time' => $habit->planned_time,
-                'archived_at' => $habit->archived_at?->toIso8601String(),
+                'retired_at' => $habit->retired_at?->toIso8601String(),
                 'url' => $this->links->habit($habit),
             ],
             'metrics' => [

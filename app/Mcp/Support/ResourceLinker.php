@@ -42,6 +42,16 @@ class ResourceLinker
         return route('objectives.items.show', [substr($itemKey, 0, (int) strrpos($itemKey, '-')), $itemKey]);
     }
 
+    /**
+     * The Retired view, optionally filtered (phase 6).
+     *
+     * @param  array<string, string|null>  $filters
+     */
+    public function retired(array $filters = []): string
+    {
+        return route('retired.index', array_filter($filters, fn (?string $value): bool => $value !== null));
+    }
+
     public function habit(Habit $habit): string
     {
         return route('habits.show', ['habit' => $habit->id]);

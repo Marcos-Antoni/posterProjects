@@ -45,7 +45,7 @@ class ItemFactory extends Factory
 
         return $this
             ->afterMaking(function (Item $item) use ($appended): void {
-                $plan = Plan::query()->findOrFail($item->plan_id);
+                $plan = Plan::withRetired()->findOrFail($item->plan_id);
 
                 $item->objective_id ??= $plan->objective_id;
                 $item->number ??= $plan->objective->allocateNextItemNumber();
@@ -57,7 +57,7 @@ class ItemFactory extends Factory
             })
             ->afterCreating(function (Item $item) use ($appended): void {
                 if (isset($appended[$item])) {
-                    $item->update(['position' => Item::query()
+                    $item->update(['position' => Item::withRetired()
                         ->where('plan_id', $item->plan_id)
                         ->where('id', '<', $item->id)
                         ->count()]);

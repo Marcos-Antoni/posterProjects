@@ -7,12 +7,15 @@ import { ControlPlanCard } from '@/components/marcos/control-plan-card';
 import { Crumbs } from '@/components/marcos/crumbs';
 import { PlusIcon } from '@/components/marcos/icons';
 import { ItemRow } from '@/components/marcos/item-row';
+import { RetireButton } from '@/components/marcos/retire-dialog';
 import { StateGlyph } from '@/components/marcos/state-glyph';
 import AppLayout from '@/layouts/app-layout';
 import {
     edit as objectiveEdit,
     index as objectivesIndex,
     reopen as objectiveReopen,
+    retire as objectiveRetire,
+    retireContext as objectiveRetireContext,
     update as objectiveUpdate,
 } from '@/routes/objectives';
 import controlMap from '@/routes/objectives/control-map';
@@ -94,6 +97,15 @@ export default function ObjectiveShow({
                         >
                             Editar el objetivo
                         </Link>
+                    )}
+                    {writable && (
+                        <RetireButton
+                            contextUrl={
+                                objectiveRetireContext(objective.key).url
+                            }
+                            actionUrl={objectiveRetire(objective.key).url}
+                            label="Retirar el objetivo"
+                        />
                     )}
                 </div>
             </div>

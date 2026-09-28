@@ -14,7 +14,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Record an entry against a habit for today (UTC-6). Yes/no habits always log 1 (a single check-in); quantitative habits require a positive amount, which accumulates into the day\'s total. Archived habits reject new entries — reactivate first with unarchive-habit. Owner only.')]
+#[Description('Record an entry against a habit for today (UTC-6). Yes/no habits always log 1 (a single check-in); quantitative habits require a positive amount, which accumulates into the day\'s total. Retired habits are hidden and reject new entries (not found); Marco restores them from Retirados. Owner only.')]
 class LogHabitEntry extends Tool
 {
     use ResolvesAuthenticatedUser;

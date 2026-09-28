@@ -11,7 +11,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('List every habit owned by the authenticated user, active and archived alike — same data as the habit management page. Use today-habits to see only what is scheduled today.')]
+#[Description('List every non-retired habit owned by the authenticated user — same data as the habit management page. Retired habits are hidden; they appear only in retired-view. Use today-habits to see only what is scheduled today.')]
 class ListHabits extends Tool
 {
     use ResolvesAuthenticatedUser;
@@ -42,7 +42,7 @@ class ListHabits extends Tool
                 'weekdays' => $habit->weekdays,
                 'times_per_week' => $habit->times_per_week,
                 'planned_time' => $habit->planned_time,
-                'archived_at' => $habit->archived_at?->toIso8601String(),
+                'retired_at' => $habit->retired_at?->toIso8601String(),
                 'url' => $this->links->habit($habit),
             ])->all(),
         ]);

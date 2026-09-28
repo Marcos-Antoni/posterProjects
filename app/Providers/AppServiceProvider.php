@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Actions\Retirement\RetirementHandlers;
 use App\Actions\Support\AuditWriter;
 use App\Actions\Support\LogAuditWriter;
+use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
 use App\Models\Plan;
@@ -32,6 +34,10 @@ class AppServiceProvider extends ServiceProvider
         // Phase 2 skeleton (design D3): AI-applied changes are recorded in the
         // log until Phase 8 adds `ai_audit_entries` and binds its writer here.
         $this->app->bind(AuditWriter::class, LogAuditWriter::class);
+
+        // Phase 6 (design D8): one registry of retirement handlers per model;
+        // Phase 7 registers captures on it.
+        $this->app->singleton(RetirementHandlers::class);
     }
 
     /**
@@ -99,6 +105,7 @@ class AppServiceProvider extends ServiceProvider
             'objective' => Objective::class,
             'plan' => Plan::class,
             'item' => Item::class,
+            'habit' => Habit::class, // phase 6
         ]);
     }
 

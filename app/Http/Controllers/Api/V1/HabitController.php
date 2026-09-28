@@ -32,7 +32,6 @@ class HabitController extends Controller
 
         $habits = $request->user()
             ->habits()
-            ->whereNull('archived_at')
             ->with(['days' => fn ($query) => $query->whereBetween(
                 'entry_date',
                 [$weekStart->toDateString(), $today->toDateString()],

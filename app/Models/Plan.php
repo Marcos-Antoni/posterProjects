@@ -3,6 +3,9 @@
 namespace App\Models;
 
 use App\Enums\PlanState;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
+use App\Models\Scopes\NotRetired;
 use Database\Factories\PlanFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -30,10 +33,12 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['objective_id', 'title', 'state', 'level', 'position'])]
-class Plan extends Model
+class Plan extends Model implements Retirable
 {
     /** @use HasFactory<PlanFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -53,7 +58,22 @@ class Plan extends Model
      */
     public function objective(): BelongsTo
     {
-        return $this->belongsTo(Objective::class);
+        return $this->belongsTo(Objective::class)->withoutGlobalScope(NotRetired::class);
+    }
+
+    /**
+     * Retired plans are in the `retired` state (plans spec).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $query->where($this->qualifyColumn('state'), $retired ? '=' : '!=', PlanState::Retired->value);
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->state === PlanState::Retired;
     }
 
     /**

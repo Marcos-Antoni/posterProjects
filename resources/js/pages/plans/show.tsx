@@ -5,6 +5,7 @@ import type { FormEvent, ReactElement } from 'react';
 import { Crumbs } from '@/components/marcos/crumbs';
 import { AttentionIcon } from '@/components/marcos/icons';
 import { ItemRow } from '@/components/marcos/item-row';
+import { RetireButton } from '@/components/marcos/retire-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { formatLongDateCapitalized, formatNumber } from '@/lib/marcos';
 import {
@@ -15,6 +16,8 @@ import {
     activate as planActivate,
     edit as planEdit,
     move as planMove,
+    retire as planRetire,
+    retireContext as planRetireContext,
     show as planShow,
 } from '@/routes/objectives/plans';
 import { store as itemStore } from '@/routes/objectives/plans/items';
@@ -219,6 +222,13 @@ export default function PlanShow({
                         >
                             Editar el plan
                         </Link>
+                        <RetireButton
+                            contextUrl={
+                                planRetireContext([objective.key, plan.id]).url
+                            }
+                            actionUrl={planRetire([objective.key, plan.id]).url}
+                            label="Retirar el plan"
+                        />
                     </div>
                 )}
             </div>

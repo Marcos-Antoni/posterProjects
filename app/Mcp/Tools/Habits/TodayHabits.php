@@ -14,7 +14,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('List the authenticated user\'s active habits scheduled for today (UTC-6), with each one\'s progress for the day and, for weekly-quota habits, how many days of the current week are already recorded. Same data as the "Today" view. Use list-habits to see every habit, including archived ones.')]
+#[Description('List the authenticated user\'s active habits scheduled for today (UTC-6), with each one\'s progress for the day and, for weekly-quota habits, how many days of the current week are already recorded. Same data as the "Today" view. Retired habits are hidden (see retired-view). Use list-habits to see every non-retired habit.')]
 class TodayHabits extends Tool
 {
     use ResolvesAuthenticatedUser;
@@ -34,7 +34,6 @@ class TodayHabits extends Tool
         $weekStart = $today->clone()->startOfWeek(CarbonInterface::MONDAY);
 
         $habits = $user->habits()
-            ->whereNull('archived_at')
             ->with(['days' => fn ($query) => $query->whereBetween(
                 'entry_date',
                 [$weekStart->toDateString(), $today->toDateString()],

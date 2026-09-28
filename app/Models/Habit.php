@@ -4,9 +4,12 @@ namespace App\Models;
 
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
 use Carbon\CarbonInterface;
 use Database\Factories\HabitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -28,7 +31,7 @@ use Illuminate\Validation\ValidationException;
  * @property list<int>|null $weekdays
  * @property int|null $times_per_week
  * @property string|null $planned_time
- * @property Carbon|null $archived_at
+ * @property Carbon|null $retired_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -42,12 +45,14 @@ use Illuminate\Validation\ValidationException;
     'weekdays',
     'times_per_week',
     'planned_time',
-    'archived_at',
+    'retired_at',
 ])]
-class Habit extends Model
+class Habit extends Model implements Retirable
 {
     /** @use HasFactory<HabitFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -63,8 +68,25 @@ class Habit extends Model
             'habit_type' => HabitType::class,
             'recurrence_type' => RecurrenceType::class,
             'weekdays' => 'array',
-            'archived_at' => 'datetime',
+            'retired_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Retired habits carry `retired_at` (habits spec: retire, never delete).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $retired
+            ? $query->whereNotNull($this->qualifyColumn('retired_at'))
+            : $query->whereNull($this->qualifyColumn('retired_at'));
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->retired_at !== null;
     }
 
     /**

@@ -4,10 +4,10 @@ use App\Models\User;
 
 /**
  * Full habit lifecycle through the UI: create a quantitative habit, log
- * an entry, check the detail page, then archive and reactivate it from
- * management.
+ * an entry, check the detail page, then retire it with a reason (Phase 6:
+ * archive became retire) and bring it back from Retirados.
  */
-test('a user creates a quantitative habit, logs an entry, views the detail page, and archives then reactivates it', function () {
+test('a user creates a quantitative habit, logs an entry, views the detail page, and retires then restores it', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user);
@@ -46,19 +46,28 @@ test('a user creates a quantitative habit, logs an entry, views the detail page,
         ->assertSee('días')
         ->assertNoJavascriptErrors();
 
-    // Back to management: archive, confirm it moved to "Archivados", then
-    // reactivate it back into the active list.
+    // Back to management: retire with a written reason; it leaves the list
+    // and shows in Retirados, from where it goes back to the map.
     $page = visit('/habits/manage');
 
     $page->assertSee('Read')
-        ->click('Archivar')
-        ->assertSee('Archivados')
-        ->assertSee('Reactivar')
+        ->click('Retirar')
+        ->assertSee('¿Por qué lo retirás?')
+        ->fill('reason', 'demasiado grande para arrancar')
+        ->click('Retirar y archivar')
+        ->assertSee('Todavía no tenés hábitos')
         ->assertNoJavascriptErrors();
 
-    $page->click('Reactivar')
-        ->assertSee('Read')
+    $page = visit('/retired');
+
+    $page->assertSee('Read')
+        ->assertSee('demasiado grande para arrancar')
+        ->click('Devolver al mapa')
+        ->click('internal:role=dialog >> internal:role=button[name="Devolver al mapa"]')
+        ->assertSee('Todavía no retiraste nada')
         ->assertNoJavascriptErrors();
+
+    visit('/habits/manage')->assertSee('Read');
 });
 
 /**

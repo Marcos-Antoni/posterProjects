@@ -12,8 +12,8 @@ type HabitsIndexProps = {
 };
 
 export default function HabitsIndex({ habits }: HabitsIndexProps) {
-    const active = habits.filter((habit) => habit.archived_at === null);
-    const archived = habits.filter((habit) => habit.archived_at !== null);
+    // Retired habits are hidden (retirement spec): they live in Retirados.
+    const active = habits;
 
     return (
         <>
@@ -26,7 +26,7 @@ export default function HabitsIndex({ habits }: HabitsIndexProps) {
                             Gestión de hábitos
                         </h1>
                         <p className="text-sm text-muted-foreground">
-                            Creá, editá y archivá tus hábitos.
+                            Creá, editá y retirá tus hábitos.
                         </p>
                     </div>
 
@@ -51,19 +51,6 @@ export default function HabitsIndex({ habits }: HabitsIndexProps) {
                         {active.map((habit) => (
                             <ManageHabitCard key={habit.id} habit={habit} />
                         ))}
-                    </div>
-                )}
-
-                {archived.length > 0 && (
-                    <div className="flex flex-col gap-3">
-                        <h2 className="text-sm font-medium tracking-wide text-muted-foreground uppercase">
-                            Archivados
-                        </h2>
-                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            {archived.map((habit) => (
-                                <ManageHabitCard key={habit.id} habit={habit} />
-                            ))}
-                        </div>
                     </div>
                 )}
             </div>

@@ -17,8 +17,8 @@ use Inertia\Response;
 class HabitController extends Controller
 {
     /**
-     * Display the authenticated user's habits (active and archived — the
-     * page splits them client-side).
+     * Display the authenticated user's non-retired habits (retired ones
+     * live in the Retired view).
      */
     public function index(Request $request): Response
     {
@@ -49,7 +49,6 @@ class HabitController extends Controller
 
         $habits = $request->user()
             ->habits()
-            ->whereNull('archived_at')
             ->with(['days' => fn ($query) => $query->whereBetween(
                 'entry_date',
                 [$weekStart->toDateString(), $today->toDateString()],
@@ -181,31 +180,6 @@ class HabitController extends Controller
             'times_per_week' => null,
             ...$request->validated(),
         ]);
-
-        return redirect()->route('habits.index');
-    }
-
-    /**
-     * Archive a habit. It keeps its full history and can be reactivated
-     * at any time — there is no destroy. Owner only.
-     */
-    public function archive(Habit $habit): RedirectResponse
-    {
-        Gate::authorize('archive', $habit);
-
-        $habit->update(['archived_at' => now()]);
-
-        return redirect()->route('habits.index');
-    }
-
-    /**
-     * Reactivate an archived habit. Owner only.
-     */
-    public function unarchive(Habit $habit): RedirectResponse
-    {
-        Gate::authorize('unarchive', $habit);
-
-        $habit->update(['archived_at' => null]);
 
         return redirect()->route('habits.index');
     }

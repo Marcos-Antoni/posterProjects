@@ -26,7 +26,7 @@ export type HabitTodayProgress = {
 /** A habit as serialized by `HabitController::today()`. */
 export type TodayHabit = Omit<
     Habit,
-    'user_id' | 'archived_at' | 'created_at' | 'updated_at'
+    'user_id' | 'retired_at' | 'created_at' | 'updated_at'
 > & {
     today: HabitTodayProgress | null;
     week_recorded_days: number | null;
