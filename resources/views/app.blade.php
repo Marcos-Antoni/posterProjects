@@ -1,25 +1,29 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') == 'dark'])>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" @class(['dark' => ($appearance ?? 'system') === 'dark']) data-appearance="{{ $appearance ?? 'system' }}">
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        {{-- Anti-FOUC: resolves the `system` case (server can't see
-        `prefers-color-scheme`) and any cookie/class desync, before any
-        CSS or JS bundle loads. Vanilla JS, no dependencies. --}}
+        {{-- Anti-FOUC: the server renders `data-appearance` (the user's
+        stored preference, or the guest cookie) and the `.dark` class for
+        `dark`. Only `system` needs the browser: this resolves it against
+        `prefers-color-scheme` before any CSS or JS bundle loads, and keeps
+        following OS changes while `system` is selected. Vanilla JS. --}}
         <script id="appearance-script">
             (function () {
-                function readCookie(name) {
-                    const match = document.cookie.match(new RegExp('(?:^|; )' + name + '=([^;]*)'));
+                const root = document.documentElement;
+                const media = window.matchMedia('(prefers-color-scheme: dark)');
 
-                    return match ? decodeURIComponent(match[1]) : null;
+                function apply() {
+                    const appearance = root.dataset.appearance || 'system';
+                    const isDark = appearance === 'dark' || (appearance === 'system' && media.matches);
+
+                    root.classList.toggle('dark', isDark);
+                    root.style.colorScheme = isDark ? 'dark' : 'light';
                 }
 
-                const appearance = readCookie('appearance') || localStorage.getItem('appearance') || 'system';
-                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                const isDark = appearance === 'dark' || (appearance === 'system' && prefersDark);
-
-                document.documentElement.classList.toggle('dark', isDark);
+                apply();
+                media.addEventListener('change', apply);
             })();
         </script>
 

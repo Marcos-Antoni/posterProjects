@@ -1,9 +1,10 @@
 import { useHttp } from '@inertiajs/react';
-import { QrCode } from 'lucide-react';
+import { Check, QrCode } from 'lucide-react';
 import { toString as qrCodeToString } from 'qrcode';
 import { useEffect, useRef, useState } from 'react';
 
 import { Button } from '@/components/ui/button';
+import { formatMoment } from '@/lib/dates';
 import type { QrPassMint, QrPassStatus } from '@/types';
 
 type CardState = 'idle' | 'minting' | 'live' | 'consumed' | 'expired';
@@ -12,12 +13,6 @@ const MINT_URL = '/settings/mobile-token/qr';
 const STATUS_URL = '/settings/mobile-token/qr/status';
 const POLL_INTERVAL_MS = 3000;
 const RE_MINT_WINDOW_SECONDS = 10;
-
-const formatDateTime = (value: string) =>
-    new Date(value).toLocaleString('es', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    });
 
 const secondsUntil = (isoDate: string) =>
     Math.max(0, Math.ceil((new Date(isoDate).getTime() - Date.now()) / 1000));
@@ -39,6 +34,7 @@ export default function QrLoginCard() {
     const [qrSvg, setQrSvg] = useState<string | null>(null);
     const [expiresAt, setExpiresAt] = useState<string | null>(null);
     const [secondsLeft, setSecondsLeft] = useState(0);
+    const [lifetime, setLifetime] = useState(0);
     const [consumedAt, setConsumedAt] = useState<string | null>(null);
     const [consumedIp, setConsumedIp] = useState<string | null>(null);
 
@@ -63,6 +59,7 @@ export default function QrLoginCard() {
         }
 
         setExpiresAt(response.expires_at);
+        setLifetime(secondsUntil(response.expires_at));
         setState('live');
 
         qrCodeToString(response.payload, { type: 'svg' }).then(setQrSvg);
@@ -152,14 +149,66 @@ export default function QrLoginCard() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [state]);
 
-    if (state === 'idle') {
+    return (
+        <section
+            aria-labelledby="qr-heading"
+            className="rounded-md border border-border bg-surface p-6"
+        >
+            <h2
+                id="qr-heading"
+                className="mb-1 text-lg leading-[26px] font-bold"
+            >
+                Iniciar sesión con QR
+            </h2>
+            <QrCardBody
+                state={state}
+                qrSvg={qrSvg}
+                secondsLeft={secondsLeft}
+                lifetime={lifetime}
+                consumedAt={consumedAt}
+                consumedIp={consumedIp}
+                onMint={mint}
+            />
+        </section>
+    );
+}
+
+type QrCardBodyProps = {
+    state: CardState;
+    qrSvg: string | null;
+    secondsLeft: number;
+    lifetime: number;
+    consumedAt: string | null;
+    consumedIp: string | null;
+    onMint: (acknowledgeConsumed?: boolean) => void;
+};
+
+/**
+ * Card states. No countdown in seconds (mockup 28, COGA: no time
+ * pressure): a thin ochre line shows the code's remaining life and the
+ * copy explains it renews itself while the page is open.
+ */
+function QrCardBody({
+    state,
+    qrSvg,
+    secondsLeft,
+    lifetime,
+    consumedAt,
+    consumedIp,
+    onMint,
+}: QrCardBodyProps) {
+    if (state === 'idle' || state === 'expired') {
         return (
-            <div className="flex flex-col gap-4 rounded-lg border p-4">
+            <div className="mt-3 flex flex-col items-start gap-3">
+                <p className="text-sm text-muted-foreground">
+                    {state === 'expired'
+                        ? 'El código venció. Mostrá uno nuevo para escanearlo.'
+                        : 'El código se genera solo cuando lo pedís y vale poco tiempo.'}
+                </p>
                 <Button
                     type="button"
                     variant="outline"
-                    className="self-start"
-                    onClick={() => mint()}
+                    onClick={() => onMint()}
                 >
                     <QrCode />
                     Mostrar código QR
@@ -170,17 +219,29 @@ export default function QrLoginCard() {
 
     if (state === 'consumed') {
         return (
-            <div className="flex flex-col gap-2 rounded-lg border p-4">
-                <p className="text-sm font-medium">
-                    Se inició sesión en un teléfono
-                    {consumedAt ? ` a las ${formatDateTime(consumedAt)}` : ''}
-                    {consumedIp ? ` desde ${consumedIp}` : ''}.
-                </p>
+            <div className="mt-3 flex flex-col items-start gap-4" role="status">
+                <div className="flex items-start gap-3.5">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-md bg-sunken text-primary">
+                        <Check
+                            className="size-5"
+                            strokeWidth={1.75}
+                            aria-hidden="true"
+                        />
+                    </span>
+                    <div>
+                        <b className="block font-semibold">
+                            Se inició sesión en un teléfono
+                        </b>
+                        <p className="text-sm text-muted-foreground">
+                            {consumedAt ? formatMoment(consumedAt) : 'Recién'}
+                            {consumedIp ? `, desde ${consumedIp}` : ''}.
+                        </p>
+                    </div>
+                </div>
                 <Button
                     type="button"
                     variant="outline"
-                    className="self-start"
-                    onClick={() => mint(true)}
+                    onClick={() => onMint(true)}
                 >
                     <QrCode />
                     Regenerar código QR
@@ -189,41 +250,45 @@ export default function QrLoginCard() {
         );
     }
 
-    if (state === 'expired') {
-        return (
-            <div className="flex flex-col gap-4 rounded-lg border p-4">
-                <p className="text-sm text-muted-foreground">
-                    El código expiró. Escaneá el nuevo.
-                </p>
-                <Button
-                    type="button"
-                    variant="outline"
-                    className="self-start"
-                    onClick={() => mint()}
-                >
-                    <QrCode />
-                    Mostrar código QR
-                </Button>
-            </div>
-        );
-    }
+    const remaining = lifetime > 0 ? Math.min(1, secondsLeft / lifetime) : 1;
 
     return (
-        <div className="flex flex-col items-start gap-3 rounded-lg border p-4">
-            {qrSvg ? (
-                <div
-                    data-testid="qr-code"
-                    className="h-40 w-40"
-                    dangerouslySetInnerHTML={{ __html: qrSvg }}
-                />
-            ) : (
-                <div className="h-40 w-40 animate-pulse rounded bg-muted" />
-            )}
-            {state === 'live' && (
-                <p className="text-sm text-muted-foreground">
-                    El código expira en {secondsLeft} s
-                </p>
-            )}
+        <div className="mt-3 grid items-center gap-7 sm:grid-cols-[auto_1fr]">
+            <div className="rounded-md border border-border bg-[#FAFBF9] p-2.5 leading-none">
+                {qrSvg ? (
+                    <div
+                        data-testid="qr-code"
+                        role="img"
+                        aria-label="Código QR para iniciar sesión en la app"
+                        className="size-40"
+                        dangerouslySetInnerHTML={{ __html: qrSvg }}
+                    />
+                ) : (
+                    <div className="size-40 animate-pulse rounded-sm bg-[#E3E9E5]" />
+                )}
+            </div>
+            <div>
+                <ol className="mt-3 list-decimal pl-5 text-[15px] leading-6">
+                    <li>Abrí Poster en el teléfono.</li>
+                    <li>Tocá “Entrar con código QR”.</li>
+                    <li>Apuntá la cámara a este código.</li>
+                </ol>
+                {state === 'live' && (
+                    <p className="mt-4 flex items-center gap-2 text-sm text-muted-foreground">
+                        <span
+                            aria-hidden="true"
+                            className="relative block h-[3px] w-[120px] overflow-hidden rounded-xs bg-sunken"
+                        >
+                            <span
+                                className="absolute inset-y-0 left-0 bg-blaze-ink"
+                                style={{ width: `${remaining * 100}%` }}
+                            />
+                        </span>
+                        Vale poco tiempo y se renueva solo mientras esta página
+                        esté abierta.
+                    </p>
+                )}
+            </div>
         </div>
     );
 }

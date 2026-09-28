@@ -1,10 +1,10 @@
 import { Link, usePage } from '@inertiajs/react';
 import { Calendar, LayoutGrid, Repeat } from 'lucide-react';
 
+import { BrandMark } from '@/components/brand-mark';
 import { SidebarNavLink } from '@/components/sidebar/sidebar-nav-link';
 import { SidebarProjectList } from '@/components/sidebar/sidebar-project-list';
 import { SidebarUserMenu } from '@/components/sidebar/sidebar-user-menu';
-import { ThemeToggle } from '@/components/sidebar/theme-toggle';
 import { Separator } from '@/components/ui/separator';
 import { home } from '@/routes';
 import { today as habitsToday } from '@/routes/habits';
@@ -12,9 +12,10 @@ import { index as projectsIndex } from '@/routes/projects';
 
 /**
  * Shared sidebar content: app name, primary nav (Proyectos, Calendario),
- * the user's project list, and the theme/account footer. Prop-less — it
- * self-sources `url` via `usePage()`, same as `SidebarProjectList`,
- * `SidebarUserMenu`, and `ThemeToggle` — so both the desktop `Sidebar`
+ * the user's project list, and the account footer (settings, including
+ * the theme, live in the account menu). Prop-less — it self-sources `url`
+ * via `usePage()`, same as `SidebarProjectList` and `SidebarUserMenu` —
+ * so both the desktop `Sidebar`
  * and the mobile `MobileSidebar` drawer can mount this exact tree without
  * threading any state down.
  */
@@ -23,11 +24,8 @@ export function SidebarContent() {
 
     return (
         <>
-            <Link
-                href={home()}
-                className="px-2.5 font-heading text-lg font-medium"
-            >
-                Jira Clone
+            <Link href={home()} className="px-2.5 no-underline">
+                <BrandMark />
             </Link>
 
             <nav className="flex flex-col gap-0.5">
@@ -66,7 +64,6 @@ export function SidebarContent() {
             <Separator />
 
             <div className="flex flex-col gap-1">
-                <ThemeToggle />
                 <SidebarUserMenu />
             </div>
         </>

@@ -3,6 +3,7 @@ import { Menu } from 'lucide-react';
 import { Dialog as DialogPrimitive } from 'radix-ui';
 import { useEffect, useState } from 'react';
 
+import { BrandMark } from '@/components/brand-mark';
 import { SidebarContent } from '@/components/sidebar/sidebar-content';
 import { Button } from '@/components/ui/button';
 import {
@@ -44,9 +45,7 @@ export function MobileSidebar() {
                     </Button>
                 </DialogTrigger>
 
-                <span className="font-heading text-lg font-medium">
-                    Jira Clone
-                </span>
+                <BrandMark />
             </header>
 
             <DialogPortal>

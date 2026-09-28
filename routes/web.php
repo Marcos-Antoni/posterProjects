@@ -12,6 +12,7 @@ use App\Http\Controllers\IssueLabelController;
 use App\Http\Controllers\IssueMoveController;
 use App\Http\Controllers\LabelController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
 use App\Http\Controllers\Settings\MobileTokenQrController;
@@ -41,6 +42,12 @@ Route::middleware('auth')->group(function (): void {
     // plain text travels in a one-shot session flash (never a prop).
     Route::get('settings/mcp-token', [McpTokenController::class, 'show'])->name('settings.mcp-token.show');
     Route::post('settings/mcp-token', [McpTokenController::class, 'store'])->name('settings.mcp-token.store');
+
+    // Appearance: the one theme selector (claro / oscuro / sistema), stored
+    // per user. There is deliberately no profile or password route: the
+    // password changes only via `php artisan marcos:set-password`.
+    Route::get('settings/appearance', [AppearanceController::class, 'show'])->name('settings.appearance.show');
+    Route::patch('settings/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
 
     // The mobile *token* is minted on the phone — via `POST /api/v1/login`
     // or by redeeming a QR *pass* (below) at `POST /api/v1/qr-login` — and

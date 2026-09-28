@@ -1,7 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
-import { ChevronsUpDown, KeyRound, LogOut } from 'lucide-react';
+import {
+    ChevronsUpDown,
+    KeyRound,
+    LogOut,
+    Smartphone,
+    Sun,
+} from 'lucide-react';
 
 import { destroy } from '@/actions/App/Http/Controllers/Auth/AuthenticatedSessionController';
+import { show as appearanceShow } from '@/actions/App/Http/Controllers/Settings/AppearanceController';
 import { show as mcpTokenShow } from '@/actions/App/Http/Controllers/Settings/McpTokenController';
 import { show as mobileTokenShow } from '@/actions/App/Http/Controllers/Settings/MobileTokenController';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -16,8 +23,8 @@ import {
 
 /**
  * Bottom-of-sidebar account section. The whole row is a dropdown
- * trigger: it opens the user's info with the entry to Settings (MCP
- * token) and the logout action.
+ * trigger: it opens the user's info with the Settings entries (MCP
+ * token, mobile app and QR, appearance) and the logout action.
  */
 export function SidebarUserMenu() {
     const { props } = usePage();
@@ -69,8 +76,15 @@ export function SidebarUserMenu() {
 
                 <DropdownMenuItem asChild>
                     <Link href={mobileTokenShow()}>
-                        <KeyRound />
-                        Token móvil
+                        <Smartphone />
+                        App móvil y QR
+                    </Link>
+                </DropdownMenuItem>
+
+                <DropdownMenuItem asChild>
+                    <Link href={appearanceShow()}>
+                        <Sun />
+                        Apariencia
                     </Link>
                 </DropdownMenuItem>
 

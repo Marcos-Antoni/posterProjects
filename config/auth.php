@@ -108,10 +108,11 @@ return [
     |
     | Here you may define the number of seconds before a password confirmation
     | window expires and users are asked to re-enter their password via the
-    | confirmation screen. By default, the timeout lasts for three hours.
+    | confirmation screen. Marcos OS: 15 minutes — remote AI execution and AI
+    | permission grants require a recent confirmation (auth spec).
     |
     */
 
-    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 10800),
+    'password_timeout' => env('AUTH_PASSWORD_TIMEOUT', 900),
 
 ];

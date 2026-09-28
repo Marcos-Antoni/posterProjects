@@ -22,7 +22,7 @@ test('a user reveals the QR code, sees the countdown, and the card flips to cons
 
     $page->click('Mostrar código QR')
         ->assertPresent('[data-testid="qr-code"]')
-        ->assertSee('El código expira en')
+        ->assertSee('Vale poco tiempo y se renueva solo')
         ->assertNoJavascriptErrors();
 
     // Simulate the phone's redemption directly, exactly as
@@ -44,7 +44,7 @@ test('a user reveals the QR code, sees the countdown, and the card flips to cons
     // `acknowledge_consumed` flag in MobileTokenQrController::store).
     $page->click('Regenerar código QR')
         ->assertPresent('[data-testid="qr-code"]')
-        ->assertSee('El código expira en')
+        ->assertSee('Vale poco tiempo y se renueva solo')
         ->assertNoJavascriptErrors();
 
     expect(QrLoginPass::query()->count())->toBe(2);

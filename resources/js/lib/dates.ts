@@ -20,3 +20,33 @@ export function parseIsoDate(value: string): Date {
 
     return new Date(year, month - 1, day);
 }
+
+/**
+ * Absolute, human moment for status lines (mockups 27/28, Nielsen 1):
+ * "hoy, 19:02" for today, otherwise "sábado 12 sep 2026, 10:14".
+ */
+export function formatMoment(value: string, now: Date = new Date()): string {
+    const date = new Date(value);
+    const time = date.toLocaleTimeString('es', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    });
+
+    if (toIsoDateString(date) === toIsoDateString(now)) {
+        return `hoy, ${time}`;
+    }
+
+    const day = date
+        .toLocaleDateString('es', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+        })
+        .replace(',', '')
+        .replace(/ de /g, ' ')
+        .replace('.', '');
+
+    return `${day}, ${time}`;
+}

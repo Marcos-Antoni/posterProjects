@@ -10,7 +10,7 @@ use App\Models\User;
 test('the login page renders without javascript errors', function () {
     $page = visit('/login');
 
-    $page->assertSee('Iniciar sesión')
+    $page->assertSee('Entrar')
         ->assertNoJavascriptErrors();
 });
 
@@ -54,6 +54,9 @@ test('every key authenticated page renders without javascript errors', function 
         '/habits/manage',
         "/habits/{$habit->id}",
         '/settings/mcp-token',
+        '/settings/mobile-token',
+        '/settings/appearance',
+        '/confirm-password',
     ]);
 
     $pages->assertNoJavascriptErrors();

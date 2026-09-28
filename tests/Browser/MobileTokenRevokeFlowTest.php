@@ -18,16 +18,16 @@ test('a user logs in through the form, opens the mobile token settings from the 
 
     $page = visit('/login');
 
-    $page->assertSee('Iniciar sesión')
+    $page->assertSee('Entrar')
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
-        ->press('Ingresar')
+        ->press('button[type="submit"]')
         ->assertPathIs('/projects')
         ->assertNoJavascriptErrors();
 
     $page->click($user->name)
-        ->assertSee('Token móvil')
-        ->click('Token móvil')
+        ->assertSee('App móvil y QR')
+        ->click('App móvil y QR')
         ->assertPathIs('/settings/mobile-token')
         ->assertSee('Token activo')
         ->assertNoJavascriptErrors();

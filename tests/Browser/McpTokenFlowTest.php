@@ -13,10 +13,10 @@ test('a user logs in through the form, opens the mcp token settings from the sid
 
     $page = visit('/login');
 
-    $page->assertSee('Iniciar sesión')
+    $page->assertSee('Entrar')
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
-        ->press('Ingresar')
+        ->press('button[type="submit"]')
         ->assertPathIs('/projects')
         ->assertNoJavascriptErrors();
 
@@ -34,7 +34,7 @@ test('a user logs in through the form, opens the mcp token settings from the sid
     // one-shot notice and the readonly token input instead of exercising
     // the copy button itself.
     $page->click('Generar token')
-        ->assertSee('Copiá tu token ahora — no lo vas a volver a ver.')
+        ->assertSee('Copiá tu token ahora')
         ->assertPresent('input[readonly]')
         ->assertValueIsNot('input[readonly]', '')
         ->assertNoJavascriptErrors();
@@ -44,8 +44,8 @@ test('a user logs in through the form, opens the mcp token settings from the sid
 
     // Regenerate: a new plain token is flashed and the old record is gone.
     $page->click('Regenerar token')
-        ->assertSee('Copiá tu token ahora — no lo vas a volver a ver.')
-        ->assertSee('Al regenerar, el token actual queda')
+        ->assertSee('Copiá tu token ahora')
+        ->assertSee('Al regenerar, este token queda revocado')
         ->assertNoJavascriptErrors();
 
     expect(PersonalAccessToken::query()->count())->toBe(1);

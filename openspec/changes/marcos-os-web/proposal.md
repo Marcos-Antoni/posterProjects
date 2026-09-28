@@ -122,10 +122,12 @@ acts on minor things and proposes major ones. The web goes first; posterMobile f
 
 ## Timeline
 
-- **2026-09-27 → 2026-10-10**: planning only (this change). Decision **D-017** freezes implementation
-  until **2026-10-11** (14-day manual validation of the daily cycle). `/opsx:apply` MUST NOT start before
-  2026-10-11.
-- **From 2026-10-11**: phases in `tasks.md`, in order; each phase is independently shippable.
+- **2026-09-27**: planning done. Decision **D-017** originally froze implementation until 2026-10-11; Marco
+  explicitly lifted it on 2026-09-27 and accepted reviewing the code at the end (exception to his
+  comprehension gate, for this change only). To be recorded as D-018 in the Marcos OS repo.
+- **From 2026-09-27**: phases in `tasks.md`, in order, built by an implementer agent and verified by a
+  separate adversarial tester agent, committed on `feat/marcos-os-web`. No merge to `main` and no
+  production step until Marco's final review and explicit OK.
 - **After Phase 11 ships**: `marcos-os-mobile` (posterMobile) starts, not in parallel (R22).
 
 ## Rollback plan

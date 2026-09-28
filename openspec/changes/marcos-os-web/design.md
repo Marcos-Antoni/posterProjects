@@ -16,7 +16,8 @@ shapes the approach (from the graphify report and source):
   `habits` table has `user_id` but no project link.
 - PostgreSQL in production (Coolify on the VPS, auto-deploy of `main`). Claude Code runs on the VPS host
   as user `ubuntu`, outside the application container.
-- Constraint D-017: no implementation before 2026-10-11.
+- Constraint D-017 (no implementation before 2026-10-11) was lifted by Marco on 2026-09-27; nothing merges
+  to `main` or touches production until his final review.
 
 ## Goals / Non-Goals
 
@@ -405,7 +406,7 @@ Implementation decisions:
 
 ## Migration Plan
 
-1. Before 2026-10-11: planning only (D-017).
+1. Implementation on `feat/marcos-os-web` (D-017 lifted 2026-09-27); no production step without Marco's OK.
 2. Phase 1 on the legacy app: export + rehearsal tooling; run it; copy backup locally.
 3. Tag `pre-marcos-os`; ship Phase 2 (schema + cutover); run the guarded reset in production.
 4. Ship Phases 3–11 in order; each with its own migrations and tests; Coolify deploys each merge to `main`.

@@ -97,3 +97,15 @@ test('guests cannot logout', function () {
     $response->assertRedirect('/login');
     $this->assertGuest();
 });
+
+test('a failed web login shows the mockup copy while the api keeps its pinned message', function () {
+    $user = User::factory()->create();
+
+    $this->from('/login')
+        ->post('/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        ->assertSessionHasErrors(['email' => 'El correo o la contraseña no coinciden.']);
+
+    $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Estas credenciales no coinciden con nuestros registros.');
+});

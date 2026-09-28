@@ -1,19 +1,23 @@
-> **D-017 freeze:** do not start any task before **2026-10-11**. Each `##` group is one phase and is
-> independently shippable: finish every task of a phase, run `php artisan test` and `npm run build`, and
-> merge to `main` before starting the next phase. Strict TDD: write the failing Pest test first in every
+> **D-017 lifted by Marco on 2026-09-27** (in-session: "1 pero implementa todo, lo testeas y luego yo lo
+> pruebo" / "si acepto"): implementation starts now. Each `##` group is one phase: an implementer agent
+> builds it, a separate adversarial tester agent verifies it, then it is committed on `feat/marcos-os-web`.
+> Finish every task of a phase and run `php artisan test` and `npm run build` before the next phase.
+> NOTHING merges to `main` or reaches production until Marco's final review; production steps (1.4, the
+> production reset, installing the bridge daemon on the VPS, deploy) wait for his explicit OK at that time. Strict TDD: write the failing Pest test first in every
 > task that changes behavior. Spanish UI copy, English identifiers, UTC-6 day math. UI follows design.md D16:
 > `visual/` is the source of truth and each page's mockup is its acceptance reference.
 
 ## 1. Phase 1 — Legacy export and restore rehearsal (runs on the legacy app)
 
-- [ ] 1.1 Test + implement `marcos:export-legacy`: pg_dump custom format, one JSON per table (no password or token hashes), manifest with row counts and SHA-256; refuse output paths inside the repo (`legacy-data-export`)
-- [ ] 1.2 Test + implement manifest verification: exit non-zero and mark unverified on any row-count mismatch
-- [ ] 1.3 Test + implement `marcos:rehearse-restore <backup>`: restore into a scratch database, compare counts, record the result, drop the scratch database
-- [ ] 1.4 Run export + rehearsal in production, copy the backup to the local machine, record the backup path in the change notes
-- [ ] 1.5 Create git tag `pre-marcos-os` on the last legacy commit
-- [ ] 1.6 UI foundation from `visual/marcos-os-styleguide.html` (design.md D16): port the token block to Tailwind v4 CSS variables + shadcn theme (light/dark), load Overpass + Zilla Slab, radii/elevation/motion/state tokens, base components (button, input, card, check item "la marca", 2-minute chip, capture input, sheet/dialog, toast), custom glyphs; reused pages inherit the theme (mockups: visual/screens/01-login.html, 27-settings-mcp-token.html, 28-settings-mobile-qr.html, 30-password-confirmation.html)
-- [ ] 1.7 Test + implement Settings: appearance — theme selector claro / oscuro / sistema persisted per user (`users.appearance`, default `system`), applied on every page without a flash of the wrong theme; no profile or password editing in the web UI (`auth`) (mockup: visual/screens/29-settings-appearance-profile-password.html)
-- [ ] 1.8 Test + implement `marcos:set-password {email}`: prompts for the new password twice (hidden input), validates with the default password rules, stores the hash, never echoes or logs it (`auth`)
+- [x] 1.1 Test + implement `marcos:export-legacy`: pg_dump custom format, one JSON per table (no password or token hashes), manifest with row counts and SHA-256; refuse output paths inside the repo (`legacy-data-export`)
+- [x] 1.2 Test + implement manifest verification: exit non-zero and mark unverified on any row-count mismatch
+- [x] 1.3 Test + implement `marcos:rehearse-restore <backup>`: restore into a scratch database, compare counts, record the result, drop the scratch database
+- [ ] 1.4 Run export + rehearsal in production, copy the backup to the local machine, record the backup path in the change notes — **blocked: needs Marco's explicit OK (production)**; note: the app image (`Dockerfile`) has no `pg_dump`/`pg_restore`, so the commands cannot run inside the container until a PostgreSQL client matching the server's major version is available there
+  > Before running in production: the production image lacks pg_dump/pg_restore and the default backup path /root/backups/posterprojects would live inside the container — needs a host-mounted volume or running the export from the host.
+- [x] 1.5 Create git tag `pre-marcos-os` on the last legacy commit
+- [x] 1.6 UI foundation from `visual/marcos-os-styleguide.html` (design.md D16): port the token block to Tailwind v4 CSS variables + shadcn theme (light/dark), load Overpass + Zilla Slab, radii/elevation/motion/state tokens, base components (button, input, card, check item "la marca", 2-minute chip, capture input, sheet/dialog, toast), custom glyphs; reused pages inherit the theme (mockups: visual/screens/01-login.html, 27-settings-mcp-token.html, 28-settings-mobile-qr.html, 30-password-confirmation.html)
+- [x] 1.7 Test + implement Settings: appearance — theme selector claro / oscuro / sistema persisted per user (`users.appearance`, default `system`), applied on every page without a flash of the wrong theme; no profile or password editing in the web UI (`auth`) (mockup: visual/screens/29-settings-appearance-profile-password.html)
+- [x] 1.8 Test + implement `marcos:set-password {email}`: prompts for the new password twice (hidden input), validates with the default password rules, stores the hash, never echoes or logs it (`auth`)
 
 ## 2. Phase 2 — Clean slate and domain core (objectives, plans, items, dependencies)
 
