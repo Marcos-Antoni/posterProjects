@@ -64,10 +64,10 @@
 
 ## 5. Phase 5 — Unlock graphs
 
-- [ ] 5.1 Test + implement graph read models: per-objective (nodes grouped by plan, external stubs) and global (clusters, cross-objective edges), retired excluded (`unlock-graph`)
-- [ ] 5.2 Per-objective graph screen with add/remove dependency interactions and cycle error display (screen 8) (mockup: visual/screens/08-objective-graph.html)
-- [ ] 5.3 Global graph screen with collapse per objective and Now highlight (screen 9) (mockup: visual/screens/09-global-graph.html)
-- [ ] 5.4 MCP `objective-graph` and `global-graph` matching the web read models
+- [x] 5.1 Test + implement graph read models: per-objective (nodes grouped by plan, external stubs) and global (clusters, cross-objective edges), retired excluded (`unlock-graph`)
+- [x] 5.2 Per-objective graph screen with add/remove dependency interactions and cycle error display (screen 8) (mockup: visual/screens/08-objective-graph.html)
+- [x] 5.3 Global graph screen with collapse per objective and Now highlight (screen 9) (mockup: visual/screens/09-global-graph.html)
+- [x] 5.4 MCP `objective-graph` and `global-graph` matching the web read models
 
 ## 6. Phase 6 — Retirement protocol and Retired view
 

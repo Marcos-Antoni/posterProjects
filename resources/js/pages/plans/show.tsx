@@ -7,6 +7,7 @@ import { AttentionIcon } from '@/components/marcos/icons';
 import { ItemRow } from '@/components/marcos/item-row';
 import AppLayout from '@/layouts/app-layout';
 import { formatLongDateCapitalized, formatNumber } from '@/lib/marcos';
+import { show as mapShow } from '@/routes/map';
 import {
     index as objectivesIndex,
     show as objectiveShow,
@@ -167,8 +168,26 @@ export default function PlanShow({
                         </div>
                     )}
                 </div>
+                {/* phase 5: the map link also shows on a read-only plan */}
+                {!writable && (
+                    <div className="acts">
+                        <Link
+                            className="btn-sm btn-outline"
+                            href={mapShow(objective.key)}
+                        >
+                            Ver en el mapa
+                        </Link>
+                    </div>
+                )}
                 {writable && (
                     <div className="acts">
+                        {/* phase 5 */}
+                        <Link
+                            className="btn-sm btn-outline"
+                            href={mapShow(objective.key)}
+                        >
+                            Ver en el mapa
+                        </Link>
                         {plan.state === 'draft' && (
                             <button
                                 className="btn-sm btn-outline"

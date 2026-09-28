@@ -15,6 +15,7 @@ import {
     ITEM_STATE_LABELS,
     todayIso,
 } from '@/lib/marcos';
+import { show as mapShow } from '@/routes/map';
 import {
     index as objectivesIndex,
     show as objectiveShow,
@@ -540,7 +541,15 @@ function DependenciesBox({
 
     return (
         <section className="box deps" aria-labelledby="mp">
-            <h2 id="mp">En el mapa</h2>
+            <h2 id="mp">
+                En el mapa{' '}
+                <Link
+                    href={mapShow(objectiveKey, { query: { sel: item.key } })}
+                >
+                    Abrir mapa
+                </Link>
+                {/* phase 5 */}
+            </h2>
             <ItemMiniMap
                 self={{ key: item.key, title: item.title, state: item.state }}
                 prerequisites={item.prerequisites}

@@ -9,6 +9,7 @@ import { PlusIcon } from '@/components/marcos/icons';
 import { ItemRow } from '@/components/marcos/item-row';
 import { StateGlyph } from '@/components/marcos/state-glyph';
 import AppLayout from '@/layouts/app-layout';
+import { show as mapShow } from '@/routes/map';
 import {
     edit as objectiveEdit,
     index as objectivesIndex,
@@ -76,6 +77,23 @@ export default function ObjectiveShow({
                     )}
                 </div>
                 <div className="acts">
+                    {/* phase 5 */}
+                    <Link
+                        className="btn-sm btn-outline"
+                        href={mapShow(objective.key)}
+                    >
+                        <svg
+                            className="i s16"
+                            viewBox="0 0 24 24"
+                            aria-hidden="true"
+                        >
+                            <circle cx="5" cy="12" r="2" />
+                            <circle cx="19" cy="6" r="2" />
+                            <circle cx="19" cy="18" r="2" />
+                            <path d="M7 12h5l5-5M12 12l5 5" />
+                        </svg>
+                        Ver su mapa
+                    </Link>
                     {objective.state === 'closed' && (
                         <button
                             className="btn-sm btn-outline"

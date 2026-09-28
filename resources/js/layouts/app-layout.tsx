@@ -6,6 +6,7 @@ import { SettingsIcon } from '@/components/marcos/icons';
 import { Toaster } from '@/components/ui/toast';
 import { useSyncAppearance } from '@/hooks/use-appearance';
 import { today as habitsToday } from '@/routes/habits';
+import { index as mapIndex } from '@/routes/map';
 import { index as objectivesIndex } from '@/routes/objectives';
 import { show as mcpTokenShow } from '@/routes/settings/mcp-token';
 
@@ -22,6 +23,7 @@ const NAV: NavEntry[] = [
         href: objectivesIndex().url,
         match: '/objectives',
     } /* phase 2 */,
+    { label: 'Mapa', href: mapIndex().url, match: '/map' } /* phase 5 */,
     {
         label: 'Hábitos',
         href: habitsToday().url,
@@ -39,7 +41,13 @@ const NAV: NavEntry[] = [
  *
  *   ObjectivesIndex.layout = (page) => <AppLayout>{page}</AppLayout>;
  */
-export default function AppLayout({ children }: PropsWithChildren) {
+export default function AppLayout({
+    children,
+    bleed = false,
+}: PropsWithChildren<{
+    /** Full-width content without the `.page` column (the graphs, phase 5). */
+    bleed?: boolean;
+}>) {
     useSyncAppearance();
 
     const { url } = usePage();
@@ -86,9 +94,13 @@ export default function AppLayout({ children }: PropsWithChildren) {
                 </div>
             </header>
             <main className="min-w-0 flex-1">
-                <div className="mx-auto w-full max-w-[1200px] px-4 pt-7 pb-12 min-[900px]:px-8 min-[900px]:pt-10 min-[900px]:pb-16">
-                    {children}
-                </div>
+                {bleed ? (
+                    children
+                ) : (
+                    <div className="mx-auto w-full max-w-[1200px] px-4 pt-7 pb-12 min-[900px]:px-8 min-[900px]:pt-10 min-[900px]:pb-16">
+                        {children}
+                    </div>
+                )}
             </main>
             <Toaster />
         </div>

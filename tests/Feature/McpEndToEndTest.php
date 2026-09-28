@@ -33,7 +33,7 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
 
     $names = collect($response->json('result.tools'))->pluck('name');
 
-    expect($names)->toHaveCount(13)
+    expect($names)->toHaveCount(15) // 13 + phase 5 graph tools
         ->and($names)->toContain(
             'list-objectives',
             'show-objective',
