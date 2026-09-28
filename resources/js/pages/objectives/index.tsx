@@ -9,6 +9,7 @@ import {
     formatNumber,
     lowerFirst,
 } from '@/lib/marcos';
+import { show as mapShow } from '@/routes/map';
 import {
     create as objectiveCreate,
     show as objectiveShow,
@@ -210,6 +211,8 @@ function NextStep({
                     <Link href={objectiveShow(objectiveKey)}>
                         Abrir el objetivo
                     </Link>
+                    {/* phase 5 */}
+                    <Link href={mapShow(objectiveKey)}>Ver su mapa</Link>
                 </div>
             </>
         );
@@ -240,6 +243,8 @@ function NextStep({
                     <Link href={itemShow([objectiveKey, next.key])}>
                         Ver la tarea
                     </Link>
+                    {/* phase 5 */}
+                    <Link href={mapShow(objectiveKey)}>Ver su mapa</Link>
                 </div>
             </>
         );
@@ -259,7 +264,7 @@ function NextStep({
                     </span>
                 </p>
             </div>
-            {next.state === 'active' ? (
+            {next.state === 'active' && (
                 <Link
                     className="btn btn-outline btn-row"
                     href={itemShow([objectiveKey, next.key])}
@@ -267,13 +272,16 @@ function NextStep({
                 >
                     Seguir con la tarea
                 </Link>
-            ) : (
-                <div className="rowlinks">
+            )}
+            <div className="rowlinks">
+                {next.state !== 'active' && (
                     <Link href={itemShow([objectiveKey, next.key])}>
                         Ver la tarea
                     </Link>
-                </div>
-            )}
+                )}
+                {/* phase 5 */}
+                <Link href={mapShow(objectiveKey)}>Ver su mapa</Link>
+            </div>
         </>
     );
 }

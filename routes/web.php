@@ -13,6 +13,7 @@ use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
 use App\Http\Controllers\Settings\MobileTokenQrController;
+use App\Http\Controllers\UnlockGraphController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -133,6 +134,13 @@ Route::middleware('auth')->group(function (): void {
     Route::post('objectives/{objective}/items/{item}/stop', [ItemFocusController::class, 'stop'])->name('objectives.items.stop');
     Route::post('objectives/{objective}/items/{item}/two-minute', [ItemFocusController::class, 'shrink'])->name('objectives.items.two-minute');
     // --- end phase 3 ---
+    // --- phase 5: unlock graphs ---
+    // The global map and one objective's track (screens 9 and 8). Under
+    // `/map` so the "Mapa" navigation entry covers both; `{objective}` is
+    // the KEY, resolved by the same binder as the objective screens.
+    Route::get('map', [UnlockGraphController::class, 'global'])->name('map.index');
+    Route::get('map/{objective}', [UnlockGraphController::class, 'objective'])->name('map.show');
+    // --- end phase 5 ---
 });
 
 require __DIR__.'/auth.php';

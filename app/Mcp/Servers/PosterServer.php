@@ -2,6 +2,8 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Graphs\GlobalGraph;
+use App\Mcp\Tools\Graphs\ObjectiveGraph;
 use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
 use App\Mcp\Tools\Habits\ListHabits;
@@ -43,6 +45,10 @@ class PosterServer extends Server
         // --- phase 3: now ---
         NowView::class,
         // --- end phase 3 ---
+        // --- phase 5: unlock graphs ---
+        ObjectiveGraph::class,
+        GlobalGraph::class,
+        // --- end phase 5 ---
         CreateHabit::class,
         UpdateHabit::class,
         ArchiveHabit::class,
