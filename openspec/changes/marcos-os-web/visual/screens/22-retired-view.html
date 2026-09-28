@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirados</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('theme');
+  var t=q||(function(){try{return localStorage.getItem('mos-theme')}catch(e){return null}})();
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  function cur(){var a=document.documentElement.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function paint(){var b=document.getElementById('themeBtn');if(!b)return;var d=cur()==='dark';b.setAttribute('aria-pressed',String(d));b.querySelector('span').textContent=d?'Pasar a claro':'Pasar a oscuro'}
+  document.addEventListener('DOMContentLoaded',function(){
+    paint();
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
+      try{localStorage.setItem('mos-theme',n)}catch(e){}paint();
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif;padding-top:44px}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+p{margin:0}
+.ic{flex:none;vertical-align:-3px}
+kbd{font:600 12px/16px "Overpass",sans-serif;padding:1px 6px;border-radius:4px;border:1px solid var(--border);background:var(--sunken);color:var(--muted-fg)}
+code{font:inherit;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.sm{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mock chrome (not part of the product) */
+.mock-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px;background:var(--sunken);border-bottom:1px dashed var(--border);font-size:13px;line-height:16px;color:var(--muted-fg)}
+.mock-bar .mock-name{margin-right:auto;font-weight:600}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--foreground);font:600 13px/16px "Overpass",sans-serif;text-decoration:none;cursor:pointer}
+
+/* app shell */
+.app-nav{display:flex;align-items:center;gap:24px;min-height:60px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:700 17px/24px "Overpass",sans-serif;color:var(--foreground);text-decoration:none;flex:none}
+.brand-mark{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.app-nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.app-nav nav a{position:relative;padding:18px 10px;font:600 14px/20px "Overpass",sans-serif;color:var(--muted-fg);text-decoration:none;white-space:nowrap}
+.app-nav nav a:hover{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:10px;height:4px;background:var(--blaze);border:1px solid var(--blaze-ink);border-radius:2px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted-fg);text-decoration:none;cursor:pointer;font:600 13px/16px "Overpass"}
+.icon-btn:hover{background:var(--sunken);color:var(--foreground)}
+.icon-btn[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:32px}
+h1{font:700 30px/36px "Overpass",sans-serif;letter-spacing:-.01em;margin:0}
+.lede{color:var(--muted-fg);max-width:68ch;margin-top:8px}
+h2{font:700 20px/28px "Overpass",sans-serif;margin:0}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:6px;border:2px solid transparent;font:600 15px/20px "Overpass",sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-danger{background:var(--destructive);color:var(--primary-fg)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font:600 14px/20px "Overpass",sans-serif}
+.help{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.input,textarea.input,select.input{width:100%;min-height:44px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass",sans-serif}
+textarea.input{resize:vertical;min-height:88px}
+.input::placeholder{color:var(--muted-fg)}
+
+/* alternate-state label */
+.state-tag{display:inline-flex;align-items:center;gap:8px;font:600 13px/16px "Overpass",sans-serif;color:var(--muted-fg);padding:6px 10px;border:1px dashed var(--input);border-radius:6px;margin:48px 0 16px;background:var(--background)}
+.state-block{border-top:1px dashed var(--border);margin-top:56px}
+.state-block>.state-tag{margin-top:24px}
+
+/* tiers (AI) */
+.tier{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:6px;font:600 13px/20px "Overpass",sans-serif;white-space:nowrap}
+.tier-minor{background:var(--sunken);color:var(--muted-fg)}
+.tier-major{background:var(--attention-bg);color:var(--attention)}
+.tier-grant{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+
+/* design note */
+.design-note{max-width:1200px;margin:0 auto 64px;padding:0 32px}
+.design-note details{border:1px dashed var(--input);border-radius:10px;background:var(--surface);padding:0 20px}
+.design-note summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font:600 15px/20px "Overpass";color:var(--muted-fg)}
+.design-note ul{margin:0 0 20px;padding-left:20px;max-width:88ch;font-size:15px;line-height:24px}
+.design-note li+li{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:900px){
+  .app-nav{padding:0 16px;gap:12px}
+  .page{padding:28px 16px 48px}
+  .design-note{padding:0 16px}
+  .hide-md{display:none!important}
+}
+
+
+.patterns{display:grid;grid-template-columns:1.25fr 1fr 1fr;gap:0;padding:0;margin-bottom:32px;overflow:hidden}
+.patterns>div{padding:28px 28px}
+.patterns>div+div{border-left:1px solid var(--border)}
+.observe{background:color-mix(in srgb,var(--sunken) 55%,var(--surface))}
+.observe .win{font:600 14px/20px "Overpass";color:var(--muted-fg);margin-bottom:10px}
+.observe p.big{font:600 20px/30px "Overpass";max-width:36ch}
+.observe p.q{margin-top:16px;font-size:15px;line-height:22px;color:var(--muted-fg);max-width:44ch}
+.observe p.q b{color:var(--foreground);font-weight:600}
+.mini-h{font:600 14px/20px "Overpass";color:var(--muted-fg);margin-bottom:12px}
+.kv{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.kv li{display:grid;grid-template-columns:1fr auto auto;gap:12px;align-items:center;font-size:15px;line-height:22px}
+.kv .n{font-weight:700;font-variant-numeric:tabular-nums;min-width:4ch;text-align:right}
+.kv .sub{order:2}.kv .n{order:3}
+.tally{display:flex;gap:3px}
+.tally i{width:10px;height:10px;border-radius:2px;border:1.5px solid var(--node-retired);background:repeating-linear-gradient(45deg,var(--node-retired) 0 1.5px,transparent 1.5px 4px)}
+.fine{font-size:13px;line-height:18px;color:var(--muted-fg);margin-top:14px}
+
+.filters{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;margin-bottom:8px}
+.seg{display:flex;flex-wrap:wrap;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.seg button{border:0;background:transparent;padding:6px 12px;min-height:36px;border-radius:6px;font:600 14px/20px "Overpass";color:var(--muted-fg);cursor:pointer}
+.seg button .c{font-weight:400;margin-left:4px;font-variant-numeric:tabular-nums}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--foreground);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+.filters select.input{width:auto;min-height:40px;padding:6px 36px 6px 12px;font-size:14px;border-width:1.5px}
+.filters .sp{margin-left:auto}
+.month{display:flex;align-items:baseline;gap:12px;margin:32px 0 8px}
+.month h2{font:700 18px/24px "Overpass"}
+.month span{font-size:14px;color:var(--muted-fg)}
+table.ret{width:100%;table-layout:fixed;border-collapse:separate;border-spacing:0;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.ret thead th{font:600 13px/18px "Overpass";color:var(--muted-fg);text-align:left;padding:12px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+.ret td{padding:16px;overflow-wrap:anywhere;border-top:1px solid var(--border);vertical-align:top;font-size:15px;line-height:22px}
+.ret tbody tr:first-child td{border-top:0}
+.c-what>.w{display:flex;gap:14px}
+.kind-glyph{flex:none;width:36px;height:36px;border-radius:6px;display:grid;place-items:center;color:var(--foreground);border:1.5px solid var(--node-retired);background:repeating-linear-gradient(45deg,color-mix(in srgb,var(--node-retired) 35%,transparent) 0 1.5px,var(--surface) 1.5px 6px)}
+.kind-glyph svg{background:var(--surface);border-radius:4px;padding:1px;box-sizing:content-box}
+.kind-name{display:block;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.ttl{display:block;font-weight:600;font-size:16px;line-height:22px}
+.obj{display:block;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.c-why{max-width:30ch}
+.c-why q{quotes:"“" "”"}
+.c-dec{max-width:30ch}
+.c-dec{color:var(--muted-fg)}
+.c-dec svg{margin-right:8px;vertical-align:-3px}
+.c-dec span{color:var(--foreground)}
+.c-age{white-space:nowrap;font-weight:600}
+.c-age .lbl{font-weight:400;color:var(--muted-fg)}
+.c-age .date{display:block;font-weight:400;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.c-act{text-align:right;white-space:nowrap}
+.blk{white-space:normal;font-size:13px;line-height:18px;color:var(--muted-fg);max-width:22ch;margin:6px 0 0 auto;text-align:right}
+.nothing-lost{display:flex;gap:10px;align-items:center;margin-top:24px;font-size:14px;color:var(--muted-fg)}
+
+.restore-demo{display:grid;grid-template-columns:1fr 420px;gap:32px;align-items:start}
+.pop{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 8px 24px hsl(var(--shadow-color)/.14)}
+.pop h3{font:700 18px/26px "Overpass";margin-bottom:12px}
+.pop ul{margin:0 0 20px;padding-left:18px;font-size:15px;line-height:22px}
+.pop li+li{margin-top:6px}
+.pop .row{display:flex;gap:8px;flex-wrap:wrap}
+.toast{display:inline-flex;gap:12px;align-items:center;background:var(--foreground);color:var(--background);padding:12px 16px;border-radius:6px;font-size:14px;line-height:20px;max-width:560px}
+.toast button{white-space:nowrap;background:none;border:0;color:inherit;font:600 14px/20px "Overpass";text-decoration:underline;cursor:pointer;padding:4px}
+
+@media (max-width:1100px){.patterns{grid-template-columns:1fr 1fr}.observe{grid-column:1/-1}.patterns>div:nth-child(2){border-left:0;border-top:1px solid var(--border)}.patterns>div:nth-child(3){border-top:1px solid var(--border)}.restore-demo{grid-template-columns:1fr}}
+@media (max-width:900px){
+ .ret thead{display:none}
+ .ret,.ret tbody,.ret tr,.ret td{display:block;width:100%}
+ .ret colgroup{display:none}
+ .ret tr{border-top:1px solid var(--border);padding:12px 0}
+ .ret tbody tr:first-child{border-top:0}
+ .ret td{border:0;padding:6px 16px;max-width:none}
+ .c-act{text-align:left}.blk{margin-left:0;text-align:left;max-width:none}
+ .filters .sp{margin-left:0}
+}
+@media (max-width:640px){.patterns{grid-template-columns:1fr}.patterns>div+div{border-left:0;border-top:1px solid var(--border)}}
+
+</style>
+</head>
+<body>
+<div class="mock-bar" role="region" aria-label="Controles del mockup"><span class="mock-name">Pantalla 22 de 30 (web): Retirados</span><button type="button" id="themeBtn" aria-pressed="false"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Tema</span></button><a href="index.html"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Índice</a></div>
+<header class="app-nav"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>Marcos OS</a><nav aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="18-habits-today.html">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="22-retired-view.html" aria-current="page">Retirados</a><a href="24-ai-proposals.html">IA</a></nav><div class="nav-right"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="hide-md">Capturar</span> <kbd>C</kbd></button><button class="icon-btn hide-md" type="button" aria-label="Buscar o ir a (Ctrl+K)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><kbd>Ctrl K</kbd></button><a class="icon-btn" href="27-settings-mcp-token.html" aria-label="Ajustes"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></a></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <h1>Retirados</h1>
+      <p class="lede">Lo que dejaste de lado, con la razón que escribiste en ese momento. Sirve para ver cómo encarás las cosas. Nada de esto se borró: cualquier elemento puede volver al mapa.</p>
+    </div>
+  </div>
+
+  <section class="panel patterns" aria-labelledby="pat-h">
+    <div class="observe">
+      <p class="win" id="pat-h">Lo que se repite, en 8 retiros</p>
+      <p class="big">4 de 5 tareas se retiraron en sus primeros 3 días. Las razones que más volvés a escribir son “demasiado grande” y “planificar sin práctica”.</p>
+      <p class="q">Para tu próxima revisión semanal: <b>¿qué tenían en común esas tareas cuando las creaste?</b></p>
+    </div>
+    <div>
+      <p class="mini-h">Razones que se repiten</p>
+      <ul class="kv">
+        <li><span>demasiado grande</span><span class="n">3</span><span class="sub"><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span></span></li>
+        <li><span>planificar sin práctica</span><span class="n">3</span><span class="sub"><span class="tally" aria-hidden="true"><i></i><i></i><i></i></span></span></li>
+        <li><span>otras razones</span><span class="n">2</span><span class="sub"><span class="tally" aria-hidden="true"><i></i><i></i></span></span></li>
+      </ul>
+      <p class="fine">Se cuentan palabras clave de tus razones, tal como las escribiste.</p>
+    </div>
+    <div>
+      <p class="mini-h">Edad mediana al retirar</p>
+      <ul class="kv num">
+        <li><span>Tareas <span class="muted sm">(5)</span></span><span class="n">2 días</span></li>
+        <li><span>Planes <span class="muted sm">(1)</span></span><span class="n">9 días</span></li>
+        <li><span>Hábitos <span class="muted sm">(1)</span></span><span class="n">18 días</span></li>
+        <li><span>Capturas <span class="muted sm">(1)</span></span><span class="n">30 días</span></li>
+      </ul>
+      <p class="fine">Días entre crear algo y retirarlo. No es una tasa de nada: es cuánto tardaste en darte cuenta.</p>
+    </div>
+  </section>
+
+  <div class="filters" role="group" aria-label="Filtros">
+    <div class="seg" role="group" aria-label="Tipo">
+      <button type="button" aria-pressed="true">Todo<span class="c">8</span></button>
+      <button type="button" aria-pressed="false">Tareas<span class="c">5</span></button>
+      <button type="button" aria-pressed="false">Hitos<span class="c">0</span></button>
+      <button type="button" aria-pressed="false">Planes<span class="c">1</span></button>
+      <button type="button" aria-pressed="false">Hábitos<span class="c">1</span></button>
+      <button type="button" aria-pressed="false">Objetivos<span class="c">0</span></button>
+      <button type="button" aria-pressed="false">Capturas<span class="c">1</span></button>
+    </div>
+    <label class="sr" for="fObj">Objetivo</label>
+    <select id="fObj" class="input"><option>Todos los objetivos</option><option>Marcos OS en uso diario</option><option>Aprobar finales</option><option>Marcos OS web v1</option></select>
+    <label class="sr" for="fMes">Mes</label>
+    <select id="fMes" class="input"><option>Todos los meses</option><option>Septiembre 2026</option><option>Agosto 2026</option></select>
+    <span class="sp sm muted">Más recientes primero</span>
+  </div>
+
+  <div class="month"><h2>Septiembre 2026</h2><span>7 retiros</span></div>
+  <table class="ret">
+<caption class="sr">Retirados en septiembre de 2026</caption>
+<colgroup><col style="width:29%"><col style="width:20%"><col style="width:20%"><col style="width:12%"><col style="width:19%"></colgroup><thead><tr><th scope="col">Qué</th><th scope="col">Razón que escribiste</th><th scope="col">Qué pasó con su contenido</th><th scope="col">Edad al retirar</th><th scope="col"><span class="sr">Acción</span></th></tr></thead>
+<tbody><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1.5"/></svg></span><div><span class="kind-name">Tarea</span><b class="ttl">Migrar calendario</b><span class="obj">Marcos OS web v1</span></div></div></td>
+<td class="c-why"><q>el calendario sale del producto, no lo uso</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>Archivada tal cual</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 1 día<span class="date">retirado el 26 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg></span><div><span class="kind-name">Plan</span><b class="ttl">Diseñar segundo cerebro completo</b><span class="obj">Marcos OS en uso diario</span></div></div></td>
+<td class="c-why"><q>planificar sin práctica</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>Archivado tal cual, con sus 2 tareas</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 9 días<span class="date">retirado el 20 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1.5"/></svg></span><div><span class="kind-name">Tarea</span><b class="ttl">Configurar Notion para apuntes</b><span class="obj">Marcos OS en uso diario</span></div></div></td>
+<td class="c-why"><q>planificar sin práctica</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></svg><span>Retirada junto con su plan</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 9 días<span class="date">retirado el 20 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button" aria-disabled="true" aria-describedby="blk"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button><p class="blk" id="blk">Primero devolvé su plan, “Diseñar segundo cerebro completo”.</p></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1.5"/></svg></span><div><span class="kind-name">Tarea</span><b class="ttl">Estudiar toda la guía de Física II en un día</b><span class="obj">Aprobar finales</span></div></div></td>
+<td class="c-why"><q>demasiado grande, no arrancaba</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg><span>Dividida en “Física II: guía resuelta” y “Física II: ejercicios 1 a 5”</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 2 días<span class="date">retirado el 16 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1.5"/></svg></span><div><span class="kind-name">Tarea</span><b class="ttl">Leer todo Control antes de empezar</b><span class="obj">Marcos OS en uso diario</span></div></div></td>
+<td class="c-why"><q>planificar sin práctica</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg><span>Movida: lo que abría ahora cuelga de “Mesa lista”</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 2 días<span class="date">retirado el 14 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="7" width="16" height="10" rx="1.5"/></svg></span><div><span class="kind-name">Tarea</span><b class="ttl">Resumen de Micro, capítulos 1 a 8</b><span class="obj">Aprobar finales</span></div></div></td>
+<td class="c-why"><q>demasiado grande para una sentada</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg><span>Dividida en “Micro: capítulos 1 a 4” y “Micro: capítulos 5 a 8”</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 3 días<span class="date">retirado el 12 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg></span><div><span class="kind-name">Hábito</span><b class="ttl">Meditar 20 min</b><span class="obj">Sin objetivo</span></div></div></td>
+<td class="c-why"><q>demasiado grande para arrancar, volver con 2 minutos más adelante</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>Archivado tal cual</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 18 días<span class="date">retirado el 5 sep</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr></tbody></table>
+  <div class="month"><h2>Agosto 2026</h2><span>1 retiro</span></div>
+  <table class="ret">
+<caption class="sr">Retirados en agosto de 2026</caption>
+<colgroup><col style="width:29%"><col style="width:20%"><col style="width:20%"><col style="width:12%"><col style="width:19%"></colgroup><thead><tr><th scope="col">Qué</th><th scope="col">Razón que escribiste</th><th scope="col">Qué pasó con su contenido</th><th scope="col">Edad al retirar</th><th scope="col"><span class="sr">Acción</span></th></tr></thead>
+<tbody><tr>
+<td class="c-what"><div class="w"><span class="kind-glyph" aria-hidden="true"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span><div><span class="kind-name">Captura</span><b class="ttl">Hacer app de finanzas personales</b><span class="obj">Inbox</span></div></div></td>
+<td class="c-why"><q>idea suelta, no es para ahora</q></td>
+<td class="c-dec"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg><span>Archivada tal cual</span></td>
+<td class="c-age num"><span class="lbl">Vivió</span> 30 días<span class="date">retirado el 30 ago</span></td>
+<td class="c-act"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button></td>
+</tr></tbody></table>
+  <p class="nothing-lost"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Esta es toda la lista. Al devolver algo al mapa, su retiro queda en el historial del elemento.</p>
+
+  <div class="state-block">
+  <p class="state-tag"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Estado: devolver al mapa una tarea dividida</p>
+  <div class="restore-demo">
+    <div class="pop" role="dialog" aria-labelledby="rs-h">
+      <h3 id="rs-h">Devolver “Estudiar toda la guía de Física II en un día”</h3>
+      <ul>
+        <li>Vuelve a <b>Aprobar finales</b> como estaba antes: disponible.</li>
+        <li>Las dos tareas en que la dividiste siguen en el mapa. Si sobran, las retirás después.</li>
+        <li>El retiro del 16 sep queda en su historial, con su razón.</li>
+      </ul>
+      <div class="row"><button class="btn btn-primary" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>Devolver al mapa</button><button class="btn btn-outline" type="button">Cancelar</button></div>
+    </div>
+    <div>
+      <p class="sm muted" style="margin-bottom:12px">Después de confirmar:</p>
+      <div class="toast" role="status">Devuelta al mapa. Está otra vez en Aprobar finales. <button type="button">Ver en el mapa</button></div>
+    </div>
+  </div>
+  </div>
+</main>
+<aside class="design-note"><details><summary>Nota de diseño</summary><ul><li>El protagonista es la observación (“4 de 5 tareas…”), no la lista: la vista existe para aprender patrones, y la pregunta se lleva a la revisión semanal en vez de dar un veredicto.</li><li>Cero lenguaje de falla: sin tasas, sin rojo, sin tachado. El rayado (hatch) es el mismo que el ramal retirado del grafo (consistencia, Nielsen 4).</li><li>“Edad al retirar” se explica en contexto como “cuánto tardaste en darte cuenta”, que reencuadra el dato como aprendizaje (Nielsen 10, ayuda en contexto).</li><li>Control y libertad (Nielsen 3): cada fila tiene “Devolver al mapa”; cuando no se puede (padre retirado) el motivo está escrito al lado, no escondido en un error.</li><li>Sin scroll infinito: agrupado por mes, con el total y un final explícito de la lista.</li></ul></details></aside>
+
+</body>
+</html>

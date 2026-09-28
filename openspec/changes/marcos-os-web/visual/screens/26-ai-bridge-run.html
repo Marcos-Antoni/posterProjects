@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Puente al VPS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('theme');
+  var t=q||(function(){try{return localStorage.getItem('mos-theme')}catch(e){return null}})();
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  function cur(){var a=document.documentElement.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function paint(){var b=document.getElementById('themeBtn');if(!b)return;var d=cur()==='dark';b.setAttribute('aria-pressed',String(d));b.querySelector('span').textContent=d?'Pasar a claro':'Pasar a oscuro'}
+  document.addEventListener('DOMContentLoaded',function(){
+    paint();
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
+      try{localStorage.setItem('mos-theme',n)}catch(e){}paint();
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif;padding-top:44px}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+p{margin:0}
+.ic{flex:none;vertical-align:-3px}
+kbd{font:600 12px/16px "Overpass",sans-serif;padding:1px 6px;border-radius:4px;border:1px solid var(--border);background:var(--sunken);color:var(--muted-fg)}
+code{font:inherit;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.sm{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mock chrome (not part of the product) */
+.mock-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px;background:var(--sunken);border-bottom:1px dashed var(--border);font-size:13px;line-height:16px;color:var(--muted-fg)}
+.mock-bar .mock-name{margin-right:auto;font-weight:600}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--foreground);font:600 13px/16px "Overpass",sans-serif;text-decoration:none;cursor:pointer}
+
+/* app shell */
+.app-nav{display:flex;align-items:center;gap:24px;min-height:60px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:700 17px/24px "Overpass",sans-serif;color:var(--foreground);text-decoration:none;flex:none}
+.brand-mark{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.app-nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.app-nav nav a{position:relative;padding:18px 10px;font:600 14px/20px "Overpass",sans-serif;color:var(--muted-fg);text-decoration:none;white-space:nowrap}
+.app-nav nav a:hover{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:10px;height:4px;background:var(--blaze);border:1px solid var(--blaze-ink);border-radius:2px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted-fg);text-decoration:none;cursor:pointer;font:600 13px/16px "Overpass"}
+.icon-btn:hover{background:var(--sunken);color:var(--foreground)}
+.icon-btn[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:32px}
+h1{font:700 30px/36px "Overpass",sans-serif;letter-spacing:-.01em;margin:0}
+.lede{color:var(--muted-fg);max-width:68ch;margin-top:8px}
+h2{font:700 20px/28px "Overpass",sans-serif;margin:0}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:6px;border:2px solid transparent;font:600 15px/20px "Overpass",sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-danger{background:var(--destructive);color:var(--primary-fg)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font:600 14px/20px "Overpass",sans-serif}
+.help{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.input,textarea.input,select.input{width:100%;min-height:44px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass",sans-serif}
+textarea.input{resize:vertical;min-height:88px}
+.input::placeholder{color:var(--muted-fg)}
+
+/* alternate-state label */
+.state-tag{display:inline-flex;align-items:center;gap:8px;font:600 13px/16px "Overpass",sans-serif;color:var(--muted-fg);padding:6px 10px;border:1px dashed var(--input);border-radius:6px;margin:48px 0 16px;background:var(--background)}
+.state-block{border-top:1px dashed var(--border);margin-top:56px}
+.state-block>.state-tag{margin-top:24px}
+
+/* tiers (AI) */
+.tier{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:6px;font:600 13px/20px "Overpass",sans-serif;white-space:nowrap}
+.tier-minor{background:var(--sunken);color:var(--muted-fg)}
+.tier-major{background:var(--attention-bg);color:var(--attention)}
+.tier-grant{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+
+/* design note */
+.design-note{max-width:1200px;margin:0 auto 64px;padding:0 32px}
+.design-note details{border:1px dashed var(--input);border-radius:10px;background:var(--surface);padding:0 20px}
+.design-note summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font:600 15px/20px "Overpass";color:var(--muted-fg)}
+.design-note ul{margin:0 0 20px;padding-left:20px;max-width:88ch;font-size:15px;line-height:24px}
+.design-note li+li{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:900px){
+  .app-nav{padding:0 16px;gap:12px}
+  .page{padding:28px 16px 48px}
+  .design-note{padding:0 16px}
+  .hide-md{display:none!important}
+}
+
+
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:32px;overflow:hidden}
+.tiers>div{padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.tiers>div+div{border-left:1px solid var(--border)}
+.tiers .tier{align-self:flex-start}
+.tiers p{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.tiers p b{color:var(--foreground);font-weight:600}
+.ai-sub{display:flex;gap:4px;margin:0 0 20px;padding:4px;background:var(--sunken);border-radius:10px;width:max-content;max-width:100%;flex-wrap:wrap}
+.ai-sub a{padding:6px 14px;min-height:36px;display:inline-flex;align-items:center;gap:8px;border-radius:6px;font:600 14px/20px "Overpass";color:var(--muted-fg);text-decoration:none}
+.ai-sub a[aria-current="page"]{background:var(--surface);color:var(--foreground);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+.tiers .here{background:color-mix(in srgb,var(--attention-bg) 45%,var(--surface))}
+@media (max-width:900px){.tiers{grid-template-columns:1fr}.tiers>div+div{border-left:0;border-top:1px solid var(--border)}}
+
+.onpill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:6px;font:600 14px/20px "Overpass";color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+.onpill i{width:8px;height:8px;border-radius:50%;background:var(--primary)}
+.offpill{color:var(--attention);box-shadow:inset 0 0 0 1.5px var(--attention)}
+.offpill i{background:transparent;border:2px solid var(--attention)}
+.layout{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:40px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:24px}
+.card>h2{font:700 18px/26px "Overpass";margin-bottom:4px}
+.tpls{display:flex;flex-direction:column;gap:8px;margin:16px 0 20px}
+.tpl{position:relative;display:grid;grid-template-columns:20px 1fr;gap:2px 12px;padding:12px 14px;border:1.5px solid var(--input);border-radius:10px;cursor:pointer}
+.tpl input{margin:3px 0 0;width:18px;height:18px;accent-color:var(--primary);grid-row:1/3}
+.tpl b{font:700 15px/22px "Overpass"}
+.tpl span{font-size:13px;line-height:18px;color:var(--muted-fg)}
+.tpl .lv{grid-column:2;display:flex;gap:8px;align-items:center;margin-top:4px}
+.tpl .lv em{font-style:normal}
+.tpl.on{border:2px solid var(--primary);background:color-mix(in srgb,var(--primary) 6%,var(--surface))}
+.limits{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border:1px solid var(--border);border-radius:10px;overflow:hidden;margin:16px 0}
+.limits>div{background:var(--background);padding:10px 12px}
+.limits p{font-size:12px;line-height:16px;color:var(--muted-fg);font-weight:600}
+.limits b{font:700 16px/24px "Overpass";font-variant-numeric:tabular-nums}
+.limits b span{font-weight:400;color:var(--muted-fg);font-size:14px}
+.pwok{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:16px}
+.pwok svg{color:var(--primary)}
+.guard{margin-top:24px;padding:20px 24px;border-radius:16px;background:color-mix(in srgb,var(--sunken) 60%,var(--background));border:1px solid var(--border)}
+.guard h2{display:flex;gap:10px;align-items:center;font:700 16px/24px "Overpass";margin-bottom:12px}
+.guard h2 svg{color:var(--primary)}
+.guard ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.guard li{display:grid;grid-template-columns:20px 1fr;gap:10px;font-size:14px;line-height:20px}
+.guard li svg{color:var(--primary);margin-top:2px}
+.guard li b{font-weight:600}
+.kill{margin-top:16px;padding-top:16px;border-top:1px dashed var(--border);font-size:14px;line-height:20px}
+.kill h3{display:flex;gap:8px;align-items:center;font:700 15px/22px "Overpass";margin-bottom:6px}
+.cmd{display:flex;align-items:center;gap:8px;margin-top:8px;padding:6px 6px 6px 12px;border-radius:6px;background:var(--surface);border:1px solid var(--border)}
+.cmd code{flex:1;font-weight:600;font-size:14px;overflow-wrap:anywhere}
+.cmd .icon-btn{min-height:32px;min-width:32px}
+.runs-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.runs-h h2{font:700 20px/28px "Overpass"}
+.run{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px}
+.run+.run,.run+h3,.sec-h+.run{margin-top:12px}
+.run.live{border:2px solid var(--blaze-ink);box-shadow:0 1px 2px hsl(var(--shadow-color)/.10),0 4px 12px hsl(var(--shadow-color)/.06)}
+.run-top{display:flex;flex-wrap:wrap;gap:6px 12px;align-items:baseline;justify-content:space-between}
+.run-top h3{font:700 16px/24px "Overpass"}
+.run-top .id{font-weight:400;color:var(--muted-fg)}
+.st{display:inline-flex;gap:6px;align-items:center;font:600 13px/18px "Overpass";padding:2px 8px;border-radius:6px;background:var(--sunken);color:var(--muted-fg)}
+.st.run-now{background:color-mix(in srgb,var(--blaze) 25%,var(--surface));color:var(--foreground)}
+.st.ok{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+.st.err{background:transparent;color:var(--destructive);box-shadow:inset 0 0 0 1.5px var(--destructive)}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:16px 0 12px;list-style:none;padding:0}
+.steps li{border-top:4px solid var(--border);padding-top:8px;font-size:14px;line-height:20px}
+.steps li b{display:block;font-weight:600}
+.steps li span{color:var(--muted-fg);font-variant-numeric:tabular-nums}
+.steps li.done{border-top-color:var(--blaze-ink)}
+.steps li.now{border-top-color:var(--blaze)}
+.steps li.now b::after{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--blaze);border:1.5px solid var(--blaze-ink);margin-left:8px;vertical-align:1px}
+.steps li.next{border-top-style:dotted;border-top-color:var(--input)}
+.yourtext{font-size:14px;line-height:20px;padding:10px 12px;border-radius:6px;background:var(--background);border:1px solid var(--border)}
+.yourtext span{display:block;font-weight:600;color:var(--muted-fg);font-size:12px;line-height:16px;margin-bottom:2px}
+.run-foot{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-top:14px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.run-foot a{font-weight:600}
+.sec-h{font:700 15px/22px "Overpass";margin:28px 0 0;color:var(--muted-fg)}
+.out{margin-top:12px;padding:12px 14px;border-radius:6px;background:var(--sunken);font-size:14px;line-height:21px;max-height:none}
+.out p+p{margin-top:6px}
+.errbox{margin-top:12px;display:flex;gap:10px;padding:12px 14px;border-radius:6px;border:1.5px solid var(--destructive);font-size:14px;line-height:20px}
+.errbox svg{color:var(--destructive);margin-top:2px}
+.small-run{display:grid;grid-template-columns:1fr auto;gap:4px 12px;align-items:center}
+.small-run p{font-size:14px;line-height:20px;color:var(--muted-fg);grid-column:1/-1}
+.off-banner{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:10px;background:var(--attention-bg);margin-bottom:16px;font-size:15px;line-height:22px;max-width:760px}
+.off-banner svg{color:var(--attention);margin-top:2px}
+.off-banner b{display:block;font-size:16px}
+.disabled-form{opacity:.55;pointer-events:none;max-width:760px;max-height:300px;overflow:hidden;-webkit-mask-image:linear-gradient(#000 60%,transparent);mask-image:linear-gradient(#000 60%,transparent)}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}}
+@media (max-width:640px){.limits,.steps{grid-template-columns:1fr}.card{padding:18px}}
+
+</style>
+</head>
+<body>
+<div class="mock-bar" role="region" aria-label="Controles del mockup"><span class="mock-name">Pantalla 26 de 30 (web): Puente al VPS</span><button type="button" id="themeBtn" aria-pressed="false"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Tema</span></button><a href="index.html"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Índice</a></div>
+<header class="app-nav"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>Marcos OS</a><nav aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="18-habits-today.html">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="22-retired-view.html">Retirados</a><a href="24-ai-proposals.html" aria-current="page">IA</a></nav><div class="nav-right"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="hide-md">Capturar</span> <kbd>C</kbd></button><button class="icon-btn hide-md" type="button" aria-label="Buscar o ir a (Ctrl+K)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><kbd>Ctrl K</kbd></button><a class="icon-btn" href="27-settings-mcp-token.html" aria-label="Ajustes"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></a></div></header>
+
+<main class="page">
+  <nav class="ai-sub" aria-label="Secciones de IA"><a href="#"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Propuestas</a><a href="#"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>Actividad y permiso</a><a href="#" aria-current="page"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Puente al VPS</a></nav>
+  <div class="page-head">
+    <div>
+      <h1>Puente al VPS</h1>
+      <p class="lede">Mandale un pedido a Claude Code en tu servidor y seguí con otra cosa. La respuesta aparece acá cuando termina.</p>
+    </div>
+    <span class="onpill"><i aria-hidden="true"></i>Puente encendido</span>
+  </div>
+  <div class="layout">
+    <div>
+<section class="card" aria-labelledby="new-h">
+  <h2 id="new-h">Nuevo pedido</h2>
+  <p class="help">Elegí qué tipo de pedido es. Solo existen estas cuatro plantillas.</p>
+  <fieldset style="border:0;padding:0;margin:0"><legend class="sr">Plantilla</legend><div class="tpls"><label class="tpl"><input type="radio" name="tpl"><b>Negociar la siguiente capa</b><span>Propone la próxima capa de un árbol en negociación.</span><span class="lv"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><em>propone</em></span></label><label class="tpl on"><input type="radio" name="tpl" checked><b>Achicar el paso actual</b><span>Te devuelve una versión de 2 minutos más chica para la tarea de Ahora.</span><span class="lv"><span class="tier tier-minor"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/></svg>Menor</span><em>se aplica sola</em></span></label><label class="tpl"><input type="radio" name="tpl"><b>Borrador de revisión semanal</b><span>Arma un borrador con lo hecho en la semana para que lo edites.</span><span class="lv"><em>solo lee, no cambia nada</em></span></label><label class="tpl"><input type="radio" name="tpl"><b>Pregunta libre</b><span>Responde sobre tus objetivos y hábitos.</span><span class="lv"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><em>si quiere cambiar algo, propone</em></span></label></div></fieldset>
+  <div class="field"><label for="txt">Tu texto</label>
+    <textarea id="txt" class="input" rows="3">Captura 10 min me sigue costando: abrir el inbox ya me parece mucho a la noche.</textarea>
+    <p class="help">Llega a la IA como texto para leer, nunca como un comando.</p></div>
+  <div class="limits" aria-label="Límites">
+    <div><p>Esta hora</p><b>3 <span>de 20</span></b></div>
+    <div><p>En cola</p><b>1 <span>de 3</span></b></div>
+    <div><p>Cada corrida</p><b>5 <span>min máx.</span></b></div>
+  </div>
+  <p class="pwok"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Contraseña confirmada a las 19:06. Vale hasta las 19:21.</p>
+  <button class="btn btn-primary" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Enviar al VPS</button>
+</section>
+<section class="guard" aria-labelledby="g-h">
+  <h2 id="g-h"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>Cómo está protegido</h2>
+  <ul>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Solo vos, desde esta sesión</b> y con la contraseña confirmada hace menos de 15 minutos. Ni la app móvil ni ningún token pueden mandar pedidos.</span></li>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Solo estas cuatro plantillas.</b> Tu texto viaja como dato; el servidor no ejecuta ningún comando que venga del pedido.</span></li>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Claude Code sin terminal ni archivos.</b> Solo puede usar las herramientas de Poster de la plantilla elegida.</span></li>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Los mismos niveles de siempre.</b> Lo menor se aplica y queda en Actividad; lo mayor te llega como propuesta.</span></li>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Límites fijos:</b> una corrida a la vez, hasta 3 en cola, 20 por hora, 5 minutos y 64 KB de salida por corrida.</span></li>
+    <li><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span><b>Pedido firmado y de un solo uso,</b> por un canal local del servidor que no está abierto a internet.</span></li>
+  </ul>
+  <div class="kill">
+    <h3><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg>Para apagarlo</h3>
+    <p class="muted">Corta los envíos al instante. Se enciende igual, con <code>true</code>.</p>
+    <div class="cmd"><code>AI_BRIDGE_ENABLED=false</code><span class="xs muted">en Coolify</span><button class="icon-btn" type="button" aria-label="Copiar"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
+    <div class="cmd"><code>systemctl stop marcos-bridge</code><span class="xs muted">en el VPS</span><button class="icon-btn" type="button" aria-label="Copiar"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg></button></div>
+  </div>
+</section></div>
+    
+<section aria-labelledby="runs-h">
+  <div class="runs-h"><h2 id="runs-h">Corridas</h2><span class="sm muted" role="status">Actualizado hace 2 s</span></div>
+
+  <article class="run live" aria-labelledby="r42">
+    <div class="run-top"><h3 id="r42">Negociar la siguiente capa <span class="id">corrida 42</span></h3><span class="st run-now"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Ejecutando en el VPS</span></div>
+    <ol class="steps">
+      <li class="done"><b>En cola</b><span>19:20:04</span></li>
+      <li class="now"><b>Ejecutando</b><span>desde 19:20:09, lleva 1 min 12 s</span></li>
+      <li class="next"><b>Listo</b><span>corte a las 19:25:09</span></li>
+    </ol>
+    <p class="yourtext"><span>Tu texto</span>Seguimos con la capa de Semana 2 de Marcos OS en uso diario.</p>
+    <div class="run-foot"><span>Ya generó <a href="#">1 propuesta</a> <span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span>. La salida completa aparece al terminar.</span><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5"/></svg>Cancelar corrida</button></div>
+  </article>
+
+  <article class="run small-run" aria-labelledby="r43">
+    <h3 id="r43" style="font:700 15px/22px Overpass">Borrador de revisión semanal <span class="muted" style="font-weight:400">corrida 43</span></h3>
+    <span class="st"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>En cola, sigue después de la 42</span>
+    <p>Enviada 19:21. Empieza sola cuando termine la corrida actual.</p>
+    <div style="grid-column:1/-1"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Sacar de la cola</button></div>
+  </article>
+
+  <h3 class="sec-h">Terminadas hoy</h3>
+  <article class="run" aria-labelledby="r41">
+    <div class="run-top"><h3 id="r41">Achicar el paso actual <span class="id">corrida 41</span></h3><span class="st ok"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Terminó bien, 18:05</span></div>
+    <div class="out"><p>Achiqué la versión de 2 minutos de “Captura 10 min”.</p><p>Antes: “Abrir el inbox y escribir 3 ideas”. Ahora: “Abrir el inbox”. Si abrirlo ya es suficiente, cerrá por hoy.</p></div>
+    <div class="run-foot"><span>Duró 41 s. Hizo <a href="#">1 cambio</a> <span class="tier tier-minor"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/></svg>Menor</span></span></div>
+  </article>
+  <article class="run" aria-labelledby="r40">
+    <div class="run-top"><h3 id="r40">Negociar la siguiente capa <span class="id">corrida 40</span></h3><span class="st"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Se cortó a los 5 min, 17:35</span></div>
+    <div class="run-foot"><span>Lo que alcanzó a proponer quedó guardado: <a href="#">1 propuesta</a>. No quedó nada a medias.</span><button class="btn btn-ghost btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>Mandar de nuevo</button></div>
+  </article>
+  <article class="run" aria-labelledby="r39">
+    <div class="run-top"><h3 id="r39">Pregunta libre <span class="id">corrida 39</span></h3><span class="st err"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg>Falló, 16:02</span></div>
+    <p class="errbox"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></svg><span>Claude Code terminó con código 1: no pudo conectarse al servidor MCP de Poster. No se cambió nada. Probá de nuevo; si se repite, revisá el <a href="#">token MCP</a>.</span></p>
+  </article>
+  <p class="sm muted" style="margin-top:16px"><a href="#">Ver corridas anteriores</a></p>
+</section>
+  </div>
+  <div class="state-block">
+    <p class="state-tag"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Estado: puente apagado (interruptor general)</p>
+    
+<div class="off-banner" role="status"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2v10"/><path d="M18.4 6.6a9 9 0 1 1-12.77.04"/></svg><span><b>El puente está apagado.</b> No se puede mandar nada al VPS mientras tanto. Lo demás funciona igual, y Claude Code sigue disponible por MCP desde tu terminal. Para encenderlo: <code>AI_BRIDGE_ENABLED=true</code> en Coolify.</span></div>
+<div class="disabled-form" aria-hidden="true">
+<section class="card" aria-labelledby="new-h">
+  <h2 id="new-off">Nuevo pedido</h2>
+  <p class="help">Elegí qué tipo de pedido es. Solo existen estas cuatro plantillas.</p>
+  <fieldset style="border:0;padding:0;margin:0"><legend class="sr">Plantilla</legend><div class="tpls"><label class="tpl"><input type="radio" name="tpl-off"><b>Negociar la siguiente capa</b><span>Propone la próxima capa de un árbol en negociación.</span><span class="lv"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><em>propone</em></span></label><label class="tpl on"><input type="radio" name="tpl-off" checked><b>Achicar el paso actual</b><span>Te devuelve una versión de 2 minutos más chica para la tarea de Ahora.</span><span class="lv"><span class="tier tier-minor"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/></svg>Menor</span><em>se aplica sola</em></span></label><label class="tpl"><input type="radio" name="tpl-off"><b>Borrador de revisión semanal</b><span>Arma un borrador con lo hecho en la semana para que lo edites.</span><span class="lv"><em>solo lee, no cambia nada</em></span></label><label class="tpl"><input type="radio" name="tpl-off"><b>Pregunta libre</b><span>Responde sobre tus objetivos y hábitos.</span><span class="lv"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><em>si quiere cambiar algo, propone</em></span></label></div></fieldset>
+  <div class="field"><label for="txt-off">Tu texto</label>
+    <textarea id="txt-off" class="input" rows="3">Captura 10 min me sigue costando: abrir el inbox ya me parece mucho a la noche.</textarea>
+    <p class="help">Llega a la IA como texto para leer, nunca como un comando.</p></div>
+  <div class="limits" aria-label="Límites">
+    <div><p>Esta hora</p><b>3 <span>de 20</span></b></div>
+    <div><p>En cola</p><b>1 <span>de 3</span></b></div>
+    <div><p>Cada corrida</p><b>5 <span>min máx.</span></b></div>
+  </div>
+  <p class="pwok"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Contraseña confirmada a las 19:06. Vale hasta las 19:21.</p>
+  <button class="btn btn-primary" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Enviar al VPS (apagado)</button>
+</section></div>
+  </div>
+</main>
+<aside class="design-note"><details><summary>Nota de diseño</summary><ul><li>Seguridad visible pero en tono de manual, no de alarma: “Cómo está protegido” usa checks en pino y lenguaje llano; el rojo aparece solo en la corrida que falló por un error del sistema.</li><li>Visibilidad del estado (Nielsen 1): En cola, Ejecutando y Listo con horas reales; la corrida viva es la única tarjeta elevada y con borde ocre, y dice cuándo se corta.</li><li>Los límites (20 por hora, cola de 3, 5 minutos) están a la vista antes de enviar, como hechos, no como advertencias.</li><li>Control y libertad (Nielsen 3): cancelar la corrida, sacar de la cola y el interruptor general con los comandos exactos para copiar.</li><li>El texto del pedido se explica como dato, no comando, y cada plantilla dice qué puede tocar: el nivel (menor o propuesta) se entiende antes de enviar.</li></ul></details></aside>
+
+</body>
+</html>
