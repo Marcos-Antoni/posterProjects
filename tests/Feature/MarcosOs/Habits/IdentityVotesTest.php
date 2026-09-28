@@ -81,9 +81,9 @@ test('a habit without its own statement inherits its objective identity', functi
         ->and(collect($groups['Soy alguien que entrena']->habits)->pluck('id')->all())->toBe([$own->id]);
 });
 
-test('archived habits and other users never vote', function () {
+test('retired habits and other users never vote', function () {
     $user = User::factory()->create();
-    p4Habit('2026-09-01', ['user_id' => $user->id, 'identity_statement' => 'Soy alguien que medita', 'archived_at' => now()]);
+    p4Habit('2026-09-01', ['user_id' => $user->id, 'identity_statement' => 'Soy alguien que medita', 'retired_at' => now()]);
     p4Habit('2026-09-01', ['identity_statement' => 'Soy alguien que medita']);
 
     expect(app(IdentityVotes::class)->forUser($user))->toBe([]);

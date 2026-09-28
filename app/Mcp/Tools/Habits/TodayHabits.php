@@ -15,7 +15,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: read. List the authenticated user\'s active habits scheduled for today (UTC-6) — same data as the web "Hábitos de hoy" view: each habit\'s 2-minute version, today\'s progress (amount, completed, two_minute_logged, shown_up), the tolerant streak ("never miss twice": streak_current, streak_state ok | at_risk | restart — at_risk/restart mean "hoy toca volver" with the 2-minute version, never a debt), the objective it hangs from and, for weekly-quota habits, how many days of the current week are recorded. Use list-habits to see every habit, including archived ones.')]
+#[Description('Nivel IA: read. List the authenticated user\'s active habits scheduled for today (UTC-6) — same data as the web "Hábitos de hoy" view: each habit\'s 2-minute version, today\'s progress (amount, completed, two_minute_logged, shown_up), the tolerant streak ("never miss twice": streak_current, streak_state ok | at_risk | restart — at_risk/restart mean "hoy toca volver" with the 2-minute version, never a debt), the objective it hangs from and, for weekly-quota habits, how many days of the current week are recorded. Retired habits are hidden (see retired-view). Use list-habits to see every non-retired habit.')]
 class TodayHabits extends Tool
 {
     use PresentsHabits;
@@ -35,7 +35,6 @@ class TodayHabits extends Tool
         $today = Habit::todayLocalDate();
 
         $habits = $user->habits()
-            ->notArchived()
             ->with(['days', 'schedulePeriods', 'objective'])
             ->orderBy('name')
             ->get()

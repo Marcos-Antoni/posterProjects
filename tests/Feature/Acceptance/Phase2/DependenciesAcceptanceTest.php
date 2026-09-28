@@ -209,11 +209,15 @@ test('state precedence: retired > done > active > locked > available, and scope 
         $available->id => ItemState::Available,
     ];
 
+    // Phase 6 (retirement spec "Retired Elements Are Hidden"): the NotRetired global scope hides
+    // retired items from default queries; the derivation is checked past it with withRetired().
     foreach ($expected as $id => $state) {
-        $scoped = Item::query()->withState()->whereKey($id)->firstOrFail();
+        $scoped = Item::withRetired()->withState()->whereKey($id)->firstOrFail();
         expect($scoped->state)->toBe($state)
-            ->and(Item::query()->findOrFail($id)->deriveState())->toBe($state);
+            ->and(Item::withRetired()->findOrFail($id)->deriveState())->toBe($state);
     }
+
+    expect(Item::query()->find($retiredDone->id))->toBeNull();
 });
 
 test('a dependency cannot be added to or from a retired item', function () {

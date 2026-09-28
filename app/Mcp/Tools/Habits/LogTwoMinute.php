@@ -15,7 +15,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: minor (applied directly and audited) — only when Marco explicitly said he did the habit\'s 2-minute version. Log the 2-minute version for today (UTC-6), exactly like "Solo los 2 minutos" / "Retomar con 2 minutos" on the web: the day counts as shown-up for the tolerant streak and as an identity vote, but it is never marked completed and the amount does not change. Logging it twice the same day changes nothing. An archived habit rejects it. Returns the day and the streak.')]
+#[Description('Nivel IA: minor (applied directly and audited) — only when Marco explicitly said he did the habit\'s 2-minute version. Log the 2-minute version for today (UTC-6), exactly like "Solo los 2 minutos" / "Retomar con 2 minutos" on the web: the day counts as shown-up for the tolerant streak and as an identity vote, but it is never marked completed and the amount does not change. Logging it twice the same day changes nothing. A retired habit is hidden and rejects it. Returns the day and the streak.')]
 class LogTwoMinute extends Tool
 {
     use PresentsHabits;

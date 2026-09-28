@@ -2406,6 +2406,61 @@
     60% {
         transform: scale(1.2);
         opacity: 1;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+@keyframes mos-s02-halo {
+    from {
+        transform: scale(0.6);
+        opacity: 0.9;
+    }
+    to {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+@keyframes mos-s02-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mos-s02 .cue i {
+        transition: none;
+    }
+    .mos-s02 .tr .nd.unlock > *,
+    .mos-s02 .tr .e.draw {
+        animation: none !important;
+        stroke-dashoffset: 0;
+    }
+    .mos-s02 .tr .nd.unlock .halo {
+        opacity: 1;
+    }
+}
+@media (max-width: 560px) {
+    .mos-s02 .now {
+        padding: 28px 16px 16px;
+    }
+    .mos-s02 .now h1.task {
+        font-size: 24px;
+        line-height: 32px;
+    }
+    .mos-s02 .actions .btn {
+        flex: 1;
+    }
+    .mos-s02 .hrow {
+        grid-template-columns: 1fr;
+    }
+    .mos-s02 .today {
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+/* --- end phase 3 --- */
+
 /* screens 08 + 09: 08-objective-graph.html, 09-global-graph.html (phase 5).
    Shared graph page chrome; the track primitives are the `.mos .tr` rules above. */
 :is(.mos-s08, .mos-s09) .gpage {
@@ -2710,54 +2765,6 @@
         opacity: 1;
     }
 }
-@keyframes mos-s02-halo {
-    from {
-        transform: scale(0.6);
-        opacity: 0.9;
-    }
-    to {
-        transform: scale(1.8);
-        opacity: 0;
-    }
-}
-@keyframes mos-s02-draw {
-    to {
-        stroke-dashoffset: 0;
-    }
-}
-@media (prefers-reduced-motion: reduce) {
-    .mos-s02 .cue i {
-        transition: none;
-    }
-    .mos-s02 .tr .nd.unlock > *,
-    .mos-s02 .tr .e.draw {
-        animation: none !important;
-        stroke-dashoffset: 0;
-    }
-    .mos-s02 .tr .nd.unlock .halo {
-        opacity: 1;
-    }
-}
-@media (max-width: 560px) {
-    .mos-s02 .now {
-        padding: 28px 16px 16px;
-    }
-    .mos-s02 .now h1.task {
-        font-size: 24px;
-        line-height: 32px;
-    }
-    .mos-s02 .actions .btn {
-        flex: 1;
-    }
-    .mos-s02 .hrow {
-        grid-template-columns: 1fr;
-    }
-    .mos-s02 .today {
-        flex-direction: column;
-        gap: 2px;
-    }
-}
-/* --- end phase 3 --- */
 @keyframes mos-unlock-trace {
     from {
         stroke-dashoffset: 1;
@@ -2966,6 +2973,67 @@
 }
 /* screen 09 only */
 .mos-s09 .ghead h1 {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s09 .ghead p {
+    margin: 4px 0 0;
+    color: var(--muted-fg);
+    font-size: 15px;
+}
+.mos-s09 .gtools {
+    justify-content: flex-start;
+    gap: 12px 20px;
+}
+.mos-s09 .seg a,
+.mos-s09 .seg button {
+    padding: 8px 12px;
+}
+.mos-s09 .seg .sw {
+    width: 14px;
+    height: 4px;
+    border-radius: 2px;
+}
+.mos-s09 .sel {
+    min-height: 40px;
+    padding: 6px 32px 6px 12px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: var(--surface);
+    color: var(--foreground);
+    font: 400 15px/20px 'Overpass';
+}
+.mos-s09 .gside h2 {
+    font:
+        600 30px/36px 'Zilla Slab',
+        Georgia,
+        serif;
+    margin: 0;
+}
+.mos-s09 .gside .xfer {
+    border: 1px solid var(--border);
+    border-left: 4px solid var(--line-3);
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s09 .gside .xfer b {
+    display: block;
+}
+.mos-s09 .gside .dist {
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+/* "+N": far or overflowing connections, listed in the panel — neutral, not another objective's hue */
+:is(.mos-s08, .mos-s09) .tr .more .n-stub {
+    stroke: var(--muted-fg);
+    stroke-width: 2;
+}
+
 /* ---------- phase 4: habit screens 18-21 (generated from visual/screens/18..21 <style> blocks) ---------- */
 /* screens 18-20: shared block of the habit mockups (18-habits-today, 19-habits-manage, 20-habit-detail) */
 :is(.mos-s18, .mos-s19, .mos-s20) .btn {
@@ -3014,27 +3082,6 @@
     letter-spacing: -0.01em;
     margin: 0;
 }
-.mos-s09 .ghead p {
-    margin: 4px 0 0;
-    color: var(--muted-fg);
-    font-size: 15px;
-}
-.mos-s09 .gtools {
-    justify-content: flex-start;
-    gap: 12px 20px;
-}
-.mos-s09 .seg a,
-.mos-s09 .seg button {
-    padding: 8px 12px;
-}
-.mos-s09 .seg .sw {
-    width: 14px;
-    height: 4px;
-    border-radius: 2px;
-}
-.mos-s09 .sel {
-    min-height: 40px;
-    padding: 6px 32px 6px 12px;
 :is(.mos-s18, .mos-s19, .mos-s20) .lede {
     margin: 8px 0 0;
     color: var(--muted-fg);
@@ -3230,27 +3277,6 @@
     border: 2px solid var(--input);
     background: var(--surface);
     color: var(--foreground);
-    font: 400 15px/20px 'Overpass';
-}
-.mos-s09 .gside h2 {
-    font:
-        600 30px/36px 'Zilla Slab',
-        Georgia,
-        serif;
-    margin: 0;
-}
-.mos-s09 .gside .xfer {
-    border: 1px solid var(--border);
-    border-left: 4px solid var(--line-3);
-    border-radius: 6px;
-    padding: 12px 14px;
-    font-size: 15px;
-    line-height: 22px;
-}
-.mos-s09 .gside .xfer b {
-    display: block;
-}
-.mos-s09 .gside .dist {
     font: 400 16px/24px 'Overpass';
 }
 :is(.mos-s18, .mos-s19, .mos-s20) textarea.in {
@@ -3357,11 +3383,6 @@
     font-size: 14px;
     line-height: 20px;
     color: var(--muted-fg);
-}
-/* "+N": far or overflowing connections, listed in the panel — neutral, not another objective's hue */
-:is(.mos-s08, .mos-s09) .tr .more .n-stub {
-    stroke: var(--muted-fg);
-    stroke-width: 2;
 }
 :is(.mos-s18, .mos-s19, .mos-s20) .hatch {
     background: repeating-linear-gradient(
@@ -4422,3 +4443,1057 @@
     white-space: nowrap;
 }
 /* ---------- end phase 4 ---------- */
+
+/* screen 22: 22-retired-view.html */
+.mos-s22 .num {
+    font-variant-numeric: tabular-nums;
+}
+.mos-s22 .muted {
+    color: var(--muted-fg);
+}
+.mos-s22 .sm {
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s22 .xs {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+}
+.mos-s22 .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.mos-s22 .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 32px;
+}
+.mos-s22 h1 {
+    font:
+        700 30px/36px 'Overpass',
+        sans-serif;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s22 .lede {
+    color: var(--muted-fg);
+    max-width: 68ch;
+    margin-top: 8px;
+}
+.mos-s22 h2 {
+    font:
+        700 20px/28px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s22 h3 {
+    font:
+        600 16px/24px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s22 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    font:
+        600 15px/20px 'Overpass',
+        sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color 100ms ease-out,
+        transform 100ms ease-out;
+}
+.mos-s22 .btn:active {
+    transform: translateY(1px);
+}
+.mos-s22 .btn-primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.mos-s22 .btn-primary:hover {
+    background: color-mix(in srgb, var(--primary) 92%, var(--foreground));
+}
+.mos-s22 .btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--input);
+}
+.mos-s22 .btn-outline:hover {
+    background: var(--sunken);
+}
+.mos-s22 .btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border-color: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.mos-s22 .btn-ghost:hover {
+    background: var(--sunken);
+}
+.mos-s22 .btn-danger {
+    background: var(--destructive);
+    color: var(--primary-fg);
+}
+.mos-s22 .btn-sm {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 14px;
+}
+.mos-s22 .btn:disabled,
+.mos-s22 .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.mos-s22 .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.mos-s22 .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mos-s22 .help {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s22 .input,
+.mos-s22 textarea.input,
+.mos-s22 select.input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: var(--surface);
+    color: var(--foreground);
+    font:
+        400 16px/24px 'Overpass',
+        sans-serif;
+}
+.mos-s22 textarea.input {
+    resize: vertical;
+    min-height: 88px;
+}
+.mos-s22 .input::placeholder {
+    color: var(--muted-fg);
+}
+.mos-s22 .patterns {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 1fr;
+    gap: 0;
+    padding: 0;
+    margin-bottom: 32px;
+    overflow: hidden;
+}
+.mos-s22 .patterns > div {
+    padding: 28px 28px;
+}
+.mos-s22 .patterns > div + div {
+    border-left: 1px solid var(--border);
+}
+.mos-s22 .observe {
+    background: color-mix(in srgb, var(--sunken) 55%, var(--surface));
+}
+.mos-s22 .observe .win {
+    font: 600 14px/20px 'Overpass';
+    color: var(--muted-fg);
+    margin-bottom: 10px;
+}
+.mos-s22 .observe p.big {
+    font: 600 20px/30px 'Overpass';
+    max-width: 36ch;
+}
+.mos-s22 .observe p.q {
+    margin-top: 16px;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--muted-fg);
+    max-width: 44ch;
+}
+.mos-s22 .observe p.q b {
+    color: var(--foreground);
+    font-weight: 600;
+}
+.mos-s22 .mini-h {
+    font: 600 14px/20px 'Overpass';
+    color: var(--muted-fg);
+    margin-bottom: 12px;
+}
+.mos-s22 .kv {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.mos-s22 .kv li {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 12px;
+    align-items: center;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s22 .kv .n {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    min-width: 4ch;
+    text-align: right;
+}
+.mos-s22 .kv .sub {
+    order: 2;
+}
+.mos-s22 .kv .n {
+    order: 3;
+}
+.mos-s22 .tally {
+    display: flex;
+    gap: 3px;
+}
+.mos-s22 .tally i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1.5px solid var(--node-retired);
+    background: repeating-linear-gradient(
+        45deg,
+        var(--node-retired) 0 1.5px,
+        transparent 1.5px 4px
+    );
+}
+.mos-s22 .fine {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin-top: 14px;
+}
+.mos-s22 .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: center;
+    margin-bottom: 8px;
+}
+.mos-s22 .seg {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    background: var(--sunken);
+    padding: 4px;
+    border-radius: 10px;
+}
+.mos-s22 .seg button {
+    border: 0;
+    background: transparent;
+    padding: 6px 12px;
+    min-height: 36px;
+    border-radius: 6px;
+    font: 600 14px/20px 'Overpass';
+    color: var(--muted-fg);
+    cursor: pointer;
+}
+.mos-s22 .seg button .c {
+    font-weight: 400;
+    margin-left: 4px;
+    font-variant-numeric: tabular-nums;
+}
+.mos-s22 .seg button[aria-pressed='true'] {
+    background: var(--surface);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.12);
+}
+.mos-s22 .filters select.input {
+    width: auto;
+    min-height: 40px;
+    padding: 6px 36px 6px 12px;
+    font-size: 14px;
+    border-width: 1.5px;
+}
+.mos-s22 .filters .sp {
+    margin-left: auto;
+}
+.mos-s22 .month {
+    display: flex;
+    align-items: baseline;
+    gap: 12px;
+    margin: 32px 0 8px;
+}
+.mos-s22 .month h2 {
+    font: 700 18px/24px 'Overpass';
+}
+.mos-s22 .month span {
+    font-size: 14px;
+    color: var(--muted-fg);
+}
+.mos-s22 table.ret {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.mos-s22 .ret thead th {
+    font: 600 13px/18px 'Overpass';
+    color: var(--muted-fg);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+}
+.mos-s22 .ret td {
+    padding: 16px;
+    overflow-wrap: anywhere;
+    border-top: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s22 .ret tbody tr:first-child td {
+    border-top: 0;
+}
+.mos-s22 .c-what > .w {
+    display: flex;
+    gap: 14px;
+}
+.mos-s22 .kind-glyph {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: grid;
+    place-items: center;
+    color: var(--foreground);
+    border: 1.5px solid var(--node-retired);
+    background: repeating-linear-gradient(
+        45deg,
+        color-mix(in srgb, var(--node-retired) 35%, transparent) 0 1.5px,
+        var(--surface) 1.5px 6px
+    );
+}
+.mos-s22 .kind-glyph svg {
+    background: var(--surface);
+    border-radius: 4px;
+    padding: 1px;
+    box-sizing: content-box;
+}
+.mos-s22 .kind-name {
+    display: block;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+}
+.mos-s22 .ttl {
+    display: block;
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 22px;
+}
+.mos-s22 .obj {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s22 .c-why {
+    max-width: 30ch;
+}
+.mos-s22 .c-why q {
+    quotes: '“' '”';
+}
+.mos-s22 .c-dec {
+    max-width: 30ch;
+}
+.mos-s22 .c-dec {
+    color: var(--muted-fg);
+}
+.mos-s22 .c-dec svg {
+    margin-right: 8px;
+    vertical-align: -3px;
+}
+.mos-s22 .c-dec span {
+    color: var(--foreground);
+}
+.mos-s22 .c-age {
+    white-space: nowrap;
+    font-weight: 600;
+}
+.mos-s22 .c-age .lbl {
+    font-weight: 400;
+    color: var(--muted-fg);
+}
+.mos-s22 .c-age .date {
+    display: block;
+    font-weight: 400;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+}
+.mos-s22 .c-act {
+    text-align: right;
+    white-space: nowrap;
+}
+.mos-s22 .blk {
+    white-space: normal;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    max-width: 22ch;
+    margin: 6px 0 0 auto;
+    text-align: right;
+}
+.mos-s22 .nothing-lost {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-top: 24px;
+    font-size: 14px;
+    color: var(--muted-fg);
+}
+.mos-s22 .restore-demo {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 32px;
+    align-items: start;
+}
+.mos-s22 .pop {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    box-shadow: 0 8px 24px hsl(var(--shadow-color) / 0.14);
+}
+.mos-s22 .pop h3 {
+    font: 700 18px/26px 'Overpass';
+    margin-bottom: 12px;
+}
+.mos-s22 .pop ul {
+    margin: 0 0 20px;
+    padding-left: 18px;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s22 .pop li + li {
+    margin-top: 6px;
+}
+.mos-s22 .pop .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.mos-s22 .toast {
+    display: inline-flex;
+    gap: 12px;
+    align-items: center;
+    background: var(--foreground);
+    color: var(--background);
+    padding: 12px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    line-height: 20px;
+    max-width: 560px;
+}
+.mos-s22 .toast button {
+    white-space: nowrap;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: 600 14px/20px 'Overpass';
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 4px;
+}
+@media (max-width: 1100px) {
+    .mos-s22 .patterns {
+        grid-template-columns: 1fr 1fr;
+    }
+    .mos-s22 .observe {
+        grid-column: 1/-1;
+    }
+    .mos-s22 .patterns > div:nth-child(2) {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+    }
+    .mos-s22 .patterns > div:nth-child(3) {
+        border-top: 1px solid var(--border);
+    }
+    .mos-s22 .restore-demo {
+        grid-template-columns: 1fr;
+    }
+}
+@media (max-width: 900px) {
+    .mos-s22 .ret thead {
+        display: none;
+    }
+    .mos-s22 .ret,
+    .mos-s22 .ret tbody,
+    .mos-s22 .ret tr,
+    .mos-s22 .ret td {
+        display: block;
+        width: 100%;
+    }
+    .mos-s22 .ret colgroup {
+        display: none;
+    }
+    .mos-s22 .ret tr {
+        border-top: 1px solid var(--border);
+        padding: 12px 0;
+    }
+    .mos-s22 .ret tbody tr:first-child {
+        border-top: 0;
+    }
+    .mos-s22 .ret td {
+        border: 0;
+        padding: 6px 16px;
+        max-width: none;
+    }
+    .mos-s22 .c-act {
+        text-align: left;
+    }
+    .mos-s22 .blk {
+        margin-left: 0;
+        text-align: left;
+        max-width: none;
+    }
+    .mos-s22 .filters .sp {
+        margin-left: 0;
+    }
+}
+@media (max-width: 640px) {
+    .mos-s22 .patterns {
+        grid-template-columns: 1fr;
+    }
+    .mos-s22 .patterns > div + div {
+        border-left: 0;
+        border-top: 1px solid var(--border);
+    }
+}
+
+/* screen 23: 23-retire-flow.html */
+.mos-s23 .num {
+    font-variant-numeric: tabular-nums;
+}
+.mos-s23 .muted {
+    color: var(--muted-fg);
+}
+.mos-s23 .sm {
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s23 .xs {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+}
+.mos-s23 .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.mos-s23 .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 32px;
+}
+.mos-s23 h1 {
+    font:
+        700 30px/36px 'Overpass',
+        sans-serif;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s23 .lede {
+    color: var(--muted-fg);
+    max-width: 68ch;
+    margin-top: 8px;
+}
+.mos-s23 h2 {
+    font:
+        700 20px/28px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s23 h3 {
+    font:
+        600 16px/24px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s23 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    font:
+        600 15px/20px 'Overpass',
+        sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color 100ms ease-out,
+        transform 100ms ease-out;
+}
+.mos-s23 .btn:active {
+    transform: translateY(1px);
+}
+.mos-s23 .btn-primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.mos-s23 .btn-primary:hover {
+    background: color-mix(in srgb, var(--primary) 92%, var(--foreground));
+}
+.mos-s23 .btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--input);
+}
+.mos-s23 .btn-outline:hover {
+    background: var(--sunken);
+}
+.mos-s23 .btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border-color: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.mos-s23 .btn-ghost:hover {
+    background: var(--sunken);
+}
+.mos-s23 .btn-danger {
+    background: var(--destructive);
+    color: var(--primary-fg);
+}
+.mos-s23 .btn-sm {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 14px;
+}
+.mos-s23 .btn:disabled,
+.mos-s23 .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.mos-s23 .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.mos-s23 .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mos-s23 .help {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s23 .input,
+.mos-s23 textarea.input,
+.mos-s23 select.input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: var(--surface);
+    color: var(--foreground);
+    font:
+        400 16px/24px 'Overpass',
+        sans-serif;
+}
+.mos-s23 textarea.input {
+    resize: vertical;
+    min-height: 88px;
+}
+.mos-s23 .input::placeholder {
+    color: var(--muted-fg);
+}
+.mos-s23 .dlg {
+    position: relative;
+    width: min(680px, calc(100% - 32px));
+    margin: 0 auto;
+    background: var(--surface);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    box-shadow: 0 16px 48px hsl(var(--shadow-color) / 0.2);
+}
+.mos-s23 .dlg-head {
+    padding: 24px 28px 0;
+    display: flex;
+    gap: 16px;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+.mos-s23 .dlg-head h2 {
+    font: 700 22px/30px 'Overpass';
+    letter-spacing: -0.005em;
+}
+.mos-s23 .dlg-head p {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin-top: 4px;
+}
+.mos-s23 .close {
+    flex: none;
+}
+.mos-s23 .dlg-body {
+    padding: 8px 28px 0;
+}
+.mos-s23 .step {
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+}
+.mos-s23 .step:last-child {
+    border-bottom: 0;
+}
+.mos-s23 .step-h {
+    display: flex;
+    gap: 12px;
+    align-items: baseline;
+    margin-bottom: 12px;
+}
+.mos-s23 .step-n {
+    flex: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    background: var(--sunken);
+    display: grid;
+    place-items: center;
+    font: 700 13px/1 'Overpass';
+    color: var(--muted-fg);
+}
+.mos-s23 .step-n.ok {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.mos-s23 .step-h h3 {
+    font: 700 16px/24px 'Overpass';
+}
+.mos-s23 .reuse {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 13px;
+    color: var(--muted-fg);
+}
+.mos-s23 .reuse button {
+    border: 1px solid var(--border);
+    background: var(--background);
+    border-radius: 6px;
+    padding: 4px 10px;
+    min-height: 32px;
+    font: 600 13px/18px 'Overpass';
+    color: var(--foreground);
+    cursor: pointer;
+}
+.mos-s23 .count {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+}
+.mos-s23 .count .okt {
+    color: var(--primary);
+    font-weight: 600;
+    display: inline-flex;
+    gap: 4px;
+    align-items: center;
+}
+.mos-s23 .opts {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.mos-s23 .opt {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 12px 14px;
+    border: 1.5px solid var(--input);
+    border-radius: 10px;
+    cursor: pointer;
+    background: var(--surface);
+    min-height: 96px;
+}
+.mos-s23 .opt input {
+    position: absolute;
+    opacity: 0;
+}
+.mos-s23 .opt .t {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font: 700 15px/22px 'Overpass';
+}
+.mos-s23 .opt .d {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+}
+.mos-s23 .opt.on {
+    border: 2px solid var(--primary);
+    background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+.mos-s23 .opt.on .t::after {
+    content: '';
+    margin-left: auto;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--primary);
+    box-shadow:
+        0 0 0 3px var(--surface),
+        0 0 0 4.5px var(--primary);
+}
+.mos-s23 .opt .def {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+    color: var(--muted-fg);
+}
+.mos-s23 .split-box {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--background);
+    border: 1px solid var(--border);
+}
+.mos-s23 .newt {
+    display: grid;
+    grid-template-columns: 24px 1fr 1fr;
+    gap: 8px;
+    align-items: start;
+    padding: 8px 0;
+}
+.mos-s23 .newt + .newt {
+    border-top: 1px dashed var(--border);
+}
+.mos-s23 .newt .k {
+    font: 700 13px/40px 'Overpass';
+    color: var(--muted-fg);
+    text-align: center;
+}
+.mos-s23 .newt .input {
+    min-height: 40px;
+    padding: 8px 12px;
+    font-size: 15px;
+    border-width: 1.5px;
+}
+.mos-s23 .newt .two {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.mos-s23 .newt .two i {
+    flex: none;
+    width: 16px;
+    height: 12px;
+    background: var(--blaze);
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+}
+.mos-s23 .cols-h {
+    display: grid;
+    grid-template-columns: 24px 1fr 1fr;
+    gap: 8px;
+    font: 600 13px/18px 'Overpass';
+    color: var(--muted-fg);
+}
+.mos-s23 .addrow {
+    margin-top: 6px;
+}
+.mos-s23 .inherit {
+    margin-top: 12px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s23 .inherit .path {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+}
+.mos-s23 .nd {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 2px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--foreground);
+    background: var(--surface);
+    border: 1.5px solid var(--line-1);
+}
+.mos-s23 .nd.lock {
+    border-style: dashed;
+    border-color: var(--node-locked);
+}
+.mos-s23 .nd.new {
+    border-color: var(--primary);
+    font-weight: 600;
+}
+.mos-s23 .nd.done {
+    background: var(--blaze);
+    border-color: var(--blaze-ink);
+    color: var(--blaze-fg);
+}
+.mos-s23 .arr {
+    color: var(--muted-fg);
+}
+.mos-s23 .dlg-foot {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 16px;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 28px 24px;
+    border-top: 1px solid var(--border);
+    background: color-mix(in srgb, var(--sunken) 40%, var(--surface));
+    border-radius: 0 0 16px 16px;
+}
+.mos-s23 .dlg-foot p {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    max-width: 36ch;
+}
+.mos-s23 .dlg-foot .row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.mos-s23 .hint {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    width: 100%;
+    text-align: right;
+}
+.mos-s23 .field-err {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--attention);
+    margin-top: 6px;
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.mos-s23 .move-box {
+    margin-top: 14px;
+    padding: 14px;
+    border-radius: 10px;
+    background: var(--background);
+    border: 1px solid var(--border);
+    display: grid;
+    gap: 10px;
+}
+.mos-s23 .move-box ul {
+    margin: 0;
+    padding-left: 18px;
+    font-size: 14px;
+    line-height: 22px;
+}
+@media (max-width: 760px) {
+    .mos-s23 .opts {
+        grid-template-columns: 1fr;
+    }
+    .mos-s23 .opt {
+        min-height: 0;
+    }
+    .mos-s23 .newt,
+    .mos-s23 .cols-h {
+        grid-template-columns: 20px 1fr;
+    }
+    .mos-s23 .newt .two,
+    .mos-s23 .cols-h span:last-child {
+        grid-column: 2;
+    }
+    .mos-s23 .dlg-head,
+    .mos-s23 .dlg-body,
+    .mos-s23 .dlg-foot {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+}
+.mos-s23 .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 6px;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--muted-fg);
+    cursor: pointer;
+}
+.mos-s23 .icon-btn:hover {
+    background: var(--sunken);
+    color: var(--foreground);
+}
+.mos-s23 .dlg p {
+    margin: 0;
+}
+.mos-s22 svg.ic,
+.mos-s23 svg.ic {
+    display: inline-block;
+    flex: none;
+    vertical-align: -3px;
+}
+.mos-s22 .c-dec .date {
+    display: block;
+    margin-top: 2px;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+}

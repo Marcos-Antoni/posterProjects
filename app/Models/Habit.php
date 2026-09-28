@@ -5,6 +5,8 @@ namespace App\Models;
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
 use App\Models\Habits\HabitHistory;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
 use Carbon\CarbonInterface;
 use Database\Factories\HabitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -38,7 +40,7 @@ use Illuminate\Validation\ValidationException;
  * @property int|null $level
  * @property list<array{label: string, target: int|null, two_minute_version: string}>|null $level_ladder
  * @property Carbon|null $level_started_on
- * @property Carbon|null $archived_at
+ * @property Carbon|null $retired_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
@@ -59,12 +61,14 @@ use Illuminate\Validation\ValidationException;
     'level',
     'level_ladder',
     'level_started_on',
-    'archived_at',
+    'retired_at',
 ])]
-class Habit extends Model
+class Habit extends Model implements Retirable
 {
     /** @use HasFactory<HabitFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -83,8 +87,25 @@ class Habit extends Model
             'level' => 'integer',
             'level_ladder' => 'array',
             'level_started_on' => 'date',
-            'archived_at' => 'datetime',
+            'retired_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Retired habits carry `retired_at` (habits spec: retire, never delete).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $retired
+            ? $query->whereNotNull($this->qualifyColumn('retired_at'))
+            : $query->whereNull($this->qualifyColumn('retired_at'));
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->retired_at !== null;
     }
 
     /**
@@ -93,25 +114,6 @@ class Habit extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Habits that still accept entries and show in today/votes (phase 4:
-     * not archived). The single place that knows how "archived" is stored,
-     * so Phase 6's retirement (retired_at + NotRetired scope) changes only
-     * this model.
-     *
-     * @param  Builder<self>  $query
-     */
-    #[Scope]
-    protected function notArchived(Builder $query): void
-    {
-        $query->whereNull('archived_at');
-    }
-
-    public function isArchived(): bool
-    {
-        return $this->archived_at !== null;
     }
 
     /**

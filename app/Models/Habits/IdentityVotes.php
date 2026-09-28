@@ -23,7 +23,6 @@ class IdentityVotes
         $today = Carbon::parse(($today ?? Habit::todayLocalDate())->toDateString());
 
         $habits = $user->habits()
-            ->notArchived()
             ->with(['days', 'schedulePeriods', 'objective'])
             ->orderBy('id')
             ->get();

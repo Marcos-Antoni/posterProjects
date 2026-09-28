@@ -8,8 +8,8 @@ use Illuminate\Validation\ValidationException;
 
 /**
  * Shared guards of the habit actions: the habit must belong to the actor's
- * owner (anything else is "not found", never "forbidden"), and an archived
- * habit keeps its history but rejects new entries.
+ * owner (anything else is "not found", never "forbidden"), and a retired
+ * habit keeps its history but rejects new entries (retirement protocol).
  */
 trait GuardsHabits
 {
@@ -30,8 +30,8 @@ trait GuardsHabits
     {
         $this->ensureHabitOwned($actor, $habit);
 
-        if ($habit->isArchived()) {
-            throw ValidationException::withMessages(['habit' => 'No podés registrar en un hábito archivado.']);
+        if ($habit->isRetired()) {
+            throw ValidationException::withMessages(['habit' => 'No podés registrar en un hábito retirado.']);
         }
     }
 }

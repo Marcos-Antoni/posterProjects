@@ -61,7 +61,7 @@ class HabitPresenter
                 'two_minute_returns' => $streak->twoMinuteReturns,
                 'since' => $streak->currentSince,
             ],
-            'archived_at' => $habit->archived_at?->toIso8601String(),
+            'retired_at' => $habit->retired_at?->toIso8601String(),
         ];
     }
 

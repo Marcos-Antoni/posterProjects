@@ -30,7 +30,6 @@ class HabitController extends Controller
 
         $habits = $request->user()
             ->habits()
-            ->notArchived()
             ->with(['days', 'schedulePeriods', 'objective'])
             ->orderBy('name')
             ->get()

@@ -11,7 +11,7 @@ use App\Models\HabitEntry;
 
 /**
  * Records an entry against a habit for the current UTC-6 day (see
- * `Habit::recordEntry()`). Yes/no habits log 1. An archived habit rejects
+ * `Habit::recordEntry()`). Yes/no habits log 1. A retired habit rejects
  * it. Minor for AI (only for what Marco named).
  */
 class LogHabitEntry

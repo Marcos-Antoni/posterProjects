@@ -75,7 +75,7 @@ test('screen 19: every habit with link, level, streak and a due level suggestion
     ]);
     p4Days($gym, '2026-09-14', '2026-09-27');
     $sleep = p4Habit('2026-09-01', ['user_id' => $user->id, 'name' => 'Dormir', 'objective_id' => $objective->id]);
-    $old = p4Habit('2026-08-01', ['user_id' => $user->id, 'name' => 'Meditar', 'archived_at' => now()]);
+    $old = p4Habit('2026-08-01', ['user_id' => $user->id, 'name' => 'Meditar', 'retired_at' => now()]);
     p4Days($old, '2026-08-02', '2026-08-10');
 
     $this->actingAs($user)->get(route('habits.index'))
@@ -91,9 +91,9 @@ test('screen 19: every habit with link, level, streak and a due level suggestion
             ->where('habits.1.suggestion.direction', 'up')
             ->where('habits.1.suggestion.cast', 14)
             ->where('habits.1.suggestion.possible', 14)
-            ->has('archived', 1)
-            ->where('archived.0.id', $old->id)
-            ->where('archived.0.recorded_days', 9));
+            ->has('retired', 1)
+            ->where('retired.0.id', $old->id)
+            ->where('retired.0.recorded_days', 9));
 });
 
 test('screen 20: detail with 8-week calendar, votes for its identity, ladder, suggestion and the form options', function () {

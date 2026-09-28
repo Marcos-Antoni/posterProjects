@@ -7,11 +7,11 @@ import {
     ArrowDownIcon,
     ArrowUpIcon,
     HabitMark,
-    RestartIcon,
     VotesRow,
 } from '@/components/habits/marks';
 import { Crumbs } from '@/components/marcos/crumbs';
 import { AttentionIcon, PlusIcon } from '@/components/marcos/icons';
+import { RetireDialog } from '@/components/marcos/retire-dialog';
 import { toast } from '@/components/ui/toast';
 import AppLayout from '@/layouts/app-layout';
 import {
@@ -32,10 +32,10 @@ import type {
     Tally,
 } from '@/lib/habits';
 import {
-    archive as habitArchive,
     index as habitsIndex,
+    retire as habitRetire,
+    retireContext as habitRetireContext,
     store as habitStore,
-    unarchive as habitUnarchive,
     update as habitUpdate,
 } from '@/routes/habits';
 import { update as levelUpdate } from '@/routes/habits/level';
@@ -157,8 +157,8 @@ function HabitDetailView({ habit }: { habit: HabitDetail }) {
         habit.level
             ? `Nivel ${habit.level.current}: ${habit.level.label}.`
             : '',
-        habit.archived_at
-            ? 'Archivado: su historia queda, no recibe registros.'
+        habit.retired_at
+            ? 'Retirado: su historia queda, no recibe registros.'
             : '',
     ]
         .filter(Boolean)
@@ -171,7 +171,7 @@ function HabitDetailView({ habit }: { habit: HabitDetail }) {
             <button
                 className="chip2"
                 type="button"
-                disabled={habit.archived_at !== null || shownToday}
+                disabled={habit.retired_at !== null || shownToday}
                 onClick={() => logTwoMinute(habit.id)}
                 title={
                     shownToday
@@ -1004,27 +1004,8 @@ function HabitForm({ habit, objectives }: Props) {
                 >
                     {creating ? 'Crear hábito' : 'Guardar cambios'}
                 </button>
-                {habit && habit.archived_at === null && (
-                    <button
-                        className="btn-text quiet"
-                        type="button"
-                        onClick={() => router.post(habitArchive(habit.id).url)}
-                    >
-                        <ArchiveIcon />
-                        Archivar hábito
-                    </button>
-                )}
-                {habit && habit.archived_at !== null && (
-                    <button
-                        className="btn-text quiet"
-                        type="button"
-                        onClick={() =>
-                            router.post(habitUnarchive(habit.id).url)
-                        }
-                    >
-                        <RestartIcon size={16} />
-                        Reactivar hábito
-                    </button>
+                {habit && habit.retired_at === null && (
+                    <RetireHabitButton habitId={habit.id} />
                 )}
             </div>
         </form>
@@ -1045,3 +1026,31 @@ function FieldMessage({ message }: { message?: string }) {
 }
 
 HabitShow.layout = (page: ReactElement) => <AppLayout>{page}</AppLayout>;
+
+/**
+ * "Retirar hábito" (mockup 20): opens the shared retire dialog (reason +
+ * decision, screen 23) — it replaces any delete. Restoring happens from
+ * Retirados or "Todos los hábitos".
+ */
+function RetireHabitButton({ habitId }: { habitId: number }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <button
+                className="btn-text quiet"
+                type="button"
+                onClick={() => setOpen(true)}
+            >
+                <ArchiveIcon />
+                Retirar hábito
+            </button>
+            <RetireDialog
+                open={open}
+                onOpenChange={setOpen}
+                contextUrl={habitRetireContext(habitId).url}
+                actionUrl={habitRetire(habitId).url}
+            />
+        </>
+    );
+}

@@ -48,7 +48,7 @@ class PlanFactory extends Factory
             })
             ->afterCreating(function (Plan $plan) use ($appended): void {
                 if (isset($appended[$plan])) {
-                    $plan->update(['position' => Plan::query()
+                    $plan->update(['position' => Plan::withRetired()
                         ->where('objective_id', $plan->objective_id)
                         ->where('id', '<', $plan->id)
                         ->count()]);

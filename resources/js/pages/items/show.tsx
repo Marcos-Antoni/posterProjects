@@ -5,6 +5,7 @@ import type { FormEvent, ReactElement } from 'react';
 import { Crumbs } from '@/components/marcos/crumbs';
 import { LockIcon, PlusIcon } from '@/components/marcos/icons';
 import { ItemMiniMap } from '@/components/marcos/item-mini-map';
+import { RetireButton } from '@/components/marcos/retire-dialog';
 import { StateGlyph } from '@/components/marcos/state-glyph';
 import { toast } from '@/components/ui/toast';
 import AppLayout from '@/layouts/app-layout';
@@ -22,6 +23,8 @@ import {
 } from '@/routes/objectives';
 import {
     check as itemCheck,
+    retire as itemRetire,
+    retireContext as itemRetireContext,
     show as itemShow,
     uncheck as itemUncheck,
     update as itemUpdate,
@@ -187,6 +190,17 @@ export default function ItemShow({
                         >
                             Desmarcar
                         </button>
+                    )}
+                    {writable && (
+                        <RetireButton
+                            className="btn btn-outline"
+                            contextUrl={
+                                itemRetireContext([objective.key, item.key]).url
+                            }
+                            actionUrl={
+                                itemRetire([objective.key, item.key]).url
+                            }
+                        />
                     )}
                 </div>
             </div>

@@ -17,7 +17,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: minor (applied directly and audited) — only for an entry Marco explicitly named. Record an entry against a habit for today (UTC-6). Yes/no habits always log 1 (a single check-in); quantitative habits require a positive amount, which accumulates into the day\'s total. Archived habits reject new entries. If Marco only did the smallest start, use log-two-minute instead. Returns the day (with two_minute_logged and shown_up) and the habit\'s tolerant streak. Owner only.')]
+#[Description('Nivel IA: minor (applied directly and audited) — only for an entry Marco explicitly named. Record an entry against a habit for today (UTC-6). Yes/no habits always log 1 (a single check-in); quantitative habits require a positive amount, which accumulates into the day\'s total. Retired habits are hidden and reject new entries (not found); Marco restores them from Retirados. If Marco only did the smallest start, use log-two-minute instead. Returns the day (with two_minute_logged and shown_up) and the habit\'s tolerant streak. Owner only.')]
 class LogHabitEntry extends Tool
 {
     use PresentsHabits;

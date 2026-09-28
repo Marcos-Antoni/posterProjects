@@ -128,10 +128,10 @@ test('the derived state scope and the php derivation agree for every state', fun
         $unlockedByRetired->id => ItemState::Available,
     ];
 
-    $fromSql = Item::query()->withState()->get()->mapWithKeys(fn (Item $item) => [$item->id => $item->state])->all();
+    $fromSql = Item::withRetired()->withState()->get()->mapWithKeys(fn (Item $item) => [$item->id => $item->state])->all();
 
     foreach ($expected as $id => $state) {
         expect($fromSql[$id])->toBe($state)
-            ->and(Item::query()->findOrFail($id)->deriveState())->toBe($state);
+            ->and(Item::withRetired()->findOrFail($id)->deriveState())->toBe($state);
     }
 });

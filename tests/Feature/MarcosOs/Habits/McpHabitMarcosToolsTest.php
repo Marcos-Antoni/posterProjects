@@ -41,12 +41,12 @@ test('log-two-minute logs the 2-minute version as shown-up, never completed', fu
         ->and($day->completed)->toBeFalse();
 });
 
-test('log-two-minute rejects an archived habit and hides other users\' habits', function () {
-    $archived = p4Habit('2026-09-01', ['archived_at' => now()]);
+test('log-two-minute hides retired habits (not found, retirement protocol) and other users\' habits', function () {
+    $archived = p4Habit('2026-09-01', ['retired_at' => now()]);
     $foreign = p4Habit('2026-09-01');
 
     PosterServer::actingAs($archived->user)->tool(LogTwoMinute::class, ['habit_id' => $archived->id])
-        ->assertHasErrors(['No podés registrar en un hábito archivado.']);
+        ->assertHasErrors(["Habit not found: {$archived->id}"]);
 
     PosterServer::actingAs($archived->user)->tool(LogTwoMinute::class, ['habit_id' => $foreign->id])
         ->assertHasErrors(["Habit not found: {$foreign->id}"]);

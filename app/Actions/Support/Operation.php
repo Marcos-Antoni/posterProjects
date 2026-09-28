@@ -41,6 +41,10 @@ enum Operation: string
     case LogHabitTwoMinute = 'log-habit-two-minute';
     case UndoHabitTwoMinute = 'undo-habit-two-minute';
     // --- end phase 4 ---
+    // --- phase 6: retirement (major: create, retire or restore any element) ---
+    case RetireElement = 'retire-element';
+    case RestoreElement = 'restore-element';
+    // --- end phase 6 ---
 
     public function tier(): AiTier
     {

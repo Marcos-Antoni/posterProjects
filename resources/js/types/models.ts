@@ -105,8 +105,8 @@ export type Habit = {
     times_per_week: number | null;
     /** Time of day "HH:MM:SS" in the feature's fixed UTC-6 zone. */
     planned_time: string | null;
-    /** Set once the habit is archived. Archived habits keep their history. */
-    archived_at: string | null;
+    /** Set once the habit is retired (hidden; history kept; restore from Retirados). */
+    retired_at: string | null;
     created_at: string | null;
     updated_at: string | null;
 };

@@ -3,6 +3,7 @@
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
 use App\Models\Habit;
+use App\Models\Retirement;
 use App\Models\User;
 
 test('guests are redirected to login when visiting the habits management page', function () {
@@ -224,32 +225,35 @@ test('a user cannot update another user\'s habit', function () {
     expect($habit->refresh()->name)->toBe('Private');
 });
 
-test('the owner can archive and reactivate a habit', function () {
+test('the owner can retire a habit with a reason and restore it from Retirados (Phase 6: archive became retire)', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->create();
 
-    $this->actingAs($user)->post("/habits/{$habit->id}/archive")->assertRedirect('/habits/manage');
+    $this->actingAs($user)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito'])->assertRedirect('/habits/manage');
 
-    expect($habit->refresh()->archived_at)->not->toBeNull();
+    expect(Habit::withRetired()->findOrFail($habit->id)->retired_at)->not->toBeNull();
 
-    $this->actingAs($user)->post("/habits/{$habit->id}/unarchive")->assertRedirect('/habits/manage');
+    $retirement = Retirement::query()->sole();
+    $this->actingAs($user)->post("/retired/{$retirement->id}/restore")->assertRedirect('/retired');
 
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 });
 
-test('a user cannot archive or unarchive another user\'s habit', function () {
+test('a user cannot retire or restore another user\'s habit', function () {
     $stranger = User::factory()->create();
     $habit = Habit::factory()->create();
 
-    $this->actingAs($stranger)->post("/habits/{$habit->id}/archive")->assertForbidden();
+    $this->actingAs($stranger)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito'])->assertNotFound();
 
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 
-    $archived = Habit::factory()->archived()->create();
+    $owner = $habit->user;
+    $this->actingAs($owner)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito']);
+    $retirement = Retirement::query()->sole();
 
-    $this->actingAs($stranger)->post("/habits/{$archived->id}/unarchive")->assertForbidden();
+    $this->actingAs($stranger)->post("/retired/{$retirement->id}/restore")->assertNotFound();
 
-    expect($archived->refresh()->archived_at)->not->toBeNull();
+    expect(Habit::withRetired()->findOrFail($habit->id)->retired_at)->not->toBeNull();
 });
 
 test('there is no destroy route for habits', function () {

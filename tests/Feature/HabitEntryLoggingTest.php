@@ -111,13 +111,13 @@ test('a quantitative habit requires a positive integer amount', function (array 
     'non-integer amount' => [['amount' => 'many']],
 ]);
 
-test('an archived habit rejects new entries', function () {
+test('a retired habit rejects new entries (hidden: not found)', function () {
     $user = User::factory()->create();
-    $habit = Habit::factory()->for($user)->archived()->create();
+    $habit = Habit::factory()->for($user)->retired()->create();
 
     $response = $this->actingAs($user)->post("/habits/{$habit->id}/entries");
 
-    $response->assertSessionHasErrors('habit');
+    $response->assertNotFound();
     expect($habit->entries()->count())->toBe(0);
 });
 

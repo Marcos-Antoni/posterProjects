@@ -126,8 +126,8 @@ test('the 2-minute version restarts a broken streak', function () {
         ->and($streak->best)->toBe(11);
 });
 
-test('an archived habit rejects the 2-minute version', function () {
-    $habit = p4Habit('2026-09-20', ['archived_at' => now()]);
+test('a retired habit rejects the 2-minute version', function () {
+    $habit = p4Habit('2026-09-20', ['retired_at' => now()]);
 
     $errors = mosErrors(fn () => app(LogTwoMinute::class)(Actor::ownerWeb($habit->user), $habit));
 

@@ -58,14 +58,13 @@ class HabitEntryController extends Controller
     /**
      * Resolve `{habit}` scoped to the requesting user's active habits.
      * No route-model binding (design D-5): unknown id, another user's
-     * habit, and an archived habit all collapse into the same
+     * habit, and a retired habit all collapse into the same
      * `ModelNotFoundException` -> generic `404`, never disclosing which.
      */
     private function resolveHabit(Request $request, int $habit): Habit
     {
         return $request->user()
             ->habits()
-            ->notArchived()
             ->whereKey($habit)
             ->firstOrFail();
     }

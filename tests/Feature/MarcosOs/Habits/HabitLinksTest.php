@@ -105,14 +105,14 @@ test('closing or retiring the objective and its plan never touches the habit', f
     $plan = Plan::factory()->for($objective)->create();
     $habit = p4Habit('2026-09-01', ['user_id' => $user->id, 'objective_id' => $objective->id, 'plan_id' => $plan->id]);
     p4Days($habit, '2026-09-20', '2026-09-26');
-    $before = $habit->fresh()->only(['name', 'archived_at', 'objective_id', 'plan_id', 'two_minute_version', 'updated_at']);
+    $before = $habit->fresh()->only(['name', 'retired_at', 'objective_id', 'plan_id', 'two_minute_version', 'updated_at']);
 
     $objective->update(['state' => $state, 'closed_at' => now()]);
     $plan->update(['state' => PlanState::Retired]);
 
     $habit->refresh();
 
-    expect($habit->only(['name', 'archived_at', 'objective_id', 'plan_id', 'two_minute_version', 'updated_at']))->toEqual($before)
+    expect($habit->only(['name', 'retired_at', 'objective_id', 'plan_id', 'two_minute_version', 'updated_at']))->toEqual($before)
         ->and($habit->history()->streak()->current)->toBe(7);
 
     $this->actingAs($user)->get(route('habits.today'))

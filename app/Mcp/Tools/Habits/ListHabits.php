@@ -12,7 +12,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: read. List every habit of the authenticated user, active and archived — same data as the web "Todos los hábitos" view: each one\'s 2-minute version, identity statement, the objective it hangs from, level ladder and tolerant streak (streak_current, streak_best, streak_state).')]
+#[Description('Nivel IA: read. List every non-retired habit of the authenticated user — same data as the web "Todos los hábitos" view: each one\'s 2-minute version, identity statement, the objective it hangs from, level ladder and tolerant streak (streak_current, streak_best, streak_state). Retired habits are hidden; they appear only in retired-view.')]
 class ListHabits extends Tool
 {
     use PresentsHabits;

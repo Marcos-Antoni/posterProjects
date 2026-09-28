@@ -138,7 +138,7 @@ test('today\'s habit checks come in one compact row, with the ones that do not a
     Habit::factory()->for($owner)->create(['name' => 'Dormir 22:00', 'planned_time' => '22:00']);
     Habit::factory()->for($owner)->quantitative('páginas', 20)->create(['name' => 'Leer libro']);
     Habit::factory()->for($owner)->specificWeekdays([2, 3, 4, 5])->create(['name' => 'Gimnasio 06:30']);
-    Habit::factory()->for($owner)->create(['name' => 'Archivado', 'archived_at' => now()]);
+    Habit::factory()->for($owner)->retired()->create(['name' => 'Retirado']);
     Habit::factory()->create(['name' => 'Ajeno']);
 
     $this->actingAs($owner)->get(route('now'))

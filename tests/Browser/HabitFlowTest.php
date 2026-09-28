@@ -9,7 +9,8 @@ use Illuminate\Support\Carbon;
 | Phase 4 habit screens in a real browser (mockups 18–21): a habit is
 | created only with its 2-minute version, logged from "Hábitos de hoy"
 | (mark done, stepper, only the 2 minutes with its undo, restart after a
-| miss), inspected on its detail, archived and reactivated from "Todos",
+| miss), inspected on its detail, retired (Phase 6 protocol) and restored
+| from "Todos",
 | and its identity votes read as a proportion.
 */
 
@@ -96,7 +97,7 @@ test('after a miss the row offers to restart with 2 minutes, never a count of mi
     expect($habit->fresh()->history()->streak()->state->value)->toBe('ok');
 });
 
-test('a habit is archived and reactivated from "Todos", keeping its history', function () {
+test('a habit is retired with a reason from "Todos", listed under Retirados, and restored keeping its history', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->create(['name' => 'Meditar']);
     HabitDay::factory()->for($habit)->create(['entry_date' => Habit::todayLocalDate()->subDays(3)->toDateString()]);
@@ -105,15 +106,28 @@ test('a habit is archived and reactivated from "Todos", keeping its history', fu
     $page = visit('/habits/manage');
 
     $page->assertSee('Meditar')
-        ->click('Archivar')
-        ->assertSee('Reactivar')
-        ->assertSee('1 día registrado')
-        ->click('Reactivar')
-        ->assertSee('No hay hábitos archivados.')
+        ->click('Retirar')
+        ->assertSee('¿Por qué lo retirás?')
+        ->fill('reason', 'demasiado grande para arrancar')
+        ->click('Retirar y archivar')
         ->assertNoJavascriptErrors();
 
-    expect($habit->fresh()->archived_at)->toBeNull()
+    expect($habit->fresh())->toBeNull()
+        ->and(Habit::withRetired()->find($habit->id)->retired_at)->not->toBeNull();
+
+    $page = visit('/habits/manage');
+
+    $page->assertSee('Retirados')
+        ->assertSee('demasiado grande para arrancar')
+        ->assertSee('1 día registrado')
+        ->click('Devolver')
+        ->assertSee('Todavía no retiraste nada')
+        ->assertNoJavascriptErrors();
+
+    expect($habit->fresh()->retired_at)->toBeNull()
         ->and($habit->days()->count())->toBe(1);
+
+    visit('/habits/manage')->assertSee('Meditar')->assertDontSee('demasiado grande para arrancar');
 });
 
 test('identity votes read as a proportion per statement', function () {

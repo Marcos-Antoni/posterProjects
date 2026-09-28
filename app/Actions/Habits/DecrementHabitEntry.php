@@ -11,7 +11,7 @@ use App\Models\HabitDay;
 
 /**
  * Subtracts one from today's (UTC-6) amount — see `Habit::decrementToday()`:
- * never below zero, never un-completing the day. An archived habit rejects it.
+ * never below zero, never un-completing the day. A retired habit rejects it.
  */
 class DecrementHabitEntry
 {

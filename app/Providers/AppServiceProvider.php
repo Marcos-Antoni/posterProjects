@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Actions\Retirement\RetirementHandlers;
 use App\Actions\Support\AuditWriter;
 use App\Actions\Support\DatabaseLastActivity;
 use App\Actions\Support\LastActivity;
 use App\Actions\Support\LogAuditWriter;
 use App\Actions\Support\NoWeeklyMainPriority;
 use App\Actions\Support\WeeklyMainPriority;
+use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
 use App\Models\Plan;
@@ -45,6 +47,9 @@ class AppServiceProvider extends ServiceProvider
         // with habit_days.two_minute_logged.
         $this->app->bind(LastActivity::class, DatabaseLastActivity::class);
         // --- end phase 3 ---
+        // Phase 6 (design D8): one registry of retirement handlers per model;
+        // Phase 7 registers captures on it.
+        $this->app->singleton(RetirementHandlers::class);
     }
 
     /**
@@ -112,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
             'objective' => Objective::class,
             'plan' => Plan::class,
             'item' => Item::class,
+            'habit' => Habit::class, // phase 6
         ]);
     }
 

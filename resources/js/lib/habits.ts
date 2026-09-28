@@ -54,7 +54,7 @@ export type HabitSummary = {
     plan: { id: number; title: string } | null;
     level: HabitLevel | null;
     streak: HabitStreak;
-    archived_at: string | null;
+    retired_at: string | null;
 };
 
 export type Tally = { cast: number; possible: number; two_minute: number };

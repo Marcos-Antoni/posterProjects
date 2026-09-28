@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\ObjectiveState;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
 use Database\Factories\ObjectiveFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -34,10 +36,12 @@ use Illuminate\Support\Facades\DB;
  * @property-read int|null $progress_total  selected by `scopeWithProgress()`
  */
 #[Fillable(['user_id', 'key', 'title', 'identity_statement', 'state', 'position', 'closed_at'])]
-class Objective extends Model
+class Objective extends Model implements Retirable
 {
     /** @use HasFactory<ObjectiveFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -165,7 +169,7 @@ class Objective extends Model
     {
         return DB::transaction(function (): int {
             /** @var self $locked */
-            $locked = self::query()->whereKey($this->id)->lockForUpdate()->firstOrFail();
+            $locked = self::withRetired()->whereKey($this->id)->lockForUpdate()->firstOrFail();
 
             $number = $locked->next_item_number;
 
@@ -185,5 +189,20 @@ class Objective extends Model
         $max = self::query()->where('user_id', $owner->id)->max('position');
 
         return $max === null ? 0 : ((int) $max) + 1;
+    }
+
+    /**
+     * Retired objectives are in the `retired` state (projects spec).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $query->where($this->qualifyColumn('state'), $retired ? '=' : '!=', ObjectiveState::Retired->value);
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->state === ObjectiveState::Retired;
     }
 }

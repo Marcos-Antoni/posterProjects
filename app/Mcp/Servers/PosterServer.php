@@ -4,14 +4,14 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\Graphs\GlobalGraph;
 use App\Mcp\Tools\Graphs\ObjectiveGraph;
-use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
 use App\Mcp\Tools\Habits\ListHabits;
 use App\Mcp\Tools\Habits\LogHabitEntry;
 use App\Mcp\Tools\Habits\LogTwoMinute;
+use App\Mcp\Tools\Habits\RestoreHabit;
+use App\Mcp\Tools\Habits\RetireHabit;
 use App\Mcp\Tools\Habits\ShowHabit;
 use App\Mcp\Tools\Habits\TodayHabits;
-use App\Mcp\Tools\Habits\UnarchiveHabit;
 use App\Mcp\Tools\Habits\UpdateHabit;
 use App\Mcp\Tools\Items\CheckItem;
 use App\Mcp\Tools\Items\ShowItem;
@@ -19,6 +19,7 @@ use App\Mcp\Tools\Items\UncheckItem;
 use App\Mcp\Tools\Objectives\ListObjectives;
 use App\Mcp\Tools\Objectives\ShowObjective;
 use App\Mcp\Tools\Views\NowView;
+use App\Mcp\Tools\Views\RetiredView;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -52,8 +53,6 @@ class PosterServer extends Server
         // --- end phase 5 ---
         CreateHabit::class,
         UpdateHabit::class,
-        ArchiveHabit::class,
-        UnarchiveHabit::class,
         TodayHabits::class,
         ListHabits::class,
         ShowHabit::class,
@@ -61,5 +60,10 @@ class PosterServer extends Server
         // --- phase 4: habits ---
         LogTwoMinute::class,
         // --- end phase 4 ---
+        // --- phase 6: retirement (retire/restore replace archive/unarchive) ---
+        RetireHabit::class,
+        RestoreHabit::class,
+        RetiredView::class,
+        // --- end phase 6 ---
     ];
 }

@@ -9,6 +9,8 @@ use App\Http\Controllers\ItemFocusController;
 use App\Http\Controllers\NowController;
 use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\RetiredController;
+use App\Http\Controllers\RetirementController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
@@ -57,9 +59,10 @@ Route::middleware('auth')->group(function (): void {
 
     // --- phase 4: habits ---
     // Habits are personal to the authenticated user. There is intentionally
-    // NO destroy route: habits can only be archived (and reactivated), their
-    // history is never deleted. `{habit}` is numeric so the literal segments
-    // (manage, identity, create) never bind as a habit.
+    // NO destroy route: habits can only be retired (and restored from
+    // Retirados), their history is never deleted. Retire/restore routes live
+    // in the phase 6 block below. `{habit}` is numeric so the literal
+    // segments (manage, identity, create) never bind as a habit.
     Route::get('habits', [HabitController::class, 'today'])->name('habits.today');
     Route::get('habits/manage', [HabitController::class, 'index'])->name('habits.index');
     Route::get('habits/identity', [HabitController::class, 'identity'])->name('habits.identity');
@@ -69,8 +72,6 @@ Route::middleware('auth')->group(function (): void {
         Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
         Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
         Route::post('habits/{habit}/level', [HabitController::class, 'level'])->name('habits.level.update');
-        Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
-        Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
         Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
         Route::post('habits/{habit}/entries/decrement', [HabitEntryController::class, 'decrement'])->name('habits.entries.decrement');
         Route::post('habits/{habit}/two-minute', [HabitEntryController::class, 'twoMinute'])->name('habits.two-minute.store');
@@ -152,6 +153,24 @@ Route::middleware('auth')->group(function (): void {
     Route::get('map', [UnlockGraphController::class, 'global'])->name('map.index');
     Route::get('map/{objective}', [UnlockGraphController::class, 'objective'])->name('map.show');
     // --- end phase 5 ---
+    // --- phase 6: retirement protocol and Retired view ---
+    // Nothing is deleted: every "remove" is "Retirar" (reason + content
+    // decision). The GET beside each POST feeds the retire dialog (JSON).
+    // Restoring happens only from the Retired view. Habit archive/unarchive
+    // routes are gone: habits retire here too (habits spec).
+    Route::get('retired', [RetiredController::class, 'index'])->name('retired.index');
+    Route::post('retired/{retirement}/restore', [RetiredController::class, 'restore'])->whereNumber('retirement')->name('retired.restore');
+    Route::get('objectives/{objective}/retire', [RetirementController::class, 'objectiveContext'])->name('objectives.retire-context');
+    Route::post('objectives/{objective}/retire', [RetirementController::class, 'retireObjective'])->name('objectives.retire');
+    Route::get('objectives/{objective}/items/{item}/retire', [RetirementController::class, 'itemContext'])->name('objectives.items.retire-context');
+    Route::post('objectives/{objective}/items/{item}/retire', [RetirementController::class, 'retireItem'])->name('objectives.items.retire');
+    Route::scopeBindings()->group(function (): void {
+        Route::get('objectives/{objective}/plans/{plan}/retire', [RetirementController::class, 'planContext'])->name('objectives.plans.retire-context');
+        Route::post('objectives/{objective}/plans/{plan}/retire', [RetirementController::class, 'retirePlan'])->name('objectives.plans.retire');
+    });
+    Route::get('habits/{habit}/retire', [RetirementController::class, 'habitContext'])->name('habits.retire-context');
+    Route::post('habits/{habit}/retire', [RetirementController::class, 'retireHabit'])->name('habits.retire');
+    // --- end phase 6 ---
 });
 
 require __DIR__.'/auth.php';

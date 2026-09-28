@@ -72,12 +72,13 @@
 
 ## 6. Phase 6 — Retirement protocol and Retired view
 
-- [ ] 6.1 Test + implement `RetireElement` for item, milestone, plan, habit, objective, capture: reason ≥10 chars, move/split/archive-as-is, atomic, dependents recomputed (`retirement`, design D8)
-- [ ] 6.2 Test + implement `NotRetired` global scope on all retirable models and the hidden-everywhere rule (web, API lists, MCP lists)
-- [ ] 6.3 Test + implement restore (parent must not be retired, history kept)
-- [ ] 6.4 Migrate habit archive/unarchive to retire/restore across web, API 404 set and MCP (`habits`)
-- [ ] 6.5 Retire flow dialog and Retired view with filters, per-reason counts and median age per kind (screens 22–23) (mockups: visual/screens/22-retired-view.html, 23-retire-flow.html)
-- [ ] 6.6 MCP `retired-view`; retirement via MCP is a major operation (proposal until Phase 8 grants exist)
+- [x] 6.1 Test + implement `RetireElement` for item, milestone, plan, habit, objective, capture: reason ≥10 chars, move/split/archive-as-is, atomic, dependents recomputed (`retirement`, design D8)
+  - [ ] 6.1b Capture retirement — **waits for Phase 7** (no `captures` table yet): Phase 7 implements `App\Actions\Retirement\RetirementHandler` for `Capture` and registers it in `RetirementHandlers` (the `RetirableKind::Capture` kind, the Retired view filter and `RetireElement`'s signature already support it); see LOG NEED
+- [x] 6.2 Test + implement `NotRetired` global scope on all retirable models and the hidden-everywhere rule (web, API lists, MCP lists)
+- [x] 6.3 Test + implement restore (parent must not be retired, history kept)
+- [x] 6.4 Migrate habit archive/unarchive to retire/restore across web, API 404 set and MCP (`habits`)
+- [x] 6.5 Retire flow dialog and Retired view with filters, per-reason counts and median age per kind (screens 22–23) (mockups: visual/screens/22-retired-view.html, 23-retire-flow.html)
+- [x] 6.6 MCP `retired-view`; retirement via MCP is a major operation (proposal until Phase 8 grants exist)
 
 ## 7. Phase 7 — Capture inbox and reviews
 

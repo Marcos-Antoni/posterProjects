@@ -12,12 +12,13 @@ use Illuminate\Support\Carbon;
 /**
  * The compact "Hábitos de hoy" row of the Now screen (now-focus: "the
  * current habit checks for today in a compact row"; mockup 02): the owner's
- * non-archived habits scheduled today (UTC-6), in name order, and — set
+ * non-retired habits scheduled today (UTC-6), in name order, and — set
  * apart, never as a miss — the weekday habits that do not apply today with
  * the next day they do. Two queries whatever the number of habits.
+ * Retired habits never show: the `NotRetired` global scope hides them.
  *
- * `two_minute_version` is read defensively: the column arrives with Phase 4
- * (habits spec "Every Habit Has A 2-Minute Version"); until then it is null.
+ * `two_minute_version` is read defensively: legacy rows may still lack it
+ * (habits spec "Every Habit Has A 2-Minute Version").
  */
 final class NowHabits
 {
@@ -31,7 +32,6 @@ final class NowHabits
         $dayStart = Carbon::parse($today->toDateString(), $timezone)->utc();
 
         $habits = $owner->habits()
-            ->whereNull('archived_at')
             ->with([
                 'days' => fn ($query) => $query->where('entry_date', $today->toDateString()),
                 'entries' => fn ($query) => $query

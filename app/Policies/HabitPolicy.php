@@ -8,7 +8,7 @@ use App\Models\User;
 /**
  * Habits are strictly personal: every ability reduces to "is this my
  * habit?". There is intentionally no delete/restore/forceDelete —
- * habits can only be archived (and unarchived), never destroyed.
+ * habits can only be retired (and restored), never destroyed.
  */
 class HabitPolicy
 {
@@ -38,17 +38,9 @@ class HabitPolicy
     }
 
     /**
-     * Only the owner may archive a habit.
+     * Only the owner may retire a habit (retirement protocol).
      */
-    public function archive(User $user, Habit $habit): bool
-    {
-        return $habit->user_id === $user->id;
-    }
-
-    /**
-     * Only the owner may reactivate an archived habit.
-     */
-    public function unarchive(User $user, Habit $habit): bool
+    public function retire(User $user, Habit $habit): bool
     {
         return $habit->user_id === $user->id;
     }

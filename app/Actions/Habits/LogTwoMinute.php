@@ -13,7 +13,7 @@ use App\Models\HabitDay;
  * Records that the habit's 2-minute version was done today (UTC-6): the day
  * counts as shown-up for the tolerant streak and identity votes, but is never
  * marked `completed` by it. Idempotent within the day. Also the "volver"
- * (restart) action after a miss. An archived habit rejects it. Minor for AI.
+ * (restart) action after a miss. A retired habit rejects it. Minor for AI.
  */
 class LogTwoMinute
 {

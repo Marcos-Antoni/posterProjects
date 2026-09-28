@@ -41,7 +41,7 @@ trait PresentsHabits
             'streak_current' => $streak->current,
             'streak_best' => $streak->best,
             'streak_state' => $streak->state->value,
-            'archived_at' => $habit->archived_at?->toIso8601String(),
+            'retired_at' => $habit->retired_at?->toIso8601String(),
             'url' => $links->habit($habit),
         ];
     }

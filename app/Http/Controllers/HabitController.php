@@ -40,7 +40,6 @@ class HabitController extends Controller
 
         $habits = $request->user()
             ->habits()
-            ->notArchived()
             ->with(['days', 'schedulePeriods', 'objective', 'plan'])
             ->orderBy('name')
             ->get();
@@ -60,8 +59,9 @@ class HabitController extends Controller
 
     /**
      * Screen 19: every habit with its 2-minute version, level, link and
-     * tolerant streak (plus a level suggestion when due); archived habits
-     * apart, with their recorded history.
+     * tolerant streak (plus a level suggestion when due); retired habits
+     * apart (mockup 19 "Retirados"), with their reason, recorded history and
+     * the open retirement "Devolver" restores (retirement protocol, Phase 6).
      */
     public function index(Request $request): Response
     {
@@ -69,13 +69,18 @@ class HabitController extends Controller
 
         $today = Habit::todayLocalDate();
 
-        $habits = $request->user()
+        $active = $request->user()
             ->habits()
             ->with(['days', 'schedulePeriods', 'objective', 'plan'])
             ->orderBy('name')
             ->get();
 
-        [$archived, $active] = $habits->partition(fn (Habit $habit): bool => $habit->isArchived());
+        $retired = Habit::query()
+            ->onlyRetired()
+            ->whereBelongsTo($request->user())
+            ->with(['days', 'retirements' => fn ($query) => $query->open()])
+            ->orderByDesc('retired_at')
+            ->get();
 
         return Inertia::render('habits/index', [
             'habits' => $active->map(function (Habit $habit) use ($today): array {
@@ -86,12 +91,14 @@ class HabitController extends Controller
                     'suggestion' => $history->levelSuggestion()?->toArray(),
                 ];
             })->values()->all(),
-            'archived' => $archived->map(fn (Habit $habit): array => [
+            'retired' => $retired->map(fn (Habit $habit): array => [
                 'id' => $habit->id,
                 'name' => $habit->name,
                 'two_minute_version' => (string) $habit->two_minute_version,
                 'recurrence_type' => $habit->recurrence_type->value,
-                'archived_at' => $habit->archived_at?->toIso8601String(),
+                'retired_at' => $habit->retired_at?->toIso8601String(),
+                'reason' => $habit->retirements->first()?->reason,
+                'retirement_id' => $habit->retirements->first()?->id,
                 'recorded_days' => $habit->days->filter->isShownUp()->count(),
             ])->values()->all(),
         ]);
@@ -158,7 +165,7 @@ class HabitController extends Controller
         Gate::authorize('viewAny', Habit::class);
 
         $today = Habit::todayLocalDate();
-        $firstHabit = $request->user()->habits()->notArchived()->orderBy('id')->first(['id', 'name']);
+        $firstHabit = $request->user()->habits()->orderBy('id')->first(['id', 'name']);
 
         return Inertia::render('habits/identity', [
             'date' => $today->toDateString(),
@@ -200,32 +207,6 @@ class HabitController extends Controller
         $changeLevel(Actor::ownerWeb($request->user()), $habit, (int) $validated['level']);
 
         return redirect()->route('habits.show', $habit);
-    }
-
-    /**
-     * Archive a habit. It keeps its full history and can be reactivated at
-     * any time — there is no destroy. Owner only. (Phase 6 replaces this with
-     * the retirement protocol.)
-     */
-    public function archive(Habit $habit): RedirectResponse
-    {
-        Gate::authorize('archive', $habit);
-
-        $habit->update(['archived_at' => now()]);
-
-        return redirect()->route('habits.index');
-    }
-
-    /**
-     * Reactivate an archived habit, history untouched. Owner only.
-     */
-    public function unarchive(Habit $habit): RedirectResponse
-    {
-        Gate::authorize('unarchive', $habit);
-
-        $habit->update(['archived_at' => null]);
-
-        return redirect()->route('habits.index');
     }
 
     /**

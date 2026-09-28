@@ -9,6 +9,7 @@ import {
     RestartIcon,
 } from '@/components/habits/marks';
 import { PencilIcon, PlusIcon } from '@/components/marcos/icons';
+import { RetireDialog } from '@/components/marcos/retire-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { scheduleLabel, streakCount } from '@/lib/habits';
 import type {
@@ -18,22 +19,25 @@ import type {
 } from '@/lib/habits';
 import { formatLongDate } from '@/lib/marcos';
 import {
-    archive as habitArchive,
     create as habitCreate,
     index as habitsIndex,
+    retire as habitRetire,
+    retireContext as habitRetireContext,
     show as habitShow,
     today as habitsToday,
-    unarchive as habitUnarchive,
 } from '@/routes/habits';
+import { restore as retiredRestore } from '@/routes/retired';
 
 type ManagedHabit = HabitSummary & { suggestion: LevelSuggestion | null };
 
-type ArchivedHabit = {
+type RetiredHabit = {
     id: number;
     name: string;
     two_minute_version: string;
     recurrence_type: RecurrenceType;
-    archived_at: string | null;
+    retired_at: string | null;
+    reason: string | null;
+    retirement_id: number | null;
     recorded_days: number;
 };
 
@@ -42,16 +46,17 @@ type ArchivedHabit = {
  * its 2-minute version, level, the objective it hangs from and its tolerant
  * streak — never a count of misses. A level suggestion (≥ 80 % over 14 days,
  * or a step down after a break) shows under its row; Marco decides. Nothing
- * is deleted: archived habits keep their history and come back intact.
+ * is deleted: a habit is retired with a written reason (the shared retire
+ * dialog, Phase 6) and "Devolver" restores it with its history intact.
  */
 export default function HabitsManage({
     habits,
-    archived,
+    retired,
 }: {
     habits: ManagedHabit[];
-    archived: ArchivedHabit[];
+    retired: RetiredHabit[];
 }) {
-    const [showArchived, setShowArchived] = useState(true);
+    const [showRetired, setShowRetired] = useState(true);
 
     return (
         <div className="mos-s19">
@@ -70,7 +75,7 @@ export default function HabitsManage({
                     <p className="lede">
                         Cada hábito con su versión de 2 minutos, su nivel y de
                         qué objetivo cuelga. Los hábitos no se borran: se
-                        archivan con su historia y se pueden reactivar.
+                        retiran con una razón y se pueden devolver.
                     </p>
                 </div>
                 <Link className="btn btn-primary" href={habitCreate()}>
@@ -119,13 +124,13 @@ export default function HabitsManage({
             </div>
 
             <div className="toolbar">
-                <h2>Archivados</h2>
+                <h2>Retirados</h2>
                 <button
                     type="button"
                     className="switch"
                     role="switch"
-                    aria-checked={showArchived}
-                    onClick={() => setShowArchived(!showArchived)}
+                    aria-checked={showRetired}
+                    onClick={() => setShowRetired(!showRetired)}
                     style={{
                         background: 'none',
                         border: 0,
@@ -136,22 +141,23 @@ export default function HabitsManage({
                     <i
                         aria-hidden="true"
                         style={
-                            showArchived
+                            showRetired
                                 ? undefined
                                 : { background: 'var(--input)' }
                         }
                     />
-                    Mostrar archivados
+                    Mostrar retirados
                 </button>
             </div>
 
-            {showArchived && (
+            {showRetired && (
                 <div className="card">
                     <table className="tbl retired">
                         <thead>
                             <tr>
                                 <th scope="col">Hábito</th>
-                                <th scope="col">Archivado</th>
+                                <th scope="col">Retirado</th>
+                                <th scope="col">Razón</th>
                                 <th scope="col">Historia</th>
                                 <th scope="col">
                                     <span className="sr">Acciones</span>
@@ -159,14 +165,14 @@ export default function HabitsManage({
                             </tr>
                         </thead>
                         <tbody>
-                            {archived.length === 0 && (
+                            {retired.length === 0 && (
                                 <tr>
-                                    <td colSpan={4}>
-                                        No hay hábitos archivados.
+                                    <td colSpan={5}>
+                                        No hay hábitos retirados.
                                     </td>
                                 </tr>
                             )}
-                            {archived.map((habit) => (
+                            {retired.map((habit) => (
                                 <tr key={habit.id}>
                                     <td className="nm">
                                         <span
@@ -174,32 +180,25 @@ export default function HabitsManage({
                                             aria-hidden="true"
                                         />
                                         <span>
-                                            <b>
-                                                <Link
-                                                    href={habitShow(habit.id)}
-                                                    style={{
-                                                        color: 'inherit',
-                                                        textDecoration: 'none',
-                                                    }}
-                                                >
-                                                    {habit.name}
-                                                </Link>
-                                            </b>
+                                            <b>{habit.name}</b>
                                             <span className="meta">
-                                                Archivado tal cual, con su
-                                                historia
+                                                Archivado tal cual
                                             </span>
                                         </span>
                                     </td>
                                     <td>
-                                        {habit.archived_at
+                                        {habit.retired_at
                                             ? formatLongDate(
-                                                  habit.archived_at.slice(
-                                                      0,
-                                                      10,
-                                                  ),
+                                                  habit.retired_at.slice(0, 10),
                                               )
                                             : ''}
+                                    </td>
+                                    <td>
+                                        {habit.reason && (
+                                            <q className="reason">
+                                                {habit.reason}
+                                            </q>
+                                        )}
                                     </td>
                                     <td>
                                         {habit.recorded_days}{' '}
@@ -209,23 +208,22 @@ export default function HabitsManage({
                                     </td>
                                     <td>
                                         <div className="rowacts">
-                                            <button
-                                                className="btn-sm btn-outline"
-                                                type="button"
-                                                onClick={() =>
-                                                    router.post(
-                                                        habitUnarchive(habit.id)
-                                                            .url,
-                                                        {},
-                                                        {
-                                                            preserveScroll: true,
-                                                        },
-                                                    )
-                                                }
-                                            >
-                                                <RestartIcon size={16} />
-                                                Reactivar
-                                            </button>
+                                            {habit.retirement_id !== null && (
+                                                <button
+                                                    className="btn-sm btn-outline"
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            retiredRestore(
+                                                                habit.retirement_id!,
+                                                            ).url,
+                                                        )
+                                                    }
+                                                >
+                                                    <RestartIcon size={16} />
+                                                    Devolver
+                                                </button>
+                                            )}
                                         </div>
                                     </td>
                                 </tr>
@@ -338,20 +336,7 @@ function HabitRow({ habit }: { habit: ManagedHabit }) {
                         <PencilIcon />
                         Editar
                     </Link>
-                    <button
-                        className="btn-sm btn-ghost"
-                        type="button"
-                        onClick={() =>
-                            router.post(
-                                habitArchive(habit.id).url,
-                                {},
-                                { preserveScroll: true },
-                            )
-                        }
-                    >
-                        <ArchiveIcon />
-                        Archivar
-                    </button>
+                    <RetireHabitButton habitId={habit.id} />
                 </div>
             </td>
         </tr>
@@ -451,3 +436,30 @@ function SuggestionRow({
 }
 
 HabitsManage.layout = (page: ReactElement) => <AppLayout>{page}</AppLayout>;
+
+/**
+ * "Retirar" (mockup 19): opens the shared retire dialog (reason + decision,
+ * screen 23) for this habit — never a delete.
+ */
+function RetireHabitButton({ habitId }: { habitId: number }) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <>
+            <button
+                className="btn-sm btn-ghost"
+                type="button"
+                onClick={() => setOpen(true)}
+            >
+                <ArchiveIcon />
+                Retirar
+            </button>
+            <RetireDialog
+                open={open}
+                onOpenChange={setOpen}
+                contextUrl={habitRetireContext(habitId).url}
+                actionUrl={habitRetire(habitId).url}
+            />
+        </>
+    );
+}
