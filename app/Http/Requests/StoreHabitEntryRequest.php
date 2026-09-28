@@ -52,7 +52,7 @@ class StoreHabitEntryRequest extends FormRequest
                 /** @var Habit $habit */
                 $habit = $this->route('habit');
 
-                if ($habit->archived_at !== null) {
+                if ($habit->isArchived()) {
                     $validator->errors()->add(
                         'habit',
                         'No podés registrar en un hábito archivado.',

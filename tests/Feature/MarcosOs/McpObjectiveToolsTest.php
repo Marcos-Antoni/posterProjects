@@ -33,6 +33,7 @@ test('the server lists exactly the Marcos OS tools of this phase plus the habit 
     expect($names->sort()->values()->all())->toBe(collect([
         'list-objectives', 'show-objective', 'show-item', 'check-item', 'uncheck-item',
         'create-habit', 'update-habit', 'archive-habit', 'unarchive-habit', 'today-habits', 'list-habits', 'show-habit', 'log-habit-entry',
+        'log-two-minute', // phase 4
     ])->sort()->values()->all())
         ->and($names)->not->toContain('board-view', 'backlog-view', 'calendar-view', 'create-sprint', 'create-label', 'create-comment', 'force-delete-project', 'move-issue', 'list-trashed-projects', 'create-project', 'show-issue');
 });

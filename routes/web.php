@@ -52,17 +52,28 @@ Route::middleware('auth')->group(function (): void {
     Route::get('settings/mobile-token/qr/status', [MobileTokenQrController::class, 'status'])
         ->name('settings.mobile-token.qr.status');
 
-    // Habits are personal to the authenticated user — never project
-    // scoped. There is intentionally NO destroy route: habits can only
-    // be archived (and reactivated), their history is never deleted.
+    // --- phase 4: habits ---
+    // Habits are personal to the authenticated user. There is intentionally
+    // NO destroy route: habits can only be archived (and reactivated), their
+    // history is never deleted. `{habit}` is numeric so the literal segments
+    // (manage, identity, create) never bind as a habit.
     Route::get('habits', [HabitController::class, 'today'])->name('habits.today');
     Route::get('habits/manage', [HabitController::class, 'index'])->name('habits.index');
-    Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
+    Route::get('habits/identity', [HabitController::class, 'identity'])->name('habits.identity');
+    Route::get('habits/create', [HabitController::class, 'create'])->name('habits.create');
     Route::post('habits', [HabitController::class, 'store'])->name('habits.store');
-    Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
-    Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
-    Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
-    Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
+    Route::whereNumber('habit')->group(function (): void {
+        Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
+        Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
+        Route::post('habits/{habit}/level', [HabitController::class, 'level'])->name('habits.level.update');
+        Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
+        Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
+        Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
+        Route::post('habits/{habit}/entries/decrement', [HabitEntryController::class, 'decrement'])->name('habits.entries.decrement');
+        Route::post('habits/{habit}/two-minute', [HabitEntryController::class, 'twoMinute'])->name('habits.two-minute.store');
+        Route::delete('habits/{habit}/two-minute', [HabitEntryController::class, 'undoTwoMinute'])->name('habits.two-minute.destroy');
+    });
+    // --- end phase 4 ---
 
     // --- phase 2: objectives, plans, items, dependencies ---
     // Marcos OS objectives (projects spec). `{objective}` is the KEY and is

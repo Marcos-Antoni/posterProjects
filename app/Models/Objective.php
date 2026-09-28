@@ -80,6 +80,17 @@ class Objective extends Model
     }
 
     /**
+     * Habits hanging from this objective (phase 4). Informational link: the
+     * objective's lifecycle never archives, retires or modifies them.
+     *
+     * @return HasMany<Habit, $this>
+     */
+    public function habits(): HasMany
+    {
+        return $this->hasMany(Habit::class);
+    }
+
+    /**
      * @return HasMany<Item, $this>
      */
     public function items(): HasMany

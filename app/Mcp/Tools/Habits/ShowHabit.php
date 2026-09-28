@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Tools\Habits;
 
+use App\Mcp\Support\PresentsHabits;
 use App\Mcp\Support\ResolvesAuthenticatedUser;
 use App\Mcp\Support\ResourceLinker;
 use App\Models\Habit;
@@ -14,9 +15,10 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Show a habit\'s detail: current and best streaks, the completion percent over a period, and its daily series (date, scheduled, completion percent, completed, planned-vs-actual delta) — same data as the habit detail page. Owner only. Read-only; use log-habit-entry to record progress.')]
+#[Description('Nivel IA: read. Show a habit\'s detail — same data as the web habit screen: its 2-minute version, identity statement (own or inherited from its objective), the tolerant streak ("never miss twice": current, best, state ok | at_risk | restart), identity votes for the last 7 and 30 UTC-6 days as a proportion (votes cast of possible — never a score), the level ladder with any level suggestion (only Marco applies it), the completion percent over a period and the daily series (date, scheduled, completion percent, completed, two_minute_logged, shown_up, planned-vs-actual delta). Owner only. Use log-habit-entry or log-two-minute to record progress.')]
 class ShowHabit extends Tool
 {
+    use PresentsHabits;
     use ResolvesAuthenticatedUser;
 
     public function __construct(private ResourceLinker $links) {}
@@ -28,7 +30,7 @@ class ShowHabit extends Tool
     {
         $user = $this->authenticatedUser($request);
 
-        $habit = $user->habits()->whereKey($request->get('habit_id'))->first();
+        $habit = $this->ownedHabit($user, $request->get('habit_id'));
 
         if ($habit === null) {
             return Response::error("Habit not found: {$request->get('habit_id')}");
@@ -56,28 +58,25 @@ class ShowHabit extends Tool
                 'scheduled' => $habit->isScheduledOn($cursor),
                 'completion_percent' => $row->completion_percent ?? 0,
                 'completed' => $row !== null && $row->completed,
+                'two_minute_logged' => $row !== null && $row->two_minute_logged,
+                'shown_up' => $row !== null && $row->isShownUp(),
                 'planned_delta_minutes' => $row?->planned_delta_minutes,
             ];
         }
 
+        $history = $habit->history($to);
+        $streak = $history->streak();
+
         return Response::json([
-            'habit' => [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'habit_type' => $habit->habit_type,
-                'unit' => $habit->unit,
-                'daily_target' => $habit->daily_target,
-                'recurrence_type' => $habit->recurrence_type,
-                'weekdays' => $habit->weekdays,
-                'times_per_week' => $habit->times_per_week,
-                'planned_time' => $habit->planned_time,
-                'archived_at' => $habit->archived_at?->toIso8601String(),
-                'url' => $this->links->habit($habit),
-            ],
+            'habit' => $this->habitPayload($habit, $history, $this->links),
             'metrics' => [
-                'current_streak' => $habit->currentStreak(),
-                'best_streak' => $habit->bestStreak(),
+                'current_streak' => $streak->current,
+                'best_streak' => $streak->best,
+                'streak_state' => $streak->state->value,
                 'completion_percent' => $habit->completionForPeriod($from, $to),
+                'votes_7' => ['cast' => $history->votes(7)->cast, 'possible' => $history->votes(7)->possible],
+                'votes_30' => ['cast' => $history->votes(30)->cast, 'possible' => $history->votes(30)->possible],
+                'level_suggestion' => $history->levelSuggestion()?->toArray(),
             ],
             'series' => $series,
             'period_days' => $periodDays,

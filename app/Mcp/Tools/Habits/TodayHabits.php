@@ -3,6 +3,7 @@
 namespace App\Mcp\Tools\Habits;
 
 use App\Enums\RecurrenceType;
+use App\Mcp\Support\PresentsHabits;
 use App\Mcp\Support\ResolvesAuthenticatedUser;
 use App\Mcp\Support\ResourceLinker;
 use App\Models\Habit;
@@ -14,9 +15,10 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('List the authenticated user\'s active habits scheduled for today (UTC-6), with each one\'s progress for the day and, for weekly-quota habits, how many days of the current week are already recorded. Same data as the "Today" view. Use list-habits to see every habit, including archived ones.')]
+#[Description('Nivel IA: read. List the authenticated user\'s active habits scheduled for today (UTC-6) — same data as the web "Hábitos de hoy" view: each habit\'s 2-minute version, today\'s progress (amount, completed, two_minute_logged, shown_up), the tolerant streak ("never miss twice": streak_current, streak_state ok | at_risk | restart — at_risk/restart mean "hoy toca volver" with the 2-minute version, never a debt), the objective it hangs from and, for weekly-quota habits, how many days of the current week are recorded. Use list-habits to see every habit, including archived ones.')]
 class TodayHabits extends Tool
 {
+    use PresentsHabits;
     use ResolvesAuthenticatedUser;
 
     public function __construct(private ResourceLinker $links) {}
@@ -31,33 +33,20 @@ class TodayHabits extends Tool
         Gate::forUser($user)->authorize('viewAny', Habit::class);
 
         $today = Habit::todayLocalDate();
-        $weekStart = $today->clone()->startOfWeek(CarbonInterface::MONDAY);
 
         $habits = $user->habits()
-            ->whereNull('archived_at')
-            ->with(['days' => fn ($query) => $query->whereBetween(
-                'entry_date',
-                [$weekStart->toDateString(), $today->toDateString()],
-            )])
+            ->notArchived()
+            ->with(['days', 'schedulePeriods', 'objective'])
             ->orderBy('name')
             ->get()
             ->filter(fn (Habit $habit): bool => $habit->isScheduledOn($today))
             ->values()
             ->map(fn (Habit $habit): array => [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'habit_type' => $habit->habit_type,
-                'unit' => $habit->unit,
-                'daily_target' => $habit->daily_target,
-                'recurrence_type' => $habit->recurrence_type,
-                'weekdays' => $habit->weekdays,
-                'times_per_week' => $habit->times_per_week,
-                'planned_time' => $habit->planned_time,
+                ...$this->habitPayload($habit, $habit->history($today), $this->links),
                 'today' => $this->todayProgress($habit, $today),
                 'week_recorded_days' => $habit->recurrence_type === RecurrenceType::TimesPerWeek
-                    ? $habit->days->count()
+                    ? $habit->history($today)->recordedDaysThisWeek()
                     : null,
-                'url' => $this->links->habit($habit),
             ]);
 
         return Response::json([
@@ -68,9 +57,9 @@ class TodayHabits extends Tool
 
     /**
      * The habit's persisted aggregate for today, or null when nothing
-     * has been logged yet. Reads the eager-loaded current-week days.
+     * has been logged yet.
      *
-     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, peak_amount: int, planned_delta_minutes: int|null}|null
+     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, peak_amount: int, two_minute_logged: bool, shown_up: bool, planned_delta_minutes: int|null}|null
      */
     private function todayProgress(Habit $habit, CarbonInterface $today): ?array
     {
@@ -87,6 +76,8 @@ class TodayHabits extends Tool
             'completion_percent' => $row->completion_percent,
             'completed' => $row->completed,
             'peak_amount' => $row->peak_amount,
+            'two_minute_logged' => $row->two_minute_logged,
+            'shown_up' => $row->isShownUp(),
             'planned_delta_minutes' => $row->planned_delta_minutes,
         ];
     }

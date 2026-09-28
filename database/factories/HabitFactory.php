@@ -26,6 +26,7 @@ class HabitFactory extends Factory
         return [
             'user_id' => User::factory(),
             'name' => fake()->words(3, true),
+            'two_minute_version' => 'Hacer lo más chico: '.fake()->sentence(3),
             'habit_type' => HabitType::YesNo,
             'unit' => null,
             'daily_target' => null,

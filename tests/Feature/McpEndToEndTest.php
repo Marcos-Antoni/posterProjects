@@ -33,7 +33,7 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
 
     $names = collect($response->json('result.tools'))->pluck('name');
 
-    expect($names)->toHaveCount(13)
+    expect($names)->toHaveCount(14)
         ->and($names)->toContain(
             'list-objectives',
             'show-objective',
@@ -43,6 +43,7 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
             'create-habit',
             'log-habit-entry',
             'show-habit',
+            'log-two-minute',
         );
 });
 
@@ -115,21 +116,22 @@ test('a full objective-check to regenerated-token cycle works over real http wit
     expect($item['item']['state'])->toBe('available')
         ->and($item['item']['prerequisites'][0]['state'])->toBe('done');
 
-    // 6. create-habit (quantitative, daily).
-    $habitCreated = $call('create-habit', [
-        'name' => 'Read',
-        'habit_type' => 'quantitative',
-        'unit' => 'pages',
-        'daily_target' => 20,
-        'recurrence_type' => 'daily',
-    ]);
+    // 6. create-habit is a major AI operation (ai-operations spec): refused
+    //    over MCP, nothing written. The habit is created by the owner instead.
+    $refused = $this->postJson('/mcp', [
+        'jsonrpc' => '2.0',
+        'id' => ++$callId,
+        'method' => 'tools/call',
+        'params' => ['name' => 'create-habit', 'arguments' => (object) [
+            'name' => 'Read', 'habit_type' => 'quantitative', 'unit' => 'pages', 'daily_target' => 20,
+            'recurrence_type' => 'daily', 'two_minute_version' => 'Open the book',
+        ]],
+    ], mcpHeaders($token));
 
-    expect($habitCreated['habit']['name'])->toBe('Read')
-        ->and($habitCreated['habit']['url'])->toBe(route('habits.show', ['habit' => $habitCreated['habit']['id']]));
+    expect($refused->json('result.isError'))->toBeTrue()
+        ->and(Habit::query()->count())->toBe(0);
 
-    $habit = Habit::query()->findOrFail($habitCreated['habit']['id']);
-    expect($habit->user_id)->toBe($user->id)
-        ->and($habit->daily_target)->toBe(20);
+    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->daily()->create(['name' => 'Read']);
 
     // 7. log-habit-entry: a partial entry, then one that pushes past the target.
     $firstEntry = $call('log-habit-entry', [

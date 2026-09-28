@@ -2,192 +2,210 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\RecurrenceType;
+use App\Actions\Habits\ChangeHabitLevel;
+use App\Actions\Habits\CreateHabit;
+use App\Actions\Habits\UpdateHabit;
+use App\Actions\Support\Actor;
 use App\Http\Requests\StoreHabitRequest;
 use App\Http\Requests\UpdateHabitRequest;
+use App\Http\Resources\HabitPresenter;
 use App\Models\Habit;
-use App\Models\HabitDay;
+use App\Models\Habits\IdentityVotes;
 use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
+/**
+ * The habit screens (design D15 18–21): today, manage, detail/form and
+ * identity votes. Streaks, marks, votes and level suggestions are computed on
+ * read by `HabitHistory`; each list eager-loads the habits' days once.
+ * There is intentionally NO destroy route: habits are never deleted.
+ */
 class HabitController extends Controller
 {
     /**
-     * Display the authenticated user's habits (active and archived — the
-     * page splits them client-side).
+     * Screen 18: the habits scheduled today (with "volver" and the 2-minute
+     * version), the active ones that rest today, and the 7-day identity
+     * votes.
+     */
+    public function today(Request $request, IdentityVotes $votes): Response
+    {
+        Gate::authorize('viewAny', Habit::class);
+
+        $today = Habit::todayLocalDate();
+
+        $habits = $request->user()
+            ->habits()
+            ->notArchived()
+            ->with(['days', 'schedulePeriods', 'objective', 'plan'])
+            ->orderBy('name')
+            ->get();
+
+        [$scheduled, $resting] = $habits->partition(fn (Habit $habit): bool => $habit->isScheduledOn($today));
+
+        return Inertia::render('habits/today', [
+            'date' => $today->toDateString(),
+            'habits' => $scheduled->map(fn (Habit $habit): array => HabitPresenter::todayRow($habit, $today))->values()->all(),
+            'resting' => $resting->map(fn (Habit $habit): array => HabitPresenter::todayRow($habit, $today))->values()->all(),
+            'identities' => array_map(
+                fn ($group): array => HabitPresenter::identity($group, $today),
+                $votes->forUser($request->user(), $today),
+            ),
+        ]);
+    }
+
+    /**
+     * Screen 19: every habit with its 2-minute version, level, link and
+     * tolerant streak (plus a level suggestion when due); archived habits
+     * apart, with their recorded history.
      */
     public function index(Request $request): Response
     {
         Gate::authorize('viewAny', Habit::class);
 
+        $today = Habit::todayLocalDate();
+
         $habits = $request->user()
             ->habits()
+            ->with(['days', 'schedulePeriods', 'objective', 'plan'])
             ->orderBy('name')
             ->get();
 
+        [$archived, $active] = $habits->partition(fn (Habit $habit): bool => $habit->isArchived());
+
         return Inertia::render('habits/index', [
-            'habits' => $habits,
+            'habits' => $active->map(function (Habit $habit) use ($today): array {
+                $history = $habit->history($today);
+
+                return [
+                    ...HabitPresenter::summary($habit, $history),
+                    'suggestion' => $history->levelSuggestion()?->toArray(),
+                ];
+            })->values()->all(),
+            'archived' => $archived->map(fn (Habit $habit): array => [
+                'id' => $habit->id,
+                'name' => $habit->name,
+                'two_minute_version' => (string) $habit->two_minute_version,
+                'recurrence_type' => $habit->recurrence_type->value,
+                'archived_at' => $habit->archived_at?->toIso8601String(),
+                'recorded_days' => $habit->days->filter->isShownUp()->count(),
+            ])->values()->all(),
         ]);
     }
 
     /**
-     * Display the "Today" view: every active habit scheduled on the
-     * current UTC-6 day, with its progress for the day and — for
-     * weekly-quota habits — how many days of the current Monday-based
-     * week already have a record.
+     * Screen 20 in its "create" state: the same form, empty.
      */
-    public function today(Request $request): Response
+    public function create(Request $request): Response
     {
         Gate::authorize('viewAny', Habit::class);
 
-        $today = Habit::todayLocalDate();
-        $weekStart = $today->clone()->startOfWeek(CarbonInterface::MONDAY);
-
-        $habits = $request->user()
-            ->habits()
-            ->whereNull('archived_at')
-            ->with(['days' => fn ($query) => $query->whereBetween(
-                'entry_date',
-                [$weekStart->toDateString(), $today->toDateString()],
-            )])
-            ->orderBy('name')
-            ->get()
-            ->filter(fn (Habit $habit): bool => $habit->isScheduledOn($today))
-            ->values()
-            ->map(fn (Habit $habit): array => [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'habit_type' => $habit->habit_type,
-                'unit' => $habit->unit,
-                'daily_target' => $habit->daily_target,
-                'recurrence_type' => $habit->recurrence_type,
-                'weekdays' => $habit->weekdays,
-                'times_per_week' => $habit->times_per_week,
-                'planned_time' => $habit->planned_time,
-                'today' => $this->todayProgress($habit, $today),
-                'week_recorded_days' => $habit->recurrence_type === RecurrenceType::TimesPerWeek
-                    ? $habit->days->count()
-                    : null,
-            ]);
-
-        return Inertia::render('habits/today', [
-            'habits' => $habits->all(),
-            'date' => $today->toDateString(),
+        return Inertia::render('habits/show', [
+            'habit' => null,
+            'objectives' => HabitPresenter::objectiveOptions($request->user()),
         ]);
     }
 
     /**
-     * The habit's persisted aggregate for today, or null when nothing
-     * has been logged yet. Reads the eager-loaded current-week days.
-     *
-     * @return array{accumulated_amount: int, completion_percent: int, completed: bool, peak_amount: int, planned_delta_minutes: int|null}|null
-     */
-    private function todayProgress(Habit $habit, CarbonInterface $today): ?array
-    {
-        $row = $habit->days->first(
-            fn (HabitDay $day): bool => $day->entry_date->isSameDay($today),
-        );
-
-        if ($row === null) {
-            return null;
-        }
-
-        return [
-            'accumulated_amount' => $row->accumulated_amount,
-            'completion_percent' => $row->completion_percent,
-            'completed' => $row->completed,
-            'peak_amount' => $row->peak_amount,
-            'planned_delta_minutes' => $row->planned_delta_minutes,
-        ];
-    }
-
-    /**
-     * Display a habit's history: streaks, completion for the selected
-     * period, and the daily series (date, percent, planned delta) the
-     * evolution chart consumes. Everything is computed on read — no
-     * caching. Owner only.
+     * Screen 20: a habit's tolerant streak with its rule, the last 8 weeks of
+     * marks, its identity votes, the level ladder with any suggestion, and
+     * the edit form. Owner only.
      */
     public function show(Request $request, Habit $habit): Response
     {
         Gate::authorize('view', $habit);
 
-        $periodDays = min(365, max(7, $request->integer('days', 30)));
+        $habit->load(['days', 'schedulePeriods', 'objective', 'plan']);
 
-        $to = Habit::todayLocalDate();
-        $from = $to->clone()->subDays($periodDays - 1);
-
-        $dayRows = $habit->days()
-            ->whereBetween('entry_date', [$from->toDateString(), $to->toDateString()])
-            ->get()
-            ->keyBy(fn (HabitDay $day): string => $day->entry_date->toDateString());
-
-        $series = [];
-
-        for ($cursor = $from->clone(); $cursor->lte($to); $cursor->addDay()) {
-            $row = $dayRows->get($cursor->toDateString());
-
-            $series[] = [
-                'date' => $cursor->toDateString(),
-                'scheduled' => $habit->isScheduledOn($cursor),
-                'completion_percent' => $row->completion_percent ?? 0,
-                'completed' => $row !== null && $row->completed,
-                'planned_delta_minutes' => $row?->planned_delta_minutes,
-            ];
-        }
+        $today = Habit::todayLocalDate();
+        $history = $habit->history($today);
+        $calendarStart = $today->clone()->startOfWeek(CarbonInterface::MONDAY)->subWeeks(7);
+        $statement = $habit->effectiveIdentityStatement();
 
         return Inertia::render('habits/show', [
-            'habit' => $habit,
-            'metrics' => [
-                'current_streak' => $habit->currentStreak(),
-                'best_streak' => $habit->bestStreak(),
-                'completion_percent' => $habit->completionForPeriod($from, $to),
+            'habit' => [
+                ...HabitPresenter::summary($habit, $history),
+                'objective_id' => $habit->objective_id,
+                'plan_id' => $habit->plan_id,
+                'level_number' => $habit->level,
+                'level_ladder' => $habit->level_ladder ?? [],
+                'started_on' => $history->startDate()->toDateString(),
+                'has_history' => $habit->days->contains(fn ($day): bool => $day->isShownUp()),
+                'suggestion' => $history->levelSuggestion()?->toArray(),
+                'next_date' => $history->nextScheduledDate()?->toDateString(),
+                'calendar' => $this->calendar($history->marks($calendarStart, $today), $calendarStart),
+                'votes' => $statement === null ? null : [
+                    'statement' => $statement,
+                    'source' => trim((string) $habit->identity_statement) !== '' ? 'habit' : 'objective',
+                    'last7' => [...HabitPresenter::tally($history->votes(7)), 'row' => HabitPresenter::voteRow([$habit], $today)],
+                    'last30' => [...HabitPresenter::tally($history->votes(30)), 'row' => HabitPresenter::voteRow([$habit], $today, 30)],
+                ],
             ],
-            'series' => $series,
-            'period_days' => $periodDays,
+            'objectives' => HabitPresenter::objectiveOptions($request->user(), $habit),
         ]);
     }
 
     /**
-     * Create a new habit owned by the authenticated user. Fields that
-     * don't apply to the chosen type/recurrence are excluded by the
-     * request's `exclude_unless` rules, so they persist as null.
+     * Screen 21: the identity statements, each with its 7- and 30-day vote
+     * proportions. Never a score, never ranked.
      */
-    public function store(StoreHabitRequest $request): RedirectResponse
+    public function identity(Request $request, IdentityVotes $votes): Response
     {
-        Habit::create([
-            ...$request->validated(),
-            'user_id' => $request->user()->id,
-        ]);
+        Gate::authorize('viewAny', Habit::class);
 
-        return redirect()->route('habits.index');
+        $today = Habit::todayLocalDate();
+        $firstHabit = $request->user()->habits()->notArchived()->orderBy('id')->first(['id', 'name']);
+
+        return Inertia::render('habits/identity', [
+            'date' => $today->toDateString(),
+            'identities' => array_map(
+                fn ($group): array => HabitPresenter::identity($group, $today),
+                $votes->forUser($request->user(), $today),
+            ),
+            'first_habit' => $firstHabit !== null ? ['id' => $firstHabit->id, 'name' => $firstHabit->name] : null,
+        ]);
+    }
+
+    public function store(StoreHabitRequest $request, CreateHabit $createHabit): RedirectResponse
+    {
+        $habit = $createHabit(Actor::ownerWeb($request->user()), $request->validated());
+
+        return redirect()->route('habits.show', $habit);
+    }
+
+    public function update(UpdateHabitRequest $request, Habit $habit, UpdateHabit $updateHabit): RedirectResponse
+    {
+        $updateHabit(Actor::ownerWeb($request->user()), $habit, $request->validated());
+
+        return redirect()->route('habits.show', $habit);
     }
 
     /**
-     * Update a habit. Owner only — enforced by
-     * `UpdateHabitRequest::authorize()`. Conditional fields are reset to
-     * null first so switching type or recurrence never leaves stale
-     * values behind (the validated payload overrides the ones that apply).
+     * Apply a level of the ladder (the owner accepting a suggestion, or
+     * choosing another level). The streak is untouched.
      */
-    public function update(UpdateHabitRequest $request, Habit $habit): RedirectResponse
+    public function level(Request $request, Habit $habit, ChangeHabitLevel $changeLevel): RedirectResponse
     {
-        $habit->update([
-            'unit' => null,
-            'daily_target' => null,
-            'weekdays' => null,
-            'times_per_week' => null,
-            ...$request->validated(),
-        ]);
+        Gate::authorize('update', $habit);
 
-        return redirect()->route('habits.index');
+        $validated = $request->validate(
+            ['level' => ['required', 'integer']],
+            ['level.required' => 'Elegí un nivel.', 'level.integer' => 'Elegí un nivel.'],
+        );
+
+        $changeLevel(Actor::ownerWeb($request->user()), $habit, (int) $validated['level']);
+
+        return redirect()->route('habits.show', $habit);
     }
 
     /**
-     * Archive a habit. It keeps its full history and can be reactivated
-     * at any time — there is no destroy. Owner only.
+     * Archive a habit. It keeps its full history and can be reactivated at
+     * any time — there is no destroy. Owner only. (Phase 6 replaces this with
+     * the retirement protocol.)
      */
     public function archive(Habit $habit): RedirectResponse
     {
@@ -199,7 +217,7 @@ class HabitController extends Controller
     }
 
     /**
-     * Reactivate an archived habit. Owner only.
+     * Reactivate an archived habit, history untouched. Owner only.
      */
     public function unarchive(Habit $habit): RedirectResponse
     {
@@ -208,5 +226,23 @@ class HabitController extends Controller
         $habit->update(['archived_at' => null]);
 
         return redirect()->route('habits.index');
+    }
+
+    /**
+     * The detail calendar: Monday-based weeks, each with its 7 marks and the
+     * length of any run a missed day closed that week.
+     *
+     * @param  list<array{date: string, mark: string, closes: bool, closed_run: int|null}>  $marks
+     * @return list<array{week_start: string, days: list<array{date: string, mark: string, closes: bool, closed_run: int|null}>}>
+     */
+    private function calendar(array $marks, Carbon $start): array
+    {
+        $weeks = [];
+
+        foreach (array_chunk($marks, 7) as $index => $days) {
+            $weeks[] = ['week_start' => $start->clone()->addWeeks($index)->toDateString(), 'days' => $days];
+        }
+
+        return $weeks;
     }
 }

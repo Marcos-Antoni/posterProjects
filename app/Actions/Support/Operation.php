@@ -26,6 +26,15 @@ enum Operation: string
     case UncheckItem = 'uncheck-item';
     case AddDependency = 'add-dependency';
     case RemoveDependency = 'remove-dependency';
+    // --- phase 4: habits ---
+    case CreateHabit = 'create-habit';
+    case UpdateHabit = 'update-habit';
+    case ChangeHabitLevel = 'change-habit-level';
+    case LogHabitEntry = 'log-habit-entry';
+    case DecrementHabitEntry = 'decrement-habit-entry';
+    case LogHabitTwoMinute = 'log-habit-two-minute';
+    case UndoHabitTwoMinute = 'undo-habit-two-minute';
+    // --- end phase 4 ---
 
     public function tier(): AiTier
     {
@@ -33,6 +42,7 @@ enum Operation: string
             self::CheckItem,
             self::UncheckItem,
             self::UpdateMetricCurrent => AiTier::Minor,
+            self::LogHabitEntry, self::LogHabitTwoMinute => AiTier::Minor, // phase 4
             default => AiTier::Major,
         };
     }
