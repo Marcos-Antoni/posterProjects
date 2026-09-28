@@ -35,7 +35,7 @@ test('a stored oscuro renders dark in a fresh browser right after logging in, wi
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
         ->press('button[type="submit"]')
-        ->assertPathIs('/objectives')
+        ->assertPathIs('/now')
         ->assertScript('document.documentElement.classList.contains("dark")', true);
 
     $page->navigate('/settings/appearance')

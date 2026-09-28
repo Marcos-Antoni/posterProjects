@@ -22,7 +22,7 @@ test('a user logs in through the form, opens the mobile token settings from the 
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
         ->press('button[type="submit"]')
-        ->assertPathIs('/objectives')
+        ->assertPathIs('/now')
         ->assertNoJavascriptErrors();
 
     $page->click('a[aria-label="Ajustes"]')

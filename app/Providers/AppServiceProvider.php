@@ -3,7 +3,11 @@
 namespace App\Providers;
 
 use App\Actions\Support\AuditWriter;
+use App\Actions\Support\DatabaseLastActivity;
+use App\Actions\Support\LastActivity;
 use App\Actions\Support\LogAuditWriter;
+use App\Actions\Support\NoWeeklyMainPriority;
+use App\Actions\Support\WeeklyMainPriority;
 use App\Models\Item;
 use App\Models\Objective;
 use App\Models\Plan;
@@ -32,6 +36,15 @@ class AppServiceProvider extends ServiceProvider
         // Phase 2 skeleton (design D3): AI-applied changes are recorded in the
         // log until Phase 8 adds `ai_audit_entries` and binds its writer here.
         $this->app->bind(AuditWriter::class, LogAuditWriter::class);
+
+        // --- phase 3: now ---
+        // The weekly main priority that drives the Now suggestion; Phase 7
+        // (weekly reviews) rebinds it to its `weekly_priorities` reader.
+        $this->app->bind(WeeklyMainPriority::class, NoWeeklyMainPriority::class);
+        // Last showing-up moment for the restart offer; Phase 4 extends it
+        // with habit_days.two_minute_logged.
+        $this->app->bind(LastActivity::class, DatabaseLastActivity::class);
+        // --- end phase 3 ---
     }
 
     /**

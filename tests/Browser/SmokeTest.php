@@ -38,6 +38,7 @@ test('every key authenticated page renders without javascript errors', function 
     $this->actingAs($user);
 
     $pages = visit([
+        '/now',
         '/objectives',
         '/objectives/create',
         '/objectives/SMOKE',

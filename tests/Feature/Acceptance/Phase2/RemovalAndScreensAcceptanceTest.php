@@ -120,8 +120,10 @@ test('the item screen carries the full item payload: plan, objective, prerequisi
         ->has('item.evidence'));
 });
 
-test('root and login land on the objectives index', function () {
+// Updated by the Phase 3 tester: the auth spec makes Now the single landing
+// (Phase 3 NEED in LOG); the Phase 2 objectives index is no longer the root.
+test('root and login land on the Now screen', function () {
     $owner = User::factory()->create();
 
-    $this->actingAs($owner)->get('/')->assertRedirect('/objectives');
+    $this->actingAs($owner)->get('/')->assertRedirect('/now');
 });

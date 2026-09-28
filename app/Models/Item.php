@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -24,6 +25,7 @@ use Illuminate\Support\Facades\DB;
  * precedence, used for a single item).
  *
  * @property int $id
+ * @property int $user_id the objective's owner, filled by a database trigger (phase 3)
  * @property int $objective_id
  * @property int $plan_id
  * @property int $number
@@ -201,6 +203,28 @@ class Item extends Model
                 ELSE 'available'
             END AS derived_state
             SQL);
+    }
+
+    /**
+     * Only `available` items: not retired, not done, not active and with no
+     * open (non-retired, not done) prerequisite — the same predicate as the
+     * `available` branch of `scopeWithState()`.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeAvailable(Builder $query): void
+    {
+        $query->whereNull('items.retired_at')
+            ->whereNull('items.completed_at')
+            ->where('items.is_active', false)
+            ->whereNotExists(function (QueryBuilder $edges): void {
+                $edges->selectRaw('1')
+                    ->from('item_dependencies as available_edges')
+                    ->join('items as available_prerequisites', 'available_prerequisites.id', '=', 'available_edges.prerequisite_id')
+                    ->whereColumn('available_edges.dependent_id', 'items.id')
+                    ->whereNull('available_prerequisites.retired_at')
+                    ->whereNull('available_prerequisites.completed_at');
+            });
     }
 
     /**

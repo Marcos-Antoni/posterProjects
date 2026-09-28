@@ -26,13 +26,20 @@ enum Operation: string
     case UncheckItem = 'uncheck-item';
     case AddDependency = 'add-dependency';
     case RemoveDependency = 'remove-dependency';
+    // --- phase 3: now and execution ---
+    case StartItem = 'start-item';
+    case StopItem = 'stop-item';
+    case ShrinkStep = 'shrink-step';
+    case DismissItemForToday = 'dismiss-item-for-today';
+    // --- end phase 3 ---
 
     public function tier(): AiTier
     {
         return match ($this) {
             self::CheckItem,
             self::UncheckItem,
-            self::UpdateMetricCurrent => AiTier::Minor,
+            self::UpdateMetricCurrent,
+            self::ShrinkStep => AiTier::Minor,
             default => AiTier::Major,
         };
     }

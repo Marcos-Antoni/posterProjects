@@ -41,14 +41,15 @@
 
 ## 3. Phase 3 — Now screen and execution
 
-- [ ] 3.1 Test + implement `StartItem`: exactly one active item (partial unique index), previous one released, focus session opened/closed (`now-focus`, design D6)
-- [ ] 3.2 Test + implement Now selection: active, else first available of weekly main priority, else oldest available of first active objective
-- [ ] 3.3 Now screen: one task, 2-minute version as primary action, unlocks list, today's habit checks row, empty state inviting capture/planning (screen 2) (mockup: visual/screens/02-now.html)
-- [ ] 3.4 Silent 25-minute cue from persisted `focus_started_at`: discreet inline region (3px filling line + dot + text) with `aria-live="off"` (no screen-reader announcement), three labeled keyboard-reachable options — Sigo (dismiss until next tramo), Terminé (= Marcar hecho), Estoy trabado (= stuck flow) — no sound/modal/notification/focus steal, auto-dismiss; browser test for reload continuity (design D7) (mockup: visual/screens/02-now.html)
-- [ ] 3.5 Test + implement "estoy trabado" fallback without AI: ask for one smaller physical action, save as new 2-minute version with history (mockup: visual/screens/02-now.html)
-- [ ] 3.6 Unlock animation on completion (Now mini-graph) with reduced-motion static fallback (`unlock-graph`) (mockup: visual/screens/02-now.html)
-- [ ] 3.7 Test + implement restart offer after inactivity without missed-day counts; auth landing redirects to Now (`now-focus`, `auth`)
-- [ ] 3.8 MCP `now-view` with absolute URL; update the external `foco-hoy` skill to use it (outside this repo, note only)
+- [x] 3.1 Test + implement `StartItem`: exactly one active item (partial unique index), previous one released, focus session opened/closed (`now-focus`, design D6)
+- [x] 3.2 Test + implement Now selection: active, else first available of weekly main priority, else oldest available of first active objective
+- [x] 3.3 Now screen: one task, 2-minute version as primary action, unlocks list, today's habit checks row, empty state inviting capture/planning (screen 2) (mockup: visual/screens/02-now.html)
+- [x] 3.4 Silent 25-minute cue from persisted `focus_started_at`: discreet inline region (3px filling line + dot + text) with `aria-live="off"` (no screen-reader announcement), three labeled keyboard-reachable options — Sigo (dismiss until next tramo), Terminé (= Marcar hecho), Estoy trabado (= stuck flow) — no sound/modal/notification/focus steal, auto-dismiss; browser test for reload continuity (design D7) (mockup: visual/screens/02-now.html)
+- [x] 3.5 Test + implement "estoy trabado" fallback without AI: ask for one smaller physical action, save as new 2-minute version with history (mockup: visual/screens/02-now.html)
+- [x] 3.6 Unlock animation on completion (Now mini-graph) with reduced-motion static fallback (`unlock-graph`) (mockup: visual/screens/02-now.html)
+- [x] 3.7 Test + implement restart offer after inactivity without missed-day counts; auth landing redirects to Now (`now-focus`, `auth`)
+- [x] 3.8 MCP `now-view` with absolute URL; update the external `foco-hoy` skill to use it (outside this repo, note only)
+  > Note: `foco-hoy` (outside this repo) must call MCP `now-view` instead of reading issues: it returns `now` (the one active or suggested task with `two_minute_version`, `unlocks`, absolute `url`), `restart` and `now_url`. Not edited from this worktree.
 
 ## 4. Phase 4 — Habits adaptation
 

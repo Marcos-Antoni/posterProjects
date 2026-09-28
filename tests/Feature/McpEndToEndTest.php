@@ -33,13 +33,14 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
 
     $names = collect($response->json('result.tools'))->pluck('name');
 
-    expect($names)->toHaveCount(13)
+    expect($names)->toHaveCount(14)
         ->and($names)->toContain(
             'list-objectives',
             'show-objective',
             'show-item',
             'check-item',
             'uncheck-item',
+            'now-view',
             'create-habit',
             'log-habit-entry',
             'show-habit',

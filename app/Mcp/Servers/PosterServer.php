@@ -15,6 +15,7 @@ use App\Mcp\Tools\Items\ShowItem;
 use App\Mcp\Tools\Items\UncheckItem;
 use App\Mcp\Tools\Objectives\ListObjectives;
 use App\Mcp\Tools\Objectives\ShowObjective;
+use App\Mcp\Tools\Views\NowView;
 use Laravel\Mcp\Server;
 use Laravel\Mcp\Server\Attributes\Instructions;
 use Laravel\Mcp\Server\Attributes\Name;
@@ -39,6 +40,9 @@ class PosterServer extends Server
         CheckItem::class,
         UncheckItem::class,
         // --- end phase 2 ---
+        // --- phase 3: now ---
+        NowView::class,
+        // --- end phase 3 ---
         CreateHabit::class,
         UpdateHabit::class,
         ArchiveHabit::class,

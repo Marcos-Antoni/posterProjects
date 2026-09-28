@@ -2089,3 +2089,374 @@
 .mos-s06 .ladder a.rung.next {
     color: var(--muted-fg);
 }
+
+/* --- phase 3: screen 02 (Ahora), from visual/screens/02-now.html --- */
+.mos-s02 .now-wrap {
+    max-width: 640px;
+    margin: 0 auto;
+}
+.mos-s02 .today {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s02 .today b {
+    font-weight: 600;
+    color: var(--foreground);
+}
+.mos-s02 .now {
+    position: relative;
+    background: var(--surface);
+    border-radius: 10px;
+    padding: 32px 24px 24px;
+    box-shadow:
+        0 1px 2px hsl(var(--shadow-color) / 0.1),
+        0 4px 12px hsl(var(--shadow-color) / 0.06);
+    overflow: hidden;
+}
+.mos-s02 .cue {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 3px;
+    background: var(--sunken);
+}
+.mos-s02 .cue i {
+    display: block;
+    height: 100%;
+    background: var(--blaze-ink);
+    transition: width 1000ms linear;
+}
+.mos-s02 .cue-note {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin-bottom: 16px;
+}
+.mos-s02 .cue-note .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--blaze);
+}
+.mos-s02 .cue-note button {
+    background: none;
+    border: 0;
+    color: var(--foreground);
+    font:
+        600 14px/20px 'Overpass',
+        sans-serif;
+    text-decoration: underline;
+    padding: 4px;
+    cursor: pointer;
+}
+.mos-s02 .cue-note .gone {
+    flex-basis: 100%;
+    padding-left: 16px;
+    font-size: 13px;
+}
+.mos-s02 .ctxrow {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.mos-s02 .ctx {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s02 .now h1.task {
+    font:
+        700 30px/36px 'Overpass',
+        sans-serif;
+    letter-spacing: -0.01em;
+    margin: 8px 0 24px;
+    max-width: 45ch;
+}
+.mos-s02 .now .desc {
+    margin: -16px 0 20px;
+    color: var(--muted-fg);
+    max-width: 60ch;
+}
+.mos-s02 .chip2 kbd {
+    margin-left: auto;
+}
+.mos-s02 .btn kbd {
+    margin-left: 8px;
+}
+.mos-s02 .reentry {
+    margin: 16px 0 0;
+    font-size: 16px;
+}
+.mos-s02 .opens-h {
+    margin: 20px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s02 .opens {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 0;
+    font-size: 14px;
+    color: var(--muted-fg);
+    flex-wrap: wrap;
+}
+.mos-s02 .opens .node-mini {
+    border: 2px dashed var(--node-locked);
+    border-radius: 6px;
+    padding: 2px 10px;
+    color: var(--foreground);
+}
+.mos-s02 .minimap {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin: 4px 0 0;
+}
+.mos-s02 .minimap .par {
+    font-size: 13px;
+    fill: var(--muted-fg);
+}
+.mos-s02 .actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+.mos-s02 .stuck-result {
+    margin-top: 16px;
+    background: var(--attention-bg);
+    color: var(--foreground);
+    border-left: 3px solid var(--attention);
+    border-radius: 6px;
+    padding: 12px 16px;
+}
+.mos-s02 .stuck-result p {
+    margin: 0 0 8px;
+}
+.mos-s02 .stuck-result .in {
+    margin: 0 0 8px;
+}
+.mos-s02 .stuck-result p.src {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin: 8px 0 0;
+}
+.mos-s02 .stuck-result .btns {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.mos-s02 .stuck-result .btn {
+    min-height: 40px;
+    padding: 6px 14px;
+    font-size: 15px;
+}
+.mos-s02 .empty {
+    background: var(--surface);
+    border: 1px dashed var(--input);
+    border-radius: 10px;
+    padding: 28px 20px;
+}
+.mos-s02 .empty h2 {
+    font:
+        700 20px/28px 'Overpass',
+        sans-serif;
+    margin: 0 0 8px;
+}
+.mos-s02 .empty p {
+    margin: 0 0 20px;
+    color: var(--muted-fg);
+}
+.mos-s02 .empty .actions {
+    margin-top: 0;
+    justify-content: flex-start;
+    gap: 8px;
+}
+.mos-s02 .done-moment {
+    padding: 4px 0 0;
+}
+.mos-s02 .done-moment .actions {
+    justify-content: flex-start;
+    gap: 8px;
+    margin-top: 20px;
+}
+.mos-s02 .unlocked-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 12px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s02 .unlocked-note i {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 3px solid var(--line-1);
+    flex: none;
+}
+.mos-s02 .habits {
+    margin-top: 32px;
+}
+.mos-s02 .habits-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin: 0 0 8px;
+}
+.mos-s02 .habits-h h2 {
+    font:
+        700 16px/24px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s02 .hrow {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px;
+}
+.mos-s02 .hrow .hcheck {
+    min-height: 64px;
+    color: var(--foreground);
+    text-decoration: none;
+}
+.mos-s02 .rest {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 8px 12px;
+    min-height: 56px;
+    color: var(--muted-fg);
+    font-size: 14px;
+    line-height: 20px;
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+}
+.mos-s02 .rest i {
+    flex: none;
+    width: 28px;
+    height: 20px;
+    border: 2px dashed var(--border);
+    border-radius: 2px;
+}
+.mos-s02 .prio {
+    margin: 24px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s02 .prio a {
+    font-weight: 600;
+}
+
+/* Unlock animation (unlock-graph "Completing An Item Plays An Unlock
+   Animation"): the completed mark and every newly available station
+   pulse once and the opened segment is traced; with reduced motion the
+   same nodes get a static ring instead. */
+.mos-s02 .tr .halo {
+    fill: none;
+    stroke: var(--tr-hue);
+    stroke-width: 2.5;
+    opacity: 0;
+}
+.mos-s02 [data-motion='full'] .tr .nd.unlock > :not(.halo):not(title) {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: mos-s02-unlock 700ms var(--ease-out-soft) both;
+}
+.mos-s02 [data-motion='full'] .tr .nd.unlock .halo {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: mos-s02-halo 900ms var(--ease-out-soft) 200ms both;
+}
+.mos-s02 [data-motion='full'] .tr .e.draw {
+    stroke-dasharray: 400;
+    stroke-dashoffset: 400;
+    animation: mos-s02-draw 500ms var(--ease-paint) forwards;
+}
+.mos-s02 [data-motion='reduce'] .tr .nd.unlock .halo {
+    opacity: 1;
+}
+@keyframes mos-s02-unlock {
+    from {
+        transform: scale(0.4);
+        opacity: 0.2;
+    }
+    60% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+@keyframes mos-s02-halo {
+    from {
+        transform: scale(0.6);
+        opacity: 0.9;
+    }
+    to {
+        transform: scale(1.8);
+        opacity: 0;
+    }
+}
+@keyframes mos-s02-draw {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .mos-s02 .cue i {
+        transition: none;
+    }
+    .mos-s02 .tr .nd.unlock > *,
+    .mos-s02 .tr .e.draw {
+        animation: none !important;
+        stroke-dashoffset: 0;
+    }
+    .mos-s02 .tr .nd.unlock .halo {
+        opacity: 1;
+    }
+}
+@media (max-width: 560px) {
+    .mos-s02 .now {
+        padding: 28px 16px 16px;
+    }
+    .mos-s02 .now h1.task {
+        font-size: 24px;
+        line-height: 32px;
+    }
+    .mos-s02 .actions .btn {
+        flex: 1;
+    }
+    .mos-s02 .hrow {
+        grid-template-columns: 1fr;
+    }
+    .mos-s02 .today {
+        flex-direction: column;
+        gap: 2px;
+    }
+}
+/* --- end phase 3 --- */
