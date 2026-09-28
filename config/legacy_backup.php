@@ -65,4 +65,17 @@ return [
         'cache_locks' => 'Estado temporal del framework.',
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Clean-Slate Reset In The Test Environment
+    |--------------------------------------------------------------------------
+    |
+    | `marcos:reset` refuses to run when the environment is `testing` unless
+    | the test suite itself flips this flag with `Config::set()`. It is
+    | deliberately not read from the environment, so no `.env` can enable it.
+    |
+    */
+
+    'reset_allow_testing' => false,
+
 ];

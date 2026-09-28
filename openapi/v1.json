@@ -2,8 +2,8 @@
   "openapi": "3.0.3",
   "info": {
     "title": "posterProjects Mobile API",
-    "version": "1.0.0",
-    "description": "Stateless bearer-token surface at /api/v1, consumed by the posterMobile Flutter client. Tokens are Laravel Sanctum personal access tokens named `mobile` with the `mobile` ability, separate from the web session app and the `/mcp` bearer surface (which uses the `mcp` ability). This document describes the surface as implemented, including the exact JSON error contract."
+    "version": "2.0.0",
+    "description": "Stateless bearer-token surface at /api/v1, consumed by the posterMobile Flutter client. Tokens are Laravel Sanctum personal access tokens named `mobile` with the `mobile` ability, separate from the web session app and the `/mcp` bearer surface (which uses the `mcp` ability). This document describes the surface as implemented, including the exact JSON error contract. Version 2.0.0 is the Marcos OS cutover: the projects, issues, board-columns, sprints and labels operations were removed (their routes are unregistered and answer the generic 404) and replaced by `Objectives` and `Items`; the path prefix stays `/api/v1`."
   },
   "servers": [
     {
@@ -17,24 +17,12 @@
       "description": "Credentials-to-token exchange, identity, and revocation for the mobile bearer surface."
     },
     {
-      "name": "Projects",
-      "description": "Read-only project list and detail for the posterMobile client. Writes are a separate change."
+      "name": "Objectives",
+      "description": "The owner's objectives (Marcos OS): keyed, single owner, with the Control 5-point plan and their tree of plans and items."
     },
     {
-      "name": "Issues",
-      "description": "Read-only, board-ordered issue list and single-issue detail, nested under a project and addressed by the human key. Writes are a separate change, gated on board-column/sprint discovery."
-    },
-    {
-      "name": "Board Columns",
-      "description": "Read-only board-column vocabulary for a project, ordered by position. The client composes a full board from this collection plus GET /issues?sprint={id}, grouping issues by board_column_id — there is no nested /board endpoint."
-    },
-    {
-      "name": "Sprints",
-      "description": "Read-only sprint vocabulary for a project, newest first, each with a server-computed state and an issues_count. The board composes from board-columns + sprints + GET /issues?sprint={id}; the response here is the complete set because an absent meta means data is complete."
-    },
-    {
-      "name": "Labels",
-      "description": "Read-only label catalogue for a project, ordered by name, each with an eager issues_count. An issue's labels already ride on every issue row, but a zero-issue label is otherwise unreachable in the API; the response here is the complete set because an absent meta means data is complete."
+      "name": "Items",
+      "description": "Tasks and milestones of an objective, addressed by their public key (e.g. `SALUD-7`). State is derived: locked, available, active, done."
     },
     {
       "name": "Habits",
@@ -45,14 +33,18 @@
     "/api/v1/login": {
       "post": {
         "operationId": "loginMobile",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Exchange credentials for a mobile bearer token",
         "description": "Validates the owner's email and password without starting a web session (Auth::validate(), never Auth::attempt()). On success, revokes every prior token named `mobile` before minting a new one named `mobile` with exactly the `mobile` ability. A pre-existing `mcp` token is never touched. Throttled by the named limiter `api-login`: 5 attempts per minute keyed by `email|ip`, and 10 attempts per minute keyed by `ip` alone; both successful and failed attempts count toward each limit.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/LoginRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
             }
           }
         },
@@ -61,8 +53,12 @@
             "description": "Credentials valid. Returns the plain-text token; it is never shown again.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponse" },
-                "example": { "token": "1|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN" }
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "example": {
+                  "token": "1|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN"
+                }
               }
             }
           },
@@ -70,13 +66,19 @@
             "description": "Missing/invalid fields, or a recognized-but-wrong email/password pair. Bad credentials are reported under the `email` field, reusing the existing Spanish copy.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
                 "examples": {
                   "bad_credentials": {
                     "summary": "Wrong password (or unknown email)",
                     "value": {
                       "message": "Estas credenciales no coinciden con nuestros registros.",
-                      "errors": { "email": ["Estas credenciales no coinciden con nuestros registros."] }
+                      "errors": {
+                        "email": [
+                          "Estas credenciales no coinciden con nuestros registros."
+                        ]
+                      }
                     }
                   },
                   "missing_fields": {
@@ -84,8 +86,12 @@
                     "value": {
                       "message": "El correo electrónico es obligatorio.",
                       "errors": {
-                        "email": ["El correo electrónico es obligatorio."],
-                        "password": ["La contraseña es obligatoria."]
+                        "email": [
+                          "El correo electrónico es obligatorio."
+                        ],
+                        "password": [
+                          "La contraseña es obligatoria."
+                        ]
                       }
                     }
                   }
@@ -98,13 +104,19 @@
             "headers": {
               "Retry-After": {
                 "description": "Seconds until the limiter resets.",
-                "schema": { "type": "integer" }
+                "schema": {
+                  "type": "integer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ThrottledResponse" },
-                "example": { "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos." }
+                "schema": {
+                  "$ref": "#/components/schemas/ThrottledResponse"
+                },
+                "example": {
+                  "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos."
+                }
               }
             }
           }
@@ -114,14 +126,18 @@
     "/api/v1/qr-login": {
       "post": {
         "operationId": "redeemQrLoginPass",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Redeem a QR login pass for a mobile bearer token",
         "description": "Exchanges a short-lived, single-use QR pass (minted by an authenticated browser session at POST settings/mobile-token/qr) for a token byte-identical to POST /api/v1/login's: named `mobile`, ability `['mobile']`. Revokes every prior token named `mobile` before minting the new one; a pre-existing `mcp` token is never touched. Unauthenticated by design — the pass itself is the credential. Consumption is a single conditional UPDATE keyed on `affected === 1`; unknown, expired, already-consumed, and malformed pass values are indistinguishable and all produce the same 422 body (see the api-qr-login spec's 'Uniform Redemption Failure' requirement). Throttled by the named limiter `api-qr-redeem`: 10 attempts per minute keyed by IP alone, since no identity exists before a pass is validated.",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
-              "schema": { "$ref": "#/components/schemas/QrLoginRequest" }
+              "schema": {
+                "$ref": "#/components/schemas/QrLoginRequest"
+              }
             }
           }
         },
@@ -130,8 +146,12 @@
             "description": "Pass valid, unconsumed, and unexpired. Returns the plain-text token; it is never shown again.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/LoginResponse" },
-                "example": { "token": "2|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN" }
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                },
+                "example": {
+                  "token": "2|abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMN"
+                }
               }
             }
           },
@@ -139,10 +159,16 @@
             "description": "The pass value is unknown, expired, already consumed, or malformed. All four causes are byte-identical and never disclose which one occurred.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/QrLoginFailureResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/QrLoginFailureResponse"
+                },
                 "example": {
                   "message": "El código QR no es válido o expiró.",
-                  "errors": { "token": ["El código QR no es válido o expiró."] }
+                  "errors": {
+                    "token": [
+                      "El código QR no es válido o expiró."
+                    ]
+                  }
                 }
               }
             }
@@ -152,13 +178,19 @@
             "headers": {
               "Retry-After": {
                 "description": "Seconds until the limiter resets.",
-                "schema": { "type": "integer" }
+                "schema": {
+                  "type": "integer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ThrottledResponse" },
-                "example": { "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos." }
+                "schema": {
+                  "$ref": "#/components/schemas/ThrottledResponse"
+                },
+                "example": {
+                  "message": "Demasiados intentos de acceso. Por favor, inténtalo de nuevo en 42 segundos."
+                }
               }
             }
           }
@@ -168,17 +200,31 @@
     "/api/v1/user": {
       "get": {
         "operationId": "getAuthenticatedMobileUser",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Return the authenticated owner",
         "description": "Requires a bearer token carrying the `mobile` ability (or the legacy wildcard `['*']` ability). Exposes exactly id, name, and email — no other user attribute.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "The owner's identity.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UserResponse" },
-                "example": { "data": { "id": 1, "name": "Marco", "email": "marco@example.com" } }
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                },
+                "example": {
+                  "data": {
+                    "id": 1,
+                    "name": "Marco",
+                    "email": "marco@example.com"
+                  }
+                }
               }
             }
           },
@@ -187,13 +233,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -201,37 +254,59 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           }
         }
       }
     },
-    "/api/v1/projects": {
+    "/api/v1/objectives": {
       "get": {
-        "operationId": "listProjects",
-        "tags": ["Projects"],
-        "summary": "List the authenticated owner's active projects",
-        "description": "Returns the requesting user's active (non-archived) projects, scoped by membership, ordered by name then id. Requires the `mobile` ability. There is no pagination envelope today: `data` is always the complete result set. Forward-compatibility rule for the client: if a future response omits `meta`, `data` is still the complete set — there is no next page. If `meta` is present, the last page is reached when `meta.current_page === meta.last_page` (equivalently `links.next === null`). A client written against this rule never breaks and never has to assume the response has exactly one key.",
-        "security": [{ "bearerAuth": [] }],
+        "operationId": "listObjectives",
+        "tags": [
+          "Objectives"
+        ],
+        "summary": "List the owner's active objectives",
+        "description": "The authenticated owner's `active` objectives in the owner's manual order, as `{\"data\": [...]}` with no pagination envelope. Closed, retired and draft objectives are absent. The query count does not grow with the number of objectives. Requires the `mobile` ability.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
-            "description": "The member's active projects, ordered by name.",
+            "description": "The active objectives, in manual order.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProjectCollectionResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectiveCollectionResponse"
+                },
                 "example": {
                   "data": [
                     {
                       "id": 1,
-                      "key": "DEMO",
-                      "name": "Demo",
-                      "description": "Sample project",
-                      "issues_count": 3,
-                      "updated_at": "2026-07-21T07:48:51+00:00",
-                      "archived": false
+                      "key": "SALUD",
+                      "title": "Correr 5 km",
+                      "identity_statement": "Soy alguien que entrena",
+                      "state": "active",
+                      "outcome": "Corro 5 km sin parar",
+                      "deadline": "2026-12-15",
+                      "metric": {
+                        "name": "Kilómetros sin parar",
+                        "target": 5.0,
+                        "current": 2.0
+                      },
+                      "progress": {
+                        "done": 3,
+                        "total": 10
+                      },
+                      "updated_at": "2026-09-28T03:00:00+00:00"
                     }
                   ]
                 }
@@ -243,13 +318,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -257,45 +339,87 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           }
         }
       }
     },
-    "/api/v1/projects/{project}": {
+    "/api/v1/objectives/{objective}": {
       "get": {
-        "operationId": "getProject",
-        "tags": ["Projects"],
-        "summary": "Resolve a single project by key, active or archived",
-        "description": "Resolves `{project}` against the project's `key` column for any project the requesting user is a member of, including a soft-deleted (archived) one — a stale link to an archived project still resolves so the client can render a meaningful state instead of a dead end. Requires the `mobile` ability. Unknown key, non-member key, and force-deleted key are indistinguishable: all three respond `404` with the identical generic body, never `403` — the response never discloses whether an inaccessible key exists.",
-        "security": [{ "bearerAuth": [] }],
+        "operationId": "getObjective",
+        "tags": [
+          "Objectives"
+        ],
+        "summary": "Show one objective with its tree",
+        "description": "Resolves `{objective}` by key among the owner's active and closed objectives and returns the pinned objective shape plus `plans` (non-retired, manual order), each with its non-retired items in manual order. Requires the `mobile` ability.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
-            "name": "project",
+            "name": "objective",
             "in": "path",
             "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
+            "description": "The objective's `key` (e.g. SALUD) — never the numeric `id`.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The project, active or archived.",
+            "description": "The objective and its tree.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ProjectResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ObjectiveTreeResponse"
+                },
                 "example": {
                   "data": {
                     "id": 1,
-                    "key": "DEMO",
-                    "name": "Demo",
-                    "description": "Sample project",
-                    "issues_count": 3,
-                    "updated_at": "2026-07-21T07:48:51+00:00",
-                    "archived": false
+                    "key": "SALUD",
+                    "title": "Correr 5 km",
+                    "identity_statement": "Soy alguien que entrena",
+                    "state": "active",
+                    "outcome": "Corro 5 km sin parar",
+                    "deadline": "2026-12-15",
+                    "metric": {
+                      "name": "Kilómetros sin parar",
+                      "target": 5.0,
+                      "current": 2.0
+                    },
+                    "progress": {
+                      "done": 3,
+                      "total": 10
+                    },
+                    "updated_at": "2026-09-28T03:00:00+00:00",
+                    "plans": [
+                      {
+                        "id": 3,
+                        "title": "Semana 1",
+                        "state": "active",
+                        "level": 1,
+                        "items": [
+                          {
+                            "key": "SALUD-1",
+                            "kind": "task",
+                            "title": "Mesa lista",
+                            "two_minute_version": "despejar la mesa",
+                            "state": "done",
+                            "prerequisite_keys": []
+                          }
+                        ]
+                      }
+                    ]
                   }
                 }
               }
@@ -306,13 +430,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -320,96 +451,103 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           },
           "404": {
-            "description": "No project with this key is resolvable for the requesting user: the key never existed, belongs to a project the user is not a member of, or was permanently force-deleted. These three causes are intentionally indistinguishable.",
+            "description": "No visible objective with this key for the requesting owner: the key never existed, belongs to another user record, is retired (only in the web Retired view) or is a draft still inside a negotiation. The causes are indistinguishable — never `403`.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
+                }
               }
             }
           }
         }
       }
     },
-    "/api/v1/projects/{project}/issues": {
+    "/api/v1/objectives/{objective}/items/{item}": {
       "get": {
-        "operationId": "listProjectIssues",
-        "tags": ["Issues"],
-        "summary": "List a project's issues, board-ordered and paginated",
-        "description": "Returns `{project}`'s issues ordered by board column position, then issue position, then issue id as a mandatory tiebreaker (position is unique only within a board-column/sprint scope). Paginated: `per_page` defaults to 50 and is capped at 100 regardless of the requested value; `links.next` retains every applied query filter. `?sprint=` accepts an integer sprint id belonging to `{project}`, or the literal `backlog` for unsprinted issues; absent, every issue in the project is returned. A sprint id belonging to a different project responds `404`; a value that is neither `backlog` nor an integer responds `422`. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, unlike `GET /api/v1/projects/{project}`.",
-        "security": [{ "bearerAuth": [] }],
+        "operationId": "getItem",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Show one item by key",
+        "description": "The pinned item detail, with its prerequisites and the items it unlocks (each with key, title and derived state). Items of a closed objective resolve read-only. Serialization does not grow in queries with the number of neighbours. Requires the `mobile` ability.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
-            "name": "project",
+            "name": "objective",
             "in": "path",
             "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
+            "description": "The objective's `key` (e.g. SALUD) — never the numeric `id`.",
+            "schema": {
+              "type": "string"
+            }
           },
           {
-            "name": "sprint",
-            "in": "query",
-            "required": false,
-            "description": "An integer sprint id belonging to `{project}`, or the literal `backlog` for unsprinted issues. Absent returns every issue in the project.",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "per_page",
-            "in": "query",
-            "required": false,
-            "description": "Items per page. Default 50, capped at 100.",
-            "schema": { "type": "integer", "minimum": 1, "maximum": 100, "default": 50 }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "description": "Page number, 1-indexed.",
-            "schema": { "type": "integer", "minimum": 1, "default": 1 }
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "description": "The item's public key (e.g. SALUD-7): the objective key, a dash and the item number. Resolved in code, never by route-model binding.",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
           "200": {
-            "description": "The project's issues, board-ordered, one page at a time.",
+            "description": "The item.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/IssueCollectionResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ItemResponse"
+                },
                 "example": {
-                  "data": [
-                    {
-                      "id": 1,
-                      "key": "DEMO-1",
-                      "number": 1,
-                      "title": "Set up CI",
-                      "type": "task",
-                      "priority": 3,
-                      "story_points": 3,
-                      "due_date": "2026-08-15",
-                      "board_column_id": 1,
-                      "sprint_id": null,
-                      "parent_id": null,
-                      "position": 0,
-                      "assignee": { "id": 2, "name": "Ada Lovelace" },
-                      "labels": [{ "id": 1, "name": "backend" }],
-                      "updated_at": "2026-07-21T07:48:51+00:00"
-                    }
-                  ],
-                  "links": { "first": "/api/v1/projects/DEMO/issues?page=1", "last": "/api/v1/projects/DEMO/issues?page=1", "prev": null, "next": null },
-                  "meta": {
-                    "current_page": 1,
-                    "last_page": 1,
-                    "per_page": 50,
-                    "total": 1,
-                    "from": 1,
-                    "to": 1,
-                    "path": "/api/v1/projects/DEMO/issues",
-                    "links": [{ "url": null, "label": "&laquo; Previous", "page": null, "active": false }]
+                  "data": {
+                    "id": 7,
+                    "key": "SALUD-2",
+                    "kind": "task",
+                    "title": "Captura 10 min",
+                    "description": null,
+                    "two_minute_version": "abrir el inbox y escribir una línea",
+                    "state": "available",
+                    "target_date": null,
+                    "plan": {
+                      "id": 3,
+                      "title": "Semana 1"
+                    },
+                    "prerequisites": [
+                      {
+                        "key": "SALUD-1",
+                        "title": "Mesa lista",
+                        "state": "done"
+                      }
+                    ],
+                    "unlocks": [
+                      {
+                        "key": "SALUD-3",
+                        "title": "Clasificar y elegir prioridad",
+                        "state": "locked"
+                      }
+                    ],
+                    "completed_at": null,
+                    "evidence": null,
+                    "updated_at": "2026-09-28T03:00:00+00:00"
                   }
                 }
               }
@@ -420,13 +558,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -434,328 +579,191 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           },
           "404": {
-            "description": "`{project}` is unresolvable for the requesting user (unknown key, non-member key, or archived project), or `?sprint=` names a sprint belonging to a different project. Every cause is byte-identical and never discloses which one occurred.",
+            "description": "Any of: a key with no dash, an empty or non-numeric suffix, a prefix that is not `{objective}`'s key, a well-formed key whose number does not exist in this objective, a retired item, or an unresolvable `{objective}`. All identical.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/objectives/{objective}/items/{item}/check": {
+      "post": {
+        "operationId": "checkItem",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Mark an item done",
+        "description": "Marks an available or active item `done` through the same domain action as the web and answers the item detail plus `unlocked` (the items that became available). A locked item is `422`; a milestone needs a non-empty `evidence` (`422` otherwise); an already-done item is `200` unchanged (idempotent). Items of a closed objective are read-only (`422`). Requires the `mobile` ability.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "objective",
+            "in": "path",
+            "required": true,
+            "description": "The objective's `key` (e.g. SALUD) — never the numeric `id`.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "item",
+            "in": "path",
+            "required": true,
+            "description": "The item's public key (e.g. SALUD-7): the objective key, a dash and the item number. Resolved in code, never by route-model binding.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckItemRequest"
+              },
+              "example": {
+                "evidence": "Boceto en la libreta, página 12"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "The item, now done, and what it unlocked.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemCheckResponse"
+                },
+                "example": {
+                  "data": {
+                    "id": 7,
+                    "key": "SALUD-2",
+                    "kind": "task",
+                    "title": "Captura 10 min",
+                    "description": null,
+                    "two_minute_version": "abrir el inbox y escribir una línea",
+                    "state": "done",
+                    "target_date": null,
+                    "plan": {
+                      "id": 3,
+                      "title": "Semana 1"
+                    },
+                    "prerequisites": [
+                      {
+                        "key": "SALUD-1",
+                        "title": "Mesa lista",
+                        "state": "done"
+                      }
+                    ],
+                    "unlocks": [
+                      {
+                        "key": "SALUD-3",
+                        "title": "Clasificar y elegir prioridad",
+                        "state": "locked"
+                      }
+                    ],
+                    "completed_at": "2026-09-28T03:10:00+00:00",
+                    "evidence": null,
+                    "updated_at": "2026-09-28T03:00:00+00:00",
+                    "unlocked": [
+                      {
+                        "key": "SALUD-3",
+                        "title": "Clasificar y elegir prioridad",
+                        "state": "available"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Any of: a key with no dash, an empty or non-numeric suffix, a prefix that is not `{objective}`'s key, a well-formed key whose number does not exist in this objective, a retired item, or an unresolvable `{objective}`. All identical.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
+                }
               }
             }
           },
           "422": {
-            "description": "`per_page` above 100, `page` not a positive integer, or `sprint` neither `backlog` nor an integer.",
+            "description": "A locked item, a milestone without evidence, or an item of a closed objective.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
-                "example": { "message": "El campo sprint seleccionado no es válido.", "errors": { "sprint": ["El campo sprint seleccionado no es válido."] } }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/projects/{project}/issues/{issue}": {
-      "get": {
-        "operationId": "getProjectIssue",
-        "tags": ["Issues"],
-        "summary": "Resolve a single issue by its human key",
-        "description": "Resolves `{issue}` (e.g. DEMO-123) via `Issue::resolveByKey()` against `{project}`, never route-model binding — `key` is a computed accessor, not a column. Requires the `mobile` ability. Seven distinct causes converge on the identical `404`: an unresolvable `{project}` (unknown key, non-member key, archived project), and a malformed, cross-project, or unknown `{issue}` (no dash, non-numeric/empty suffix, prefix mismatch, unknown number). None is distinguishable from the response.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "project",
-            "in": "path",
-            "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "issue",
-            "in": "path",
-            "required": true,
-            "description": "The full issue key (e.g. DEMO-123) — never the numeric `id`.",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The issue, with every relation embedded.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/IssueResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
                 "example": {
-                  "data": {
-                    "id": 1,
-                    "key": "DEMO-1",
-                    "number": 1,
-                    "title": "Set up CI",
-                    "type": "task",
-                    "priority": 3,
-                    "story_points": 3,
-                    "due_date": "2026-08-15",
-                    "board_column_id": 1,
-                    "sprint_id": null,
-                    "parent_id": null,
-                    "position": 0,
-                    "assignee": { "id": 2, "name": "Ada Lovelace" },
-                    "labels": [{ "id": 1, "name": "backend" }],
-                    "updated_at": "2026-07-21T07:48:51+00:00",
-                    "description": "Configure the CI pipeline.",
-                    "reporter": { "id": 3, "name": "Alan Turing" },
-                    "parent": null,
-                    "children": [{ "id": 5, "key": "DEMO-5", "title": "Add the lint step", "type": "task", "board_column_id": 1 }],
-                    "comments": [{ "id": 9, "body": "Started this.", "created_at": "2026-07-21T07:50:00+00:00", "author": { "id": 3, "name": "Alan Turing" } }]
+                  "message": "Esta tarea está bloqueada: se abre al terminar Mesa lista.",
+                  "errors": {
+                    "item": [
+                      "Esta tarea está bloqueada: se abre al terminar Mesa lista."
+                    ]
                   }
                 }
-              }
-            }
-          },
-          "401": {
-            "description": "No token, or a token that does not authenticate.",
-            "headers": {
-              "WWW-Authenticate": {
-                "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
-              }
-            }
-          },
-          "403": {
-            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
-              }
-            }
-          },
-          "404": {
-            "description": "`{project}` is unresolvable for the requesting user (unknown key, non-member key, or archived project), or `{issue}` is malformed, belongs to a different project, or has no matching number in this project. All seven causes are byte-identical and never disclose which one occurred.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/projects/{project}/board-columns": {
-      "get": {
-        "operationId": "listProjectBoardColumns",
-        "tags": ["Board Columns"],
-        "summary": "List a project's board columns, ordered by position",
-        "description": "Returns the complete, unpaginated set of `{project}`'s board columns ordered by position — no tiebreaker needed, position is unique within a project. An empty column (no issues assigned) is still returned. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "project",
-            "in": "path",
-            "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The project's board columns, position-ordered, complete set.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/BoardColumnCollectionResponse" },
-                "example": {
-                  "data": [
-                    { "id": 1, "name": "To Do", "position": 0, "updated_at": "2026-07-21T07:48:51+00:00" },
-                    { "id": 2, "name": "In Progress", "position": 1, "updated_at": "2026-07-21T07:48:51+00:00" },
-                    { "id": 3, "name": "Done", "position": 2, "updated_at": "2026-07-21T07:48:51+00:00" }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No token, or a token that does not authenticate.",
-            "headers": {
-              "WWW-Authenticate": {
-                "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
-              }
-            }
-          },
-          "403": {
-            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
-              }
-            }
-          },
-          "404": {
-            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/projects/{project}/sprints": {
-      "get": {
-        "operationId": "listProjectSprints",
-        "tags": ["Sprints"],
-        "summary": "List a project's sprints, newest first, with computed state",
-        "description": "Returns the complete, unpaginated set of `{project}`'s sprints ordered by start_date descending, id descending as the mandatory tiebreaker (start_date is a date and may repeat). Each sprint carries a server-computed `state` (`future` when start_date is after today, `completed` when end_date is before today, `active` otherwise — both bounds inclusive, anchored to today() in the application timezone, UTC) and an eager `issues_count` aggregate. The client's default sprint is the first element with `state: \"active\"`, matching the web board's pick for identical data. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "project",
-            "in": "path",
-            "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The project's sprints, newest first, complete set.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/SprintCollectionResponse" },
-                "example": {
-                  "data": [
-                    {
-                      "id": 3,
-                      "name": "Sprint 4",
-                      "goal": "Ship the board",
-                      "start_date": "2026-07-28",
-                      "end_date": "2026-08-10",
-                      "state": "active",
-                      "issues_count": 12,
-                      "updated_at": "2026-08-01T10:22:31+00:00"
-                    }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No token, or a token that does not authenticate.",
-            "headers": {
-              "WWW-Authenticate": {
-                "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
-              }
-            }
-          },
-          "403": {
-            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
-              }
-            }
-          },
-          "404": {
-            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/projects/{project}/labels": {
-      "get": {
-        "operationId": "listProjectLabels",
-        "tags": ["Labels"],
-        "summary": "List a project's label catalogue, ordered by name",
-        "description": "Returns the complete, unpaginated set of `{project}`'s labels ordered by name ascending — no tiebreaker needed, name is unique within a project. A label attached to no issues is still returned, with issues_count: 0 — the row an issue's embedded labels can never surface. issues_count is an eager withCount aggregate, never a per-row query. No query parameter is accepted. Requires the `mobile` ability. An archived (soft-deleted) `{project}` responds `404`, matching `GET /api/v1/projects/{project}/issues`.",
-        "security": [{ "bearerAuth": [] }],
-        "parameters": [
-          {
-            "name": "project",
-            "in": "path",
-            "required": true,
-            "description": "The project's `key` (e.g. DEMO) — never the numeric `id`.",
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "The project's labels, name-ordered, complete set.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/LabelCollectionResponse" },
-                "example": {
-                  "data": [
-                    { "id": 4, "name": "backend", "issues_count": 3, "updated_at": "2026-08-01T10:22:31+00:00" },
-                    { "id": 9, "name": "urgent", "issues_count": 0, "updated_at": "2026-08-01T10:22:31+00:00" }
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "No token, or a token that does not authenticate.",
-            "headers": {
-              "WWW-Authenticate": {
-                "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
-              }
-            }
-          },
-          "403": {
-            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
-              }
-            }
-          },
-          "404": {
-            "description": "`{project}` is unresolvable for the requesting user: unknown key, non-member key, or archived project. All three causes are byte-identical and never disclose which one occurred.",
-            "content": {
-              "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
               }
             }
           }
@@ -765,10 +773,16 @@
     "/api/v1/logout": {
       "post": {
         "operationId": "logoutMobile",
-        "tags": ["Auth"],
+        "tags": [
+          "Auth"
+        ],
         "summary": "Revoke the presenting token",
         "description": "Revokes only the token used to authenticate the request, via currentAccessToken(). Every other token (of either name) is left untouched. Requires the `mobile` ability.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "204": {
             "description": "Token revoked. No body."
@@ -778,13 +792,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -792,8 +813,12 @@
             "description": "A valid token that lacks the `mobile` ability.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           }
@@ -803,20 +828,54 @@
     "/api/v1/habits/today": {
       "get": {
         "operationId": "listTodayHabits",
-        "tags": ["Habits"],
+        "tags": [
+          "Habits"
+        ],
         "summary": "List today's active, scheduled habits with each one's progress",
         "description": "Returns every active habit scheduled for the current UTC-6 day, ordered by name, each with its persisted progress for the day flattened to zero/false when nothing has been logged yet. week_recorded_days is populated only for times_per_week habits. Requires the `mobile` ability.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "responses": {
           "200": {
             "description": "Today's scheduled habits, name-ordered, complete set.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TodayHabitCollectionResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/TodayHabitCollectionResponse"
+                },
                 "example": {
                   "data": [
-                    { "id": 3, "date": "2026-08-01", "name": "Meditar", "habit_type": "yes_no", "unit": null, "target": 1, "accumulated_amount": 1, "completion_percent": 100, "completed": true, "peak_amount": 1, "times_per_week": null, "week_recorded_days": null },
-                    { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 3, "completion_percent": 38, "completed": false, "peak_amount": 3, "times_per_week": null, "week_recorded_days": null }
+                    {
+                      "id": 3,
+                      "date": "2026-08-01",
+                      "name": "Meditar",
+                      "habit_type": "yes_no",
+                      "unit": null,
+                      "target": 1,
+                      "accumulated_amount": 1,
+                      "completion_percent": 100,
+                      "completed": true,
+                      "peak_amount": 1,
+                      "times_per_week": null,
+                      "week_recorded_days": null
+                    },
+                    {
+                      "id": 7,
+                      "date": "2026-08-01",
+                      "name": "Tomar agua",
+                      "habit_type": "quantitative",
+                      "unit": "vasos",
+                      "target": 8,
+                      "accumulated_amount": 3,
+                      "completion_percent": 38,
+                      "completed": false,
+                      "peak_amount": 3,
+                      "times_per_week": null,
+                      "week_recorded_days": null
+                    }
                   ]
                 }
               }
@@ -827,13 +886,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -841,8 +907,12 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           }
@@ -852,17 +922,25 @@
     "/api/v1/habits/{habit}/increment": {
       "post": {
         "operationId": "incrementHabit",
-        "tags": ["Habits"],
+        "tags": [
+          "Habits"
+        ],
         "summary": "Tap \"sumar\": add 1 to today's aggregate",
         "description": "The phone never sends an amount — every tap adds exactly 1 to the current UTC-6 day's accumulated_amount, recalculates completion_percent and the sticky completed flag, and returns the same shape as a GET /habits/today element (shape-identical by construction, design D-4). Not idempotent: repeating the request repeats the effect. Requires the `mobile` ability. Unknown, another user's, or archived `{habit}` all resolve to the identical generic 404.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "habit",
             "in": "path",
             "required": true,
             "description": "The habit's numeric id.",
-            "schema": { "type": "integer" }
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -870,9 +948,24 @@
             "description": "The habit's updated progress for today.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TodayHabitResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/TodayHabitResponse"
+                },
                 "example": {
-                  "data": { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 4, "completion_percent": 50, "completed": false, "peak_amount": 4, "times_per_week": null, "week_recorded_days": null }
+                  "data": {
+                    "id": 7,
+                    "date": "2026-08-01",
+                    "name": "Tomar agua",
+                    "habit_type": "quantitative",
+                    "unit": "vasos",
+                    "target": 8,
+                    "accumulated_amount": 4,
+                    "completion_percent": 50,
+                    "completed": false,
+                    "peak_amount": 4,
+                    "times_per_week": null,
+                    "week_recorded_days": null
+                  }
                 }
               }
             }
@@ -882,13 +975,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -896,8 +996,12 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           },
@@ -905,8 +1009,12 @@
             "description": "`{habit}` is unresolvable for the requesting user: unknown id, another user's habit, or an archived habit. All three causes are byte-identical and never disclose which one occurred.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
+                }
               }
             }
           }
@@ -916,17 +1024,25 @@
     "/api/v1/habits/{habit}/decrement": {
       "post": {
         "operationId": "decrementHabit",
-        "tags": ["Habits"],
+        "tags": [
+          "Habits"
+        ],
         "summary": "Tap \"restar\": subtract 1 from today's aggregate",
         "description": "Corrects an over-tap: subtracts 1 from the current UTC-6 day's accumulated_amount, floored at zero, and never un-completes an already-completed day (completed is sticky — design D-1). Returns the same shape as a GET /habits/today element. Requires the `mobile` ability. Unknown, another user's, or archived `{habit}` all resolve to the identical generic 404.",
-        "security": [{ "bearerAuth": [] }],
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
         "parameters": [
           {
             "name": "habit",
             "in": "path",
             "required": true,
             "description": "The habit's numeric id.",
-            "schema": { "type": "integer" }
+            "schema": {
+              "type": "integer"
+            }
           }
         ],
         "responses": {
@@ -934,9 +1050,24 @@
             "description": "The habit's updated progress for today.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/TodayHabitResponse" },
+                "schema": {
+                  "$ref": "#/components/schemas/TodayHabitResponse"
+                },
                 "example": {
-                  "data": { "id": 7, "date": "2026-08-01", "name": "Tomar agua", "habit_type": "quantitative", "unit": "vasos", "target": 8, "accumulated_amount": 2, "completion_percent": 25, "completed": false, "peak_amount": 4, "times_per_week": null, "week_recorded_days": null }
+                  "data": {
+                    "id": 7,
+                    "date": "2026-08-01",
+                    "name": "Tomar agua",
+                    "habit_type": "quantitative",
+                    "unit": "vasos",
+                    "target": 8,
+                    "accumulated_amount": 2,
+                    "completion_percent": 25,
+                    "completed": false,
+                    "peak_amount": 4,
+                    "times_per_week": null,
+                    "week_recorded_days": null
+                  }
                 }
               }
             }
@@ -946,13 +1077,20 @@
             "headers": {
               "WWW-Authenticate": {
                 "description": "Bearer challenge.",
-                "schema": { "type": "string", "example": "Bearer" }
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
               }
             },
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/UnauthenticatedResponse" },
-                "example": { "message": "No autenticado." }
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
               }
             }
           },
@@ -960,8 +1098,12 @@
             "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ForbiddenResponse" },
-                "example": { "message": "Este token no tiene permiso para usar esta API." }
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
               }
             }
           },
@@ -969,8 +1111,12 @@
             "description": "`{habit}` is unresolvable for the requesting user: unknown id, another user's habit, or an archived habit. All three causes are byte-identical and never disclose which one occurred.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/NotFoundResponse" },
-                "example": { "message": "Recurso no encontrado." }
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
+                }
               }
             }
           },
@@ -978,8 +1124,17 @@
             "description": "Today has nothing to subtract: no `habit_days` row yet, or `accumulated_amount` is already 0.",
             "content": {
               "application/json": {
-                "schema": { "$ref": "#/components/schemas/ValidationErrorResponse" },
-                "example": { "message": "No hay nada que descontar hoy.", "errors": { "habit": ["No hay nada que descontar hoy."] } }
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationErrorResponse"
+                },
+                "example": {
+                  "message": "No hay nada que descontar hoy.",
+                  "errors": {
+                    "habit": [
+                      "No hay nada que descontar hoy."
+                    ]
+                  }
+                }
               }
             }
           }
@@ -999,15 +1154,26 @@
     "schemas": {
       "LoginRequest": {
         "type": "object",
-        "required": ["email", "password"],
+        "required": [
+          "email",
+          "password"
+        ],
         "properties": {
-          "email": { "type": "string", "format": "email" },
-          "password": { "type": "string", "format": "password" }
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "format": "password"
+          }
         }
       },
       "LoginResponse": {
         "type": "object",
-        "required": ["token"],
+        "required": [
+          "token"
+        ],
         "properties": {
           "token": {
             "type": "string",
@@ -1017,7 +1183,9 @@
       },
       "QrLoginRequest": {
         "type": "object",
-        "required": ["token"],
+        "required": [
+          "token"
+        ],
         "properties": {
           "token": {
             "type": "string",
@@ -1029,16 +1197,31 @@
       "QrLoginFailureResponse": {
         "type": "object",
         "description": "The single uniform failure body for POST /api/v1/qr-login. Unknown, expired, already-consumed, and malformed pass values are indistinguishable and all produce this exact body.",
-        "required": ["message", "errors"],
+        "required": [
+          "message",
+          "errors"
+        ],
         "properties": {
-          "message": { "type": "string", "enum": ["El código QR no es válido o expiró."] },
+          "message": {
+            "type": "string",
+            "enum": [
+              "El código QR no es válido o expiró."
+            ]
+          },
           "errors": {
             "type": "object",
-            "required": ["token"],
+            "required": [
+              "token"
+            ],
             "properties": {
               "token": {
                 "type": "array",
-                "items": { "type": "string", "enum": ["El código QR no es válido o expiró."] }
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "El código QR no es válido o expiró."
+                  ]
+                }
               }
             }
           }
@@ -1046,346 +1229,615 @@
       },
       "User": {
         "type": "object",
-        "required": ["id", "name", "email"],
+        "required": [
+          "id",
+          "name",
+          "email"
+        ],
         "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "name": { "type": "string" },
-          "email": { "type": "string", "format": "email" }
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
         }
       },
       "UserResponse": {
         "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": { "$ref": "#/components/schemas/User" }
-        }
-      },
-      "Project": {
-        "type": "object",
-        "required": ["id", "key", "name", "description", "issues_count", "updated_at", "archived"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
-          "key": { "type": "string", "description": "The addressable identifier, e.g. DEMO." },
-          "name": { "type": "string" },
-          "description": { "type": "string", "nullable": true },
-          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate; never triggers a query per project." },
-          "updated_at": { "type": "string", "format": "date-time", "nullable": true },
-          "archived": { "type": "boolean", "description": "True only when the project is soft-deleted." }
-        }
-      },
-      "ProjectResponse": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": { "$ref": "#/components/schemas/Project" }
-        }
-      },
-      "ProjectCollectionResponse": {
-        "type": "object",
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "properties": {
           "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/Project" }
-          }
-        }
-      },
-      "UserRef": {
-        "type": "object",
-        "required": ["id", "name"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "name": { "type": "string" }
-        }
-      },
-      "LabelRef": {
-        "type": "object",
-        "required": ["id", "name"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "name": { "type": "string" }
-        }
-      },
-      "Issue": {
-        "type": "object",
-        "description": "The board-card shape: exactly these 15 fields, no more, no fewer.",
-        "required": ["id", "key", "number", "title", "type", "priority", "story_points", "due_date", "board_column_id", "sprint_id", "parent_id", "position", "assignee", "labels", "updated_at"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
-          "key": { "type": "string", "description": "The addressable identifier, e.g. DEMO-123." },
-          "number": { "type": "integer", "description": "The per-project sequential number, i.e. the suffix of key." },
-          "title": { "type": "string" },
-          "type": { "type": "string", "enum": ["epic", "story", "task", "bug"] },
-          "priority": { "type": "integer", "enum": [1, 2, 3, 4, 5], "description": "1 = Highest ... 5 = Lowest." },
-          "story_points": { "type": "integer", "nullable": true },
-          "due_date": { "type": "string", "format": "date", "nullable": true },
-          "board_column_id": { "type": "integer", "format": "int64" },
-          "sprint_id": { "type": "integer", "format": "int64", "nullable": true },
-          "parent_id": { "type": "integer", "format": "int64", "nullable": true },
-          "position": { "type": "integer", "description": "Order within its board column and sprint scope. Not globally unique." },
-          "assignee": { "$ref": "#/components/schemas/UserRef", "nullable": true },
-          "labels": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/LabelRef" }
-          },
-          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
-        }
-      },
-      "PaginationLinks": {
-        "type": "object",
-        "required": ["first", "last", "prev", "next"],
-        "properties": {
-          "first": { "type": "string", "nullable": true },
-          "last": { "type": "string", "nullable": true },
-          "prev": { "type": "string", "nullable": true },
-          "next": { "type": "string", "nullable": true, "description": "Retains every applied query filter (e.g. ?sprint=). Null on the last page." }
-        }
-      },
-      "PaginationMeta": {
-        "type": "object",
-        "required": ["current_page", "last_page", "per_page", "total", "from", "to", "path"],
-        "properties": {
-          "current_page": { "type": "integer" },
-          "last_page": { "type": "integer" },
-          "per_page": { "type": "integer" },
-          "total": { "type": "integer" },
-          "from": { "type": "integer", "nullable": true },
-          "to": { "type": "integer", "nullable": true },
-          "path": { "type": "string" },
-          "links": {
-            "type": "array",
-            "description": "Laravel's default presentational page-link list. Ignorable by the client.",
-            "items": {
-              "type": "object",
-              "properties": {
-                "url": { "type": "string", "nullable": true },
-                "label": { "type": "string" },
-                "page": { "type": "integer", "nullable": true },
-                "active": { "type": "boolean" }
-              }
-            }
-          }
-        }
-      },
-      "IssueCollectionResponse": {
-        "type": "object",
-        "required": ["data", "links", "meta"],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/Issue" }
-          },
-          "links": { "$ref": "#/components/schemas/PaginationLinks" },
-          "meta": { "$ref": "#/components/schemas/PaginationMeta" }
-        }
-      },
-      "IssueRef": {
-        "type": "object",
-        "description": "A parent issue reference.",
-        "required": ["id", "key", "title"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "key": { "type": "string" },
-          "title": { "type": "string" }
-        }
-      },
-      "IssueChildRef": {
-        "type": "object",
-        "description": "A child issue reference, as it appears on the parent's board-card list.",
-        "required": ["id", "key", "title", "type", "board_column_id"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "key": { "type": "string" },
-          "title": { "type": "string" },
-          "type": { "type": "string", "enum": ["epic", "story", "task", "bug"] },
-          "board_column_id": { "type": "integer", "format": "int64" }
-        }
-      },
-      "IssueComment": {
-        "type": "object",
-        "required": ["id", "body", "created_at", "author"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "body": { "type": "string" },
-          "created_at": { "type": "string", "format": "date-time", "nullable": true },
-          "author": { "$ref": "#/components/schemas/UserRef" }
-        }
-      },
-      "IssueDetail": {
-        "description": "The full single-issue shape: the 15 `Issue` fields plus description, reporter, parent, children, and comments.",
-        "allOf": [
-          { "$ref": "#/components/schemas/Issue" },
-          {
-            "type": "object",
-            "required": ["description", "reporter", "parent", "children", "comments"],
-            "properties": {
-              "description": { "type": "string", "nullable": true },
-              "reporter": { "$ref": "#/components/schemas/UserRef" },
-              "parent": { "$ref": "#/components/schemas/IssueRef", "nullable": true },
-              "children": {
-                "type": "array",
-                "items": { "$ref": "#/components/schemas/IssueChildRef" }
-              },
-              "comments": {
-                "type": "array",
-                "description": "Ordered by created_at ascending, with issue id as the tiebreaker for comments sharing a timestamp.",
-                "items": { "$ref": "#/components/schemas/IssueComment" }
-              }
-            }
-          }
-        ]
-      },
-      "IssueResponse": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": { "$ref": "#/components/schemas/IssueDetail" }
-        }
-      },
-      "BoardColumn": {
-        "type": "object",
-        "description": "Exactly these 4 fields, no more, no fewer. Deliberately no issues_count: a column's count is meaningless without a sprint filter, since one column holds issues from every sprint at once.",
-        "required": ["id", "name", "position", "updated_at"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
-          "name": { "type": "string" },
-          "position": { "type": "integer", "description": "Order within the project's board. Unique per project at the database level, so no tiebreaker is needed." },
-          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
-        }
-      },
-      "BoardColumnCollectionResponse": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/BoardColumn" }
-          }
-        }
-      },
-      "Sprint": {
-        "type": "object",
-        "description": "Exactly these 8 fields, no more, no fewer. state is computed server-side from today() in the application timezone (UTC) — never sent by the client, never a device-clock computation.",
-        "required": ["id", "name", "goal", "start_date", "end_date", "state", "issues_count", "updated_at"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
-          "name": { "type": "string" },
-          "goal": { "type": "string", "nullable": true },
-          "start_date": { "type": "string", "format": "date", "description": "YYYY-MM-DD, never a timestamp." },
-          "end_date": { "type": "string", "format": "date", "description": "YYYY-MM-DD, never a timestamp." },
-          "state": { "type": "string", "enum": ["future", "active", "completed"] },
-          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate; never triggers a query per sprint." },
-          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
-        }
-      },
-      "SprintCollectionResponse": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/Sprint" }
-          }
-        }
-      },
-      "Label": {
-        "type": "object",
-        "description": "Exactly these 4 fields, no more, no fewer. No color, no project_id (the URL already carries the project), no nested issues.",
-        "required": ["id", "name", "issues_count", "updated_at"],
-        "properties": {
-          "id": { "type": "integer", "format": "int64", "description": "Stable local primary key. Never used to address the resource." },
-          "name": { "type": "string" },
-          "issues_count": { "type": "integer", "description": "Eager-loaded aggregate (withCount); never triggers a query per label. 0 for a label attached to no issues." },
-          "updated_at": { "type": "string", "format": "date-time", "nullable": true }
-        }
-      },
-      "LabelCollectionResponse": {
-        "type": "object",
-        "required": ["data"],
-        "properties": {
-          "data": {
-            "type": "array",
-            "items": { "$ref": "#/components/schemas/Label" }
+            "$ref": "#/components/schemas/User"
           }
         }
       },
       "TodayHabit": {
         "type": "object",
         "description": "Exactly these 12 fields. The four day-derived fields (accumulated_amount, completion_percent, completed, peak_amount) are flattened to their zero/false value when nothing has been logged today — never null. peak_amount is the day's high-water mark and is load-bearing: it is the only field on the wire that explains a completed day whose accumulated_amount was corrected downward by a decrement.",
-        "required": ["id", "date", "name", "habit_type", "unit", "target", "accumulated_amount", "completion_percent", "completed", "peak_amount", "times_per_week", "week_recorded_days"],
+        "required": [
+          "id",
+          "date",
+          "name",
+          "habit_type",
+          "unit",
+          "target",
+          "accumulated_amount",
+          "completion_percent",
+          "completed",
+          "peak_amount",
+          "times_per_week",
+          "week_recorded_days"
+        ],
         "properties": {
-          "id": { "type": "integer", "format": "int64" },
-          "date": { "type": "string", "format": "date", "description": "The UTC-6 day this row belongs to, per element." },
-          "name": { "type": "string" },
-          "habit_type": { "type": "string", "enum": ["yes_no", "quantitative"] },
-          "unit": { "type": "string", "nullable": true },
-          "target": { "type": "integer", "description": "Server-computed: max(1, daily_target) for quantitative habits, 1 for yes/no." },
-          "accumulated_amount": { "type": "integer" },
-          "completion_percent": { "type": "integer", "description": "Not clamped — may exceed 100." },
-          "completed": { "type": "boolean", "description": "Sticky once true: never recomputed from accumulated_amount alone." },
-          "peak_amount": { "type": "integer", "description": "The day's high-water mark. Never drops, even when a decrement corrects accumulated_amount downward." },
-          "times_per_week": { "type": "integer", "nullable": true },
-          "week_recorded_days": { "type": "integer", "nullable": true, "description": "Days already recorded in the current Monday-based week. Populated only for times_per_week habits; null otherwise." }
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "The UTC-6 day this row belongs to, per element."
+          },
+          "name": {
+            "type": "string"
+          },
+          "habit_type": {
+            "type": "string",
+            "enum": [
+              "yes_no",
+              "quantitative"
+            ]
+          },
+          "unit": {
+            "type": "string",
+            "nullable": true
+          },
+          "target": {
+            "type": "integer",
+            "description": "Server-computed: max(1, daily_target) for quantitative habits, 1 for yes/no."
+          },
+          "accumulated_amount": {
+            "type": "integer"
+          },
+          "completion_percent": {
+            "type": "integer",
+            "description": "Not clamped — may exceed 100."
+          },
+          "completed": {
+            "type": "boolean",
+            "description": "Sticky once true: never recomputed from accumulated_amount alone."
+          },
+          "peak_amount": {
+            "type": "integer",
+            "description": "The day's high-water mark. Never drops, even when a decrement corrects accumulated_amount downward."
+          },
+          "times_per_week": {
+            "type": "integer",
+            "nullable": true
+          },
+          "week_recorded_days": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Days already recorded in the current Monday-based week. Populated only for times_per_week habits; null otherwise."
+          }
         }
       },
       "TodayHabitCollectionResponse": {
         "type": "object",
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "properties": {
           "data": {
             "type": "array",
-            "items": { "$ref": "#/components/schemas/TodayHabit" }
+            "items": {
+              "$ref": "#/components/schemas/TodayHabit"
+            }
           }
         }
       },
       "TodayHabitResponse": {
         "type": "object",
-        "required": ["data"],
+        "required": [
+          "data"
+        ],
         "properties": {
-          "data": { "$ref": "#/components/schemas/TodayHabit" }
+          "data": {
+            "$ref": "#/components/schemas/TodayHabit"
+          }
         }
       },
       "NotFoundResponse": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
-          "message": { "type": "string", "example": "Recurso no encontrado." }
+          "message": {
+            "type": "string",
+            "example": "Recurso no encontrado."
+          }
         }
       },
       "ValidationErrorResponse": {
         "type": "object",
-        "required": ["message", "errors"],
+        "required": [
+          "message",
+          "errors"
+        ],
         "properties": {
-          "message": { "type": "string", "description": "The first validation error message." },
+          "message": {
+            "type": "string",
+            "description": "The first validation error message."
+          },
           "errors": {
             "type": "object",
             "description": "Field name to array of error messages.",
             "additionalProperties": {
               "type": "array",
-              "items": { "type": "string" }
+              "items": {
+                "type": "string"
+              }
             }
           }
         }
       },
       "UnauthenticatedResponse": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
-          "message": { "type": "string", "example": "No autenticado." }
+          "message": {
+            "type": "string",
+            "example": "No autenticado."
+          }
         }
       },
       "ForbiddenResponse": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
-          "message": { "type": "string", "example": "Este token no tiene permiso para usar esta API." }
+          "message": {
+            "type": "string",
+            "example": "Este token no tiene permiso para usar esta API."
+          }
         }
       },
       "ThrottledResponse": {
         "type": "object",
-        "required": ["message"],
+        "required": [
+          "message"
+        ],
         "properties": {
-          "message": { "type": "string", "description": "Spanish throttle message including the retry delay in seconds." }
+          "message": {
+            "type": "string",
+            "description": "Spanish throttle message including the retry delay in seconds."
+          }
+        }
+      },
+      "Metric": {
+        "type": "object",
+        "required": [
+          "name",
+          "target",
+          "current"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "nullable": true
+          },
+          "target": {
+            "type": "number",
+            "nullable": true
+          },
+          "current": {
+            "type": "number",
+            "nullable": true
+          }
+        }
+      },
+      "Objective": {
+        "type": "object",
+        "description": "Pinned objective shape: exactly these 10 fields. `progress` counts the non-retired items and comes from eager aggregates.",
+        "required": [
+          "id",
+          "key",
+          "title",
+          "identity_statement",
+          "state",
+          "outcome",
+          "deadline",
+          "metric",
+          "progress",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "key": {
+            "type": "string",
+            "example": "SALUD"
+          },
+          "title": {
+            "type": "string"
+          },
+          "identity_statement": {
+            "type": "string",
+            "nullable": true
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "active",
+              "closed"
+            ]
+          },
+          "outcome": {
+            "type": "string",
+            "nullable": true
+          },
+          "deadline": {
+            "type": "string",
+            "format": "date",
+            "description": "A UTC-6 calendar date.",
+            "nullable": true
+          },
+          "metric": {
+            "$ref": "#/components/schemas/Metric"
+          },
+          "progress": {
+            "type": "object",
+            "required": [
+              "done",
+              "total"
+            ],
+            "properties": {
+              "done": {
+                "type": "integer"
+              },
+              "total": {
+                "type": "integer"
+              }
+            }
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ObjectiveCollectionResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Objective"
+            }
+          }
+        }
+      },
+      "TreeItem": {
+        "type": "object",
+        "required": [
+          "key",
+          "kind",
+          "title",
+          "two_minute_version",
+          "state",
+          "prerequisite_keys"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "example": "SALUD-2"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "task",
+              "milestone"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "two_minute_version": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "locked",
+              "available",
+              "active",
+              "done"
+            ]
+          },
+          "prerequisite_keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Keys of the non-retired prerequisites, possibly from other objectives."
+          }
+        }
+      },
+      "TreePlan": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "state",
+          "level",
+          "items"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "active",
+              "done"
+            ]
+          },
+          "level": {
+            "type": "integer",
+            "nullable": true
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TreeItem"
+            }
+          }
+        }
+      },
+      "ObjectiveTreeResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/Objective"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "plans"
+                ],
+                "properties": {
+                  "plans": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TreePlan"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "ItemRef": {
+        "type": "object",
+        "required": [
+          "key",
+          "title",
+          "state"
+        ],
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "locked",
+              "available",
+              "active",
+              "done"
+            ]
+          }
+        }
+      },
+      "ItemDetail": {
+        "type": "object",
+        "description": "Pinned item detail: exactly these 14 fields.",
+        "required": [
+          "id",
+          "key",
+          "kind",
+          "title",
+          "description",
+          "two_minute_version",
+          "state",
+          "target_date",
+          "plan",
+          "prerequisites",
+          "unlocks",
+          "completed_at",
+          "evidence",
+          "updated_at"
+        ],
+        "properties": {
+          "id": {
+            "type": "integer"
+          },
+          "key": {
+            "type": "string",
+            "example": "SALUD-7"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "task",
+              "milestone"
+            ]
+          },
+          "title": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "nullable": true
+          },
+          "two_minute_version": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "locked",
+              "available",
+              "active",
+              "done"
+            ]
+          },
+          "target_date": {
+            "type": "string",
+            "format": "date",
+            "description": "Optional; a past date never changes the state.",
+            "nullable": true
+          },
+          "plan": {
+            "type": "object",
+            "required": [
+              "id",
+              "title"
+            ],
+            "properties": {
+              "id": {
+                "type": "integer"
+              },
+              "title": {
+                "type": "string"
+              }
+            }
+          },
+          "prerequisites": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemRef"
+            }
+          },
+          "unlocks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ItemRef"
+            }
+          },
+          "completed_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "evidence": {
+            "type": "object",
+            "description": "Milestones only (else null).",
+            "properties": {
+              "text": {
+                "type": "string"
+              },
+              "link": {
+                "type": "string",
+                "nullable": true
+              }
+            },
+            "nullable": true
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "ItemResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ItemDetail"
+          }
+        }
+      },
+      "ItemCheckResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ItemDetail"
+              },
+              {
+                "type": "object",
+                "required": [
+                  "unlocked"
+                ],
+                "properties": {
+                  "unlocked": {
+                    "type": "array",
+                    "description": "Items that became available because of this check (empty when the item was already done).",
+                    "items": {
+                      "$ref": "#/components/schemas/ItemRef"
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        }
+      },
+      "CheckItemRequest": {
+        "type": "object",
+        "properties": {
+          "evidence": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Required and non-empty for a milestone; ignored for a task.",
+            "nullable": true
+          },
+          "link": {
+            "type": "string",
+            "format": "uri",
+            "maxLength": 2048,
+            "nullable": true
+          }
         }
       }
     }

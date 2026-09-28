@@ -1,18 +1,19 @@
 <?php
 
-use App\Models\BoardColumn;
 use App\Models\Habit;
 use App\Models\HabitDay;
-use App\Models\Issue;
-use App\Models\Project;
+use App\Models\Item;
+use App\Models\ItemDependency;
+use App\Models\Objective;
+use App\Models\Plan;
 use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
  * End-to-end coverage of the MCP HTTP endpoint: real Sanctum bearer
  * tokens (no `actingAs`) driving the full JSON-RPC cycle — handshake,
- * discovery, and a chain of tool calls that mutate real projects, issues
- * and habits, each one checked against the database. `mcpInitializePayload()`
+ * discovery, and a chain of tool calls that read and mutate real
+ * objectives, items and habits, each one checked against the database. `mcpInitializePayload()`
  * and `mcpHeaders()` are shared globals declared in `McpServerTest.php`.
  */
 test('the http endpoint exposes every registered tool by its kebab-case name', function () {
@@ -24,7 +25,7 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
         'id' => 1,
         'method' => 'tools/list',
         // The default page is 15 tools (max 50) — request the max so the
-        // full ~38-tool catalog comes back in one page.
+        // full catalog comes back in one page.
         'params' => ['per_page' => 50],
     ], mcpHeaders($token));
 
@@ -32,19 +33,26 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
 
     $names = collect($response->json('result.tools'))->pluck('name');
 
-    expect($names)->toHaveCount(38)
+    expect($names)->toHaveCount(13)
         ->and($names)->toContain(
-            'create-project',
-            'create-issue',
-            'move-issue',
+            'list-objectives',
+            'show-objective',
+            'show-item',
+            'check-item',
+            'uncheck-item',
             'create-habit',
             'log-habit-entry',
             'show-habit',
         );
 });
 
-test('a full create-project to regenerated-token cycle works over real http with sanctum bearer auth', function () {
+test('a full objective-check to regenerated-token cycle works over real http with sanctum bearer auth', function () {
     $user = User::factory()->create();
+    $objective = Objective::factory()->for($user)->withControlPlan()->create(['key' => 'E2E']);
+    $plan = Plan::factory()->for($objective)->create();
+    $first = Item::factory()->for($plan)->create(['title' => 'First item']);
+    $second = Item::factory()->for($plan)->create(['title' => 'Second item']);
+    ItemDependency::query()->create(['prerequisite_id' => $first->id, 'dependent_id' => $second->id]);
     $user->tokens()->delete();
     $token = $user->createToken('mcp')->plainTextToken;
 
@@ -85,51 +93,27 @@ test('a full create-project to regenerated-token cycle works over real http with
     $list->assertOk();
     expect($list->json('result.tools'))->toBeArray();
 
-    // 3. create-project.
-    $created = $call('create-project', [
-        'key' => 'E2E',
-        'name' => 'End to end',
-    ]);
+    // 3. show-objective: the tree, with the second item locked by the first.
+    $shown = $call('show-objective', ['objective_key' => 'E2E']);
 
-    expect($created['project']['key'])->toBe('E2E')
-        ->and($created['project']['url'])->toBe(route('projects.board', ['project' => 'E2E']));
+    expect($shown['objective']['url'])->toBe(route('objectives.show', 'E2E'))
+        ->and($shown['objective']['plans'][0]['items'][0]['key'])->toBe('E2E-1')
+        ->and($shown['objective']['plans'][0]['items'][1]['state'])->toBe('locked');
 
-    $project = Project::query()->where('key', 'E2E')->firstOrFail();
-    expect($project->boardColumns()->pluck('name')->all())->toBe(['To Do', 'In Progress', 'Done']);
+    // 4. check-item reports what it unlocked.
+    $checked = $call('check-item', ['objective_key' => 'E2E', 'item_key' => 'E2E-1']);
 
-    $todoColumnId = BoardColumn::query()->where('project_id', $project->id)->where('name', 'To Do')->value('id');
-    $inProgressColumnId = BoardColumn::query()->where('project_id', $project->id)->where('name', 'In Progress')->value('id');
+    expect($checked['item']['state'])->toBe('done')
+        ->and($checked['item']['url'])->toBe(route('objectives.items.show', ['E2E', 'E2E-1']))
+        ->and($checked['unlocked'])->toBe([['key' => 'E2E-2', 'title' => 'Second item', 'state' => 'available']]);
 
-    // 4. create-issue.
-    $issueCreated = $call('create-issue', [
-        'project_key' => 'E2E',
-        'title' => 'First issue',
-        'board_column_id' => $todoColumnId,
-    ]);
+    expect($first->fresh()->completed_at)->not->toBeNull();
 
-    expect($issueCreated['issue']['key'])->toBe('E2E-1')
-        ->and($issueCreated['issue']['url'])->toBe(route('projects.issues.show', [
-            'project' => 'E2E',
-            'issueKey' => 'E2E-1',
-        ]));
+    // 5. show-item: the unlocked item is now available.
+    $item = $call('show-item', ['objective_key' => 'E2E', 'item_key' => 'E2E-2']);
 
-    $issue = Issue::query()->where('id', $issueCreated['issue']['id'])->firstOrFail();
-    expect($issue->board_column_id)->toBe($todoColumnId);
-
-    // 5. move-issue to "In Progress" at position 0.
-    $moved = $call('move-issue', [
-        'project_key' => 'E2E',
-        'issue_key' => 'E2E-1',
-        'board_column_id' => $inProgressColumnId,
-        'position' => 0,
-    ]);
-
-    expect($moved['issue']['board_column_id'])->toBe($inProgressColumnId)
-        ->and($moved['issue']['position'])->toBe(0);
-
-    $issue->refresh();
-    expect($issue->board_column_id)->toBe($inProgressColumnId)
-        ->and($issue->position)->toBe(0);
+    expect($item['item']['state'])->toBe('available')
+        ->and($item['item']['prerequisites'][0]['state'])->toBe('done');
 
     // 6. create-habit (quantitative, daily).
     $habitCreated = $call('create-habit', [

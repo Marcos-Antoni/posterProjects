@@ -5,12 +5,12 @@ use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * Real login (through the form, not `actingAs`) followed by the sidebar
- * dropdown → mobile token settings flow: an active `mobile` token is
+ * Real login (through the form, not `actingAs`) followed by the appbar Ajustes link
+ * → mobile token settings flow: an active `mobile` token is
  * revoked through the explicit confirmation dialog, the page settles on
  * the empty state, and the dead token then fails over HTTP.
  */
-test('a user logs in through the form, opens the mobile token settings from the sidebar, confirms, and revokes the token', function () {
+test('a user logs in through the form, opens the mobile token settings from the appbar, confirms, and revokes the token', function () {
     // The factory's default password is 'password' (see UserFactory).
     $user = User::factory()->create(['email' => 'pilot@example.com']);
     $mobileToken = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value]);
@@ -22,10 +22,10 @@ test('a user logs in through the form, opens the mobile token settings from the 
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
         ->press('button[type="submit"]')
-        ->assertPathIs('/projects')
+        ->assertPathIs('/objectives')
         ->assertNoJavascriptErrors();
 
-    $page->click($user->name)
+    $page->click('a[aria-label="Ajustes"]')
         ->assertSee('App móvil y QR')
         ->click('App móvil y QR')
         ->assertPathIs('/settings/mobile-token')

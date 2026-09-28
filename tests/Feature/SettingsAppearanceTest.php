@@ -95,7 +95,7 @@ test('every page renders dark from the first byte when the stored preference is 
 
     expect($html)->toMatch('/<html[^>]*\bclass="dark"/')
         ->and($html)->toMatch('/<html[^>]*\bdata-appearance="dark"/');
-})->with(['/settings/appearance', '/settings/mcp-token', '/settings/mobile-token', '/habits', '/projects']);
+})->with(['/settings/appearance', '/settings/mcp-token', '/settings/mobile-token', '/habits', '/objectives']);
 
 test('a light preference renders without the dark class even when the browser cookie says dark', function () {
     $user = User::factory()->create(['appearance' => Appearance::Light]);
@@ -150,7 +150,7 @@ test('the chosen theme survives logging out and logging in from another browser'
     $this->post('/login', ['email' => 'marco@example.com', 'password' => 'password']);
     $this->assertAuthenticatedAs($user);
 
-    $html = $this->get('/projects')->getContent();
+    $html = $this->get('/objectives')->getContent();
     expect($html)->toMatch('/<html[^>]*\bclass="dark"/');
 
     $page = $this->get('/settings/appearance', inertiaHeaders());

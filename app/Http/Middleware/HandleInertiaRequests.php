@@ -3,7 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Appearance;
-use App\Models\Project;
+use App\Models\Objective;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\View;
@@ -75,16 +75,20 @@ class HandleInertiaRequests extends Middleware
             // exactly once and never re-serialized into later visits.
             'flash' => [
                 'plainMcpToken' => fn (): ?string => $request->session()->get('plainMcpToken'),
+                // Items that became available with the last check (unlock-graph).
+                'unlocked' => fn (): array => $request->session()->get('unlocked', []),
             ],
-            'sidebarProjects' => $user
-                ? $user->projects()
-                    ->orderBy('name')
-                    ->get()
-                    ->map(fn (Project $project): array => [
-                        'id' => $project->id,
-                        'key' => $project->key,
-                        'name' => $project->name,
+            // Navigation shows ONLY the owner's active objectives, in their
+            // manual order (projects spec); nothing for guests.
+            'navigationObjectives' => fn (): array => $user
+                ? $user->objectives()
+                    ->active()
+                    ->get(['id', 'key', 'title'])
+                    ->map(fn (Objective $objective): array => [
+                        'key' => $objective->key,
+                        'title' => $objective->title,
                     ])
+                    ->all()
                 : [],
         ];
     }

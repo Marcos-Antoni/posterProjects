@@ -8,7 +8,6 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -57,13 +56,14 @@ class User extends Authenticatable
     }
 
     /**
-     * The projects this user is a member of.
+     * The objectives this user owns — every objective has exactly one owner
+     * and there is no membership or sharing (projects spec, R19).
      *
-     * @return BelongsToMany<Project, $this>
+     * @return HasMany<Objective, $this>
      */
-    public function projects(): BelongsToMany
+    public function objectives(): HasMany
     {
-        return $this->belongsToMany(Project::class, 'project_members');
+        return $this->hasMany(Objective::class);
     }
 
     /**

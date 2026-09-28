@@ -21,23 +21,23 @@
 
 ## 2. Phase 2 — Clean slate and domain core (objectives, plans, items, dependencies)
 
-- [ ] 2.1 Test + implement `marcos:reset` guards: verified + rehearsed backup younger than 24 h, confirmation phrase, preserves owner user and `mcp`/`mobile` tokens (`legacy-data-export`)
-- [ ] 2.2 Migrations: drop legacy tables (projects, project_members, sprints, board_columns, labels, issues, comments, issue_label); create objectives, plans, control_plans, control_map_entries, items, item_two_minute_history, item_dependencies, milestone_evidence, focus_sessions, retirements (design D2) with working `down()`
-- [ ] 2.3 Remove legacy models, factories, policies, controllers, form requests, Inertia pages and feature/browser tests for sprints, backlog, board, labels, comments, calendar, projects trash (specs REMOVED); keep a list of deleted tests in the PR description
-- [ ] 2.4 Models + factories: Objective (key, state, next_item_number with row-locked allocation), Plan, ControlPlan, ControlMapEntry, Item (derived state scope), ItemDependency
-- [ ] 2.5 Test + implement item number allocation per objective, never reused after retirement (`issues`: Item Numbers …)
-- [ ] 2.6 Test + implement the `Actor` value object and the domain action layer skeleton with `TierGate` (owner actors pass through) and audit writer (design D3)
-- [ ] 2.7 Test + implement 5-point plan validation and activation rules for objectives and plans, single metric, Spanish messages (`control-plan`, `projects`)
-- [ ] 2.8 Test + implement control map CRUD; outside-zone entries cannot become tasks (`control-plan`)
-- [ ] 2.9 Test + implement plan actions: create/append, reorder, auto-done when all non-retired items done, uncheck returns to active (`plans`)
-- [ ] 2.10 Test + implement item actions: add with required 2-minute version, edit (same-objective plan only), check, uncheck, milestone requires evidence (`issues`)
-- [ ] 2.11 Test + implement dependencies: add/remove, duplicate and self-edge rejection, recursive-CTE cycle rejection with path, cross-objective edges, derived locked/available (`unlock-graph`)
-- [ ] 2.12 Test + implement objective lifecycle (draft/active/closed/retired), navigation shows only active, no delete routes anywhere (`projects`)
-- [ ] 2.13 Screens: Objectives index, Objective detail (tree), Objective form, Plan detail/form, Item detail with deep links failing closed (screen inventory 3–7; `issues` deep links) (mockups: visual/screens/03-objectives-index.html, 04-objective-detail.html, 05-objective-form.html, 06-plan-detail.html, 07-item-detail.html)
-- [ ] 2.14 Target dates rendered neutrally, never danger color or overdue wording (`issues`)
-- [ ] 2.15 API cutover: unregister projects/issues/board-columns/sprints/labels routes; add `GET /api/v1/objectives`, `GET /api/v1/objectives/{objective}`, item show and check; pinned shapes; query-count tests; update `openapi/v1.json` (bump `info.version`); `ApiContractTest` green (`api-projects`, `api-issues`, `api-auth`)
-- [ ] 2.16 MCP cutover: remove board/backlog/sprint/label/comment/calendar/project-trash/issue tools; add list-objectives, show-objective, show-item, check-item, uncheck-item with web parity and cross-objective scoping (`mcp-server`)
-- [ ] 2.17 Run `marcos:reset` in production after deploy; smoke-test login, MCP initialize, mobile habits endpoint
+- [x] 2.1 Test + implement `marcos:reset` guards: verified + rehearsed backup younger than 24 h, confirmation phrase, preserves owner user and `mcp`/`mobile` tokens (`legacy-data-export`)
+- [x] 2.2 Migrations: drop legacy tables (projects, project_members, sprints, board_columns, labels, issues, comments, issue_label); create objectives, plans, control_plans, control_map_entries, items, item_two_minute_history, item_dependencies, milestone_evidence, focus_sessions, retirements (design D2) with working `down()`
+- [x] 2.3 Remove legacy models, factories, policies, controllers, form requests, Inertia pages and feature/browser tests for sprints, backlog, board, labels, comments, calendar, projects trash (specs REMOVED); keep a list of deleted tests in the PR description
+- [x] 2.4 Models + factories: Objective (key, state, next_item_number with row-locked allocation), Plan, ControlPlan, ControlMapEntry, Item (derived state scope), ItemDependency
+- [x] 2.5 Test + implement item number allocation per objective, never reused after retirement (`issues`: Item Numbers …)
+- [x] 2.6 Test + implement the `Actor` value object and the domain action layer skeleton with `TierGate` (owner actors pass through) and audit writer (design D3)
+- [x] 2.7 Test + implement 5-point plan validation and activation rules for objectives and plans, single metric, Spanish messages (`control-plan`, `projects`)
+- [x] 2.8 Test + implement control map CRUD; outside-zone entries cannot become tasks (`control-plan`)
+- [x] 2.9 Test + implement plan actions: create/append, reorder, auto-done when all non-retired items done, uncheck returns to active (`plans`)
+- [x] 2.10 Test + implement item actions: add with required 2-minute version, edit (same-objective plan only), check, uncheck, milestone requires evidence (`issues`)
+- [x] 2.11 Test + implement dependencies: add/remove, duplicate and self-edge rejection, recursive-CTE cycle rejection with path, cross-objective edges, derived locked/available (`unlock-graph`)
+- [x] 2.12 Test + implement objective lifecycle (draft/active/closed/retired), navigation shows only active, no delete routes anywhere (`projects`)
+- [x] 2.13 Screens: Objectives index, Objective detail (tree), Objective form, Plan detail/form, Item detail with deep links failing closed (screen inventory 3–7; `issues` deep links) (mockups: visual/screens/03-objectives-index.html, 04-objective-detail.html, 05-objective-form.html, 06-plan-detail.html, 07-item-detail.html)
+- [x] 2.14 Target dates rendered neutrally, never danger color or overdue wording (`issues`)
+- [x] 2.15 API cutover: unregister projects/issues/board-columns/sprints/labels routes; add `GET /api/v1/objectives`, `GET /api/v1/objectives/{objective}`, item show and check; pinned shapes; query-count tests; update `openapi/v1.json` (bump `info.version`); `ApiContractTest` green (`api-projects`, `api-issues`, `api-auth`)
+- [x] 2.16 MCP cutover: remove board/backlog/sprint/label/comment/calendar/project-trash/issue tools; add list-objectives, show-objective, show-item, check-item, uncheck-item with web parity and cross-objective scoping (`mcp-server`)
+- [ ] 2.17 Run `marcos:reset` in production after deploy; smoke-test login, MCP initialize, mobile habits endpoint — **blocked: needs Marco's explicit OK (production)**; tooling done and tested locally in 2.1 (`php artisan marcos:reset --owner=<email>` after a fresh `marcos:export-legacy` + `marcos:rehearse-restore`, both < 24 h)
 
 ## 3. Phase 3 — Now screen and execution
 

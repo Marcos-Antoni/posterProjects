@@ -53,7 +53,7 @@ describe('appearance preference', function () {
 
         expect($tag)->toMatch('/class="[^"]*\bdark\b/')
             ->toContain('data-appearance="dark"');
-    })->with(['/settings/appearance', '/settings/mcp-token', '/settings/mobile-token', '/projects']);
+    })->with(['/settings/appearance', '/settings/mcp-token', '/settings/mobile-token', '/objectives']);
 
     test('a stored "claro" wins over a stale guest cookie saying dark', function () {
         $user = User::factory()->create(['appearance' => 'light']);

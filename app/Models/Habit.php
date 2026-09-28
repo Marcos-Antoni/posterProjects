@@ -101,7 +101,7 @@ class Habit extends Model
      * The day row is claimed with `INSERT ... ON CONFLICT DO NOTHING`
      * and then re-read under `lockForUpdate`, so concurrent entries
      * against the same day serialize instead of losing increments
-     * (same locking pattern as `Project::allocateNextIssueNumber()`).
+     * (same locking pattern as `Objective::allocateNextItemNumber()`).
      */
     public function recordEntry(int $amount): HabitEntry
     {

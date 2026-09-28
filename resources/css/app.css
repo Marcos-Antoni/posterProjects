@@ -1,6 +1,8 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+/* Marcos OS screens (phase 2+): mockup classes scoped under .mos / .mos-sNN. */
+@import './marcos-screens.css' layer(components);
 
 @custom-variant dark (&:is(.dark *));
 

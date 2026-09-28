@@ -2,13 +2,22 @@
 
 namespace App\Providers;
 
+use App\Actions\Support\AuditWriter;
+use App\Actions\Support\LogAuditWriter;
+use App\Models\Item;
+use App\Models\Objective;
+use App\Models\Plan;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -20,7 +29,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Phase 2 skeleton (design D3): AI-applied changes are recorded in the
+        // log until Phase 8 adds `ai_audit_entries` and binds its writer here.
+        $this->app->bind(AuditWriter::class, LogAuditWriter::class);
     }
 
     /**
@@ -30,6 +41,29 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+        $this->configureMorphMap();
+        $this->configureRouteBindings();
+    }
+
+    /**
+     * `{objective}` is a KEY resolved among the authenticated owner's visible
+     * objectives (active and closed), on the web and on `/api/v1` alike.
+     * Unknown, foreign, draft and retired keys are one indistinguishable 404
+     * (projects and api-projects specs: never 403).
+     */
+    protected function configureRouteBindings(): void
+    {
+        Route::bind('objective', function (string $value): Objective {
+            $owner = request()->user();
+
+            $objective = $owner instanceof User ? Objective::visibleForOwner($owner, $value) : null;
+
+            if ($objective === null) {
+                throw (new ModelNotFoundException)->setModel(Objective::class, [$value]);
+            }
+
+            return $objective;
+        });
     }
 
     /**
@@ -52,6 +86,20 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Short, stable aliases for the polymorphic Marcos OS columns
+     * (`control_plans`, `control_map_entries`, `retirements`). Not enforced:
+     * Sanctum's `tokenable_type` keeps its existing class-name values.
+     */
+    protected function configureMorphMap(): void
+    {
+        Relation::morphMap([
+            'objective' => Objective::class,
+            'plan' => Plan::class,
+            'item' => Item::class,
+        ]);
     }
 
     /**

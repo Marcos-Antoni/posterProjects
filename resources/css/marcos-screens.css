@@ -1,0 +1,2091 @@
+/*
+ * Marcos OS screen styles, ported from the approved mockups (design.md D16:
+ * visual/screens/NN-*.html are the acceptance reference). GENERATED from the
+ * mockups' <style> blocks: the shared app shell + components under `.mos`,
+ * and each screen's own section under `.mos-sNN` (NN = inventory number),
+ * because the mockups reuse class names (`.layout`, `.key`, `.plan-h`) with
+ * different values per screen. Tokens come from app.css (phase 1); the
+ * mockups' short aliases are mapped below. Do not edit tokens here.
+ */
+
+.mos {
+    --muted-fg: var(--muted-foreground);
+    --primary-fg: var(--primary-foreground);
+    --blaze-fg: var(--blaze-foreground);
+}
+.mos svg.i {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.mos a {
+    color: var(--primary);
+}
+
+/* shared components */
+.mos .btn {
+    font:
+        600 16px/24px 'Overpass',
+        sans-serif;
+    min-height: 48px;
+    padding: 12px 20px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition:
+        background-color 100ms ease-out,
+        transform 100ms ease-out;
+}
+.mos .btn:active {
+    transform: translateY(1px);
+}
+.mos .btn-primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.mos .btn-primary:hover {
+    background: color-mix(in srgb, var(--primary) 92%, var(--foreground));
+}
+.mos .btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--input);
+}
+.mos .btn-outline:hover {
+    background: var(--sunken);
+}
+.mos .btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.mos .chip2 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 16px;
+    border-radius: 6px;
+    border: 2px solid var(--blaze-ink);
+    background: color-mix(in srgb, var(--blaze) 20%, var(--surface));
+    color: var(--foreground);
+    font: 600 16px/24px 'Overpass';
+    text-align: left;
+    cursor: pointer;
+}
+.mos .chip2 .mini {
+    width: 20px;
+    height: 14px;
+    background: var(--blaze);
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+    flex: none;
+}
+.mos textarea.in {
+    min-height: 80px;
+    resize: vertical;
+}
+/* app shell */
+.mos .appbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 64px;
+    padding: 0 32px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+.mos .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 700 17px/20px 'Overpass';
+    color: var(--foreground);
+    text-decoration: none;
+    white-space: nowrap;
+}
+.mos .brand i {
+    display: block;
+    width: 20px;
+    height: 14px;
+    background: var(--blaze);
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+}
+.mos .nav {
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    min-width: 0;
+}
+.mos .nav a {
+    font: 600 15px/20px 'Overpass';
+    color: var(--muted-fg);
+    text-decoration: none;
+    padding: 10px 12px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+.mos .nav a:hover {
+    background: var(--sunken);
+    color: var(--foreground);
+}
+.mos .nav a[aria-current='page'] {
+    color: var(--foreground);
+    background: var(--sunken);
+}
+.mos .appbar .right {
+    margin-left: auto;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.mos .btn-sm {
+    font: 600 14px/20px 'Overpass';
+    min-height: 40px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+}
+.mos .btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border-color: transparent;
+}
+.mos .btn-ghost:hover {
+    background: var(--sunken);
+}
+.mos .btn-sm.btn-outline {
+    border-color: var(--input);
+}
+.mos kbd {
+    font: 600 12px/16px 'Overpass';
+    color: var(--muted-fg);
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 4px;
+    padding: 1px 6px;
+    background: var(--background);
+}
+.mos .btn-primary kbd {
+    background: transparent;
+    color: inherit;
+    border-color: color-mix(in srgb, var(--primary-fg) 50%, transparent);
+}
+.mos svg.i {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.mos svg.i.s16 {
+    width: 16px;
+    height: 16px;
+}
+.mos .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 40px 32px 64px;
+}
+.mos .crumbs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin: 0 0 12px;
+}
+.mos .crumbs a {
+    color: var(--muted-fg);
+    text-decoration: none;
+}
+.mos .crumbs a:hover {
+    color: var(--foreground);
+    text-decoration: underline;
+}
+.mos .crumbs svg {
+    width: 14px;
+    height: 14px;
+}
+.mos .obj-title {
+    font:
+        600 38px/44px 'Zilla Slab',
+        Georgia,
+        serif;
+    letter-spacing: -0.005em;
+    margin: 0;
+}
+.mos .obj-title.sm {
+    font-size: 30px;
+    line-height: 36px;
+}
+.mos .muted {
+    color: var(--muted-fg);
+}
+.mos .small {
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos .xs {
+    font-size: 12px;
+    line-height: 16px;
+    font-weight: 600;
+}
+.mos .tnum {
+    font-variant-numeric: tabular-nums;
+}
+.mos .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.mos .sec-h {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 4px;
+    letter-spacing: 0;
+}
+.mos .sec-sub {
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    max-width: 68ch;
+}
+.mos .linkbtn {
+    background: none;
+    border: 0;
+    padding: 4px 2px;
+    color: var(--primary);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.mos .linkbtn.quiet {
+    color: var(--muted-fg);
+}
+.mos .st {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font: 600 13px/16px 'Overpass';
+    color: var(--muted-fg);
+    white-space: nowrap;
+}
+.mos .st .g {
+    flex: none;
+}
+.mos .st.done {
+    color: var(--foreground);
+}
+.mos .st.active {
+    color: var(--foreground);
+}
+.mos .st.avail {
+    color: var(--primary);
+}
+.mos .fld {
+    display: block;
+    margin: 0 0 20px;
+}
+.mos .fld > span.l {
+    display: block;
+    font: 600 14px/20px 'Overpass';
+    margin: 0 0 8px;
+}
+.mos .fld .ex {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin-top: 6px;
+    max-width: 68ch;
+}
+.mos .in {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: var(--surface);
+    color: var(--foreground);
+    font: 400 16px/24px 'Overpass';
+}
+.mos .in::placeholder {
+    color: var(--muted-fg);
+}
+.mos .in:focus {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+.mos .in.need {
+    border-style: dashed;
+    border-color: var(--attention);
+}
+.mos .msg-attn {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    margin-top: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--attention);
+}
+.mos .msg-attn svg {
+    margin-top: 2px;
+}
+@media (max-width: 900px) {
+    .mos .appbar {
+        gap: 12px;
+        padding: 0 16px;
+    }
+    .mos .appbar .right .hide-md {
+        display: none;
+    }
+    .mos .page {
+        padding: 28px 16px 48px;
+    }
+    .mos .obj-title {
+        font-size: 30px;
+        line-height: 36px;
+    }
+}
+@media (max-width: 560px) {
+    .mos .brand span {
+        display: none;
+    }
+}
+/* minimal vertical unlock track (styleguide §5.6), used by the item mini map */
+.mos .tr {
+    --tr-hue: var(--blaze-ink);
+    --tr-fill: var(--blaze);
+    --tr-ck: var(--blaze-fg);
+    --tr-w: 7px;
+    overflow: visible;
+}
+.mos .tr .e {
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.mos .tr .e-done {
+    stroke: var(--tr-hue);
+    stroke-width: var(--tr-w);
+}
+.mos .tr .e-open {
+    stroke: var(--tr-hue);
+    stroke-width: calc(var(--tr-w) * 0.45);
+}
+.mos .tr .e-lock {
+    stroke: var(--node-locked);
+    stroke-width: 2.5;
+    opacity: 0.85;
+}
+.mos .tr .n-done {
+    fill: var(--tr-fill);
+    stroke: var(--tr-hue);
+    stroke-width: 2;
+}
+.mos .tr .n-ck {
+    fill: none;
+    stroke: var(--tr-ck);
+    stroke-width: 2.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.mos .tr .n-act {
+    fill: var(--surface);
+    stroke: var(--tr-hue);
+    stroke-width: 4.5;
+}
+.mos .tr .n-mark {
+    fill: var(--blaze);
+    stroke: var(--blaze-ink);
+    stroke-width: 1.5;
+}
+.mos .tr .n-open {
+    fill: var(--surface);
+    stroke: var(--tr-hue);
+    stroke-width: 2.5;
+}
+.mos .tr .n-lock {
+    fill: var(--surface);
+    stroke: var(--node-locked);
+    stroke-width: 2;
+}
+.mos .tr .n-goal {
+    fill: var(--surface);
+    stroke: var(--foreground);
+    stroke-width: 2.5;
+}
+.mos .tr .n-goal.done {
+    fill: var(--tr-fill);
+    stroke: var(--tr-hue);
+}
+.mos .tr .n-goal-t {
+    fill: var(--tr-hue);
+}
+.mos .tr .n-goal.done + .n-goal-t {
+    fill: var(--tr-ck);
+}
+.mos .tr text {
+    font-family: 'Overpass', system-ui, sans-serif;
+    fill: var(--foreground);
+}
+.mos .tr .lb-act {
+    font-size: 15px;
+    font-weight: 700;
+}
+.mos .tr .lb-sub {
+    font-size: 12.5px;
+    font-weight: 400;
+    fill: var(--muted-fg);
+}
+.mos .tr .lb-goal {
+    font-family: 'Zilla Slab', Georgia, serif;
+    font-size: 19px;
+    font-weight: 600;
+}
+.mos .tr .lb-row {
+    font-size: 14px;
+    font-weight: 600;
+}
+.mos .tr .lb-row.mute {
+    font-weight: 400;
+    fill: var(--muted-fg);
+}
+.mos .tr .hit {
+    fill: transparent;
+}
+.mos .tr .nd {
+    cursor: pointer;
+}
+.mos .tr .nd:focus {
+    outline: none;
+}
+.mos .tr .selr {
+    fill: none;
+    stroke: var(--ring);
+    stroke-width: 2.5;
+    display: none;
+}
+.mos .tr .nd.sel .selr,
+.mos .tr .nd:focus-visible .selr {
+    display: block;
+}
+.mos .tr .tip {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 120ms ease-out;
+}
+.mos .tr .tip rect {
+    fill: var(--foreground);
+}
+.mos .tr .tip text {
+    fill: var(--background);
+    font-size: 13px;
+    font-weight: 600;
+}
+.mos .tr .nd:hover .tip,
+.mos .tr .nd:focus-visible .tip,
+.mos .tr .nd.sel .tip {
+    opacity: 1;
+}
+.mos .tr .e-ret {
+    stroke: var(--node-retired);
+    stroke-width: 3;
+    stroke-linecap: round;
+}
+.mos .tr.no-ret .ret {
+    display: none;
+}
+.mos .tr .dim {
+    opacity: 0.22;
+    transition: opacity 200ms ease-out;
+}
+.mos .tr .col {
+    display: none;
+}
+.mos .tr .collapsed > .full {
+    display: none;
+}
+.mos .tr .collapsed > .col {
+    display: inline;
+}
+@media (prefers-reduced-motion: reduce) {
+    .mos .tr .tip,
+    .mos .tr .dim {
+        transition: none;
+    }
+}
+/* screen 03: 03-objectives-index.html */
+.mos-s03 .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 0 0 32px;
+}
+.mos-s03 .head h1 {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0 0 4px;
+}
+.mos-s03 .head p {
+    margin: 0;
+    color: var(--muted-fg);
+    max-width: 60ch;
+}
+.mos-s03 .head .acts {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.mos-s03 .paused {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: var(--attention-bg);
+    border-left: 3px solid var(--attention);
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin: 0 0 24px;
+}
+.mos-s03 .paused p {
+    margin: 0;
+    flex: 1;
+    min-width: 240px;
+}
+.mos-s03 .paused b {
+    font-weight: 600;
+}
+.mos-s03 .olist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.mos-s03 .orow {
+    display: grid;
+    grid-template-columns: 6px minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 28px;
+    padding: 28px 28px 28px 0;
+    border-top: 1px solid var(--border);
+    align-items: start;
+}
+.mos-s03 .orow:first-child {
+    border-top: 0;
+}
+.mos-s03 .orow .rule {
+    align-self: stretch;
+    border-radius: 0 3px 3px 0;
+}
+.mos-s03 .orow h2 {
+    font:
+        600 30px/36px 'Zilla Slab',
+        Georgia,
+        serif;
+    letter-spacing: -0.005em;
+    margin: 0 0 6px;
+}
+.mos-s03 .orow h2 a {
+    color: var(--foreground);
+    text-decoration: none;
+}
+.mos-s03 .orow h2 a:hover {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 5px;
+}
+.mos-s03 .key {
+    font: 600 12px/16px 'Overpass';
+    color: var(--muted-fg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-right: 8px;
+}
+.mos-s03 .ident {
+    margin: 8px 0 0;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--muted-fg);
+}
+.mos-s03 .lbl {
+    display: block;
+    font: 600 13px/16px 'Overpass';
+    color: var(--muted-fg);
+    margin: 6px 0 8px;
+}
+.mos-s03 .metric {
+    margin: 0;
+    font-size: 16px;
+}
+.mos-s03 .metric b {
+    font-weight: 700;
+}
+.mos-s03 .strip14 {
+    display: flex;
+    gap: 4px;
+    margin: 10px 0 8px;
+    flex-wrap: wrap;
+}
+.mos-s03 .strip14 span {
+    width: 16px;
+    height: 12px;
+    border-radius: 2px;
+    border: 2px solid var(--border);
+}
+.mos-s03 .strip14 .d {
+    background: var(--blaze);
+    border-color: var(--blaze-ink);
+}
+.mos-s03 .strip14 .m {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border-color: var(--foreground);
+    border-width: 2.5px;
+    margin: 0 2px;
+}
+.mos-s03 .near {
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s03 .next {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+}
+.mos-s03 .next .g {
+    flex: none;
+    margin-top: 3px;
+}
+.mos-s03 .next p {
+    margin: 0;
+}
+.mos-s03 .next .t {
+    font-weight: 600;
+}
+.mos-s03 .next .s {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s03 .rowlinks {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    font-size: 14px;
+}
+.mos-s03 .rowlinks a {
+    font-weight: 600;
+}
+.mos-s03 .btn-row {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 15px;
+    margin-top: 14px;
+}
+.mos-s03 .foot {
+    margin: 24px 0 0;
+    font-size: 14px;
+    color: var(--muted-fg);
+}
+.mos-s03 .empty h3 {
+    font:
+        600 30px/36px 'Zilla Slab',
+        Georgia,
+        serif;
+    margin: 0 0 8px;
+}
+.mos-s03 .empty p {
+    margin: 0 0 20px;
+    color: var(--muted-fg);
+    max-width: 52ch;
+}
+@media (max-width: 1000px) {
+    .mos-s03 .orow {
+        grid-template-columns: 6px 1fr 1fr;
+        padding-right: 20px;
+    }
+    .mos-s03 .orow > .nextcol {
+        grid-column: 2/-1;
+        margin-top: 20px;
+    }
+}
+@media (max-width: 640px) {
+    .mos-s03 .orow {
+        grid-template-columns: 6px 1fr;
+        gap: 0 16px;
+    }
+    .mos-s03 .orow > div {
+        grid-column: 2;
+    }
+    .mos-s03 .orow > .metcol,
+    .mos-s03 .orow > .nextcol {
+        margin-top: 20px;
+    }
+}
+/* screen 04: 04-objective-detail.html */
+.mos-s04 .ohead {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin: 0 0 32px;
+}
+.mos-s04 .ohead .ident {
+    margin: 8px 0 0;
+    color: var(--muted-fg);
+    font-size: 17px;
+}
+.mos-s04 .key {
+    font: 600 12px/16px 'Overpass';
+    color: var(--muted-fg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-left: 12px;
+    vertical-align: middle;
+}
+.mos-s04 .ohead .acts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.mos-s04 .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 32px;
+    align-items: start;
+}
+.mos-s04 .plan {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin: 0 0 20px;
+    overflow: hidden;
+}
+.mos-s04 .plan-h {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 24px 16px;
+    flex-wrap: wrap;
+}
+.mos-s04 .plan-h h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0;
+}
+.mos-s04 .plan-h h2 a {
+    color: var(--foreground);
+    text-decoration: none;
+}
+.mos-s04 .plan-h h2 a:hover {
+    text-decoration: underline;
+}
+.mos-s04 .plan-h p {
+    margin: 2px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s04 .lvl {
+    font: 600 12px/16px 'Overpass';
+    border: 1px solid var(--input);
+    border-radius: 2px;
+    padding: 1px 6px;
+    margin-left: 8px;
+    color: var(--foreground);
+    vertical-align: 2px;
+}
+.mos-s04 .items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s04 .irow {
+    display: grid;
+    grid-template-columns: 36px 72px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    min-height: 64px;
+}
+.mos-s04 .irow .g {
+    justify-self: center;
+}
+.mos-s04 .irow .k {
+    font: 600 13px/16px 'Overpass';
+    color: var(--muted-fg);
+    font-variant-numeric: tabular-nums;
+}
+.mos-s04 .irow .t {
+    font-weight: 600;
+}
+.mos-s04 .irow .t a {
+    color: var(--foreground);
+    text-decoration: none;
+}
+.mos-s04 .irow .t a:hover {
+    text-decoration: underline;
+}
+.mos-s04 .irow .two {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s04 .irow .two b {
+    font-weight: 600;
+    color: var(--blaze-ink);
+}
+.mos-s04 .irow .r {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    text-align: right;
+}
+.mos-s04 .irow.active {
+    background: color-mix(in srgb, var(--blaze) 10%, var(--surface));
+}
+.mos-s04 .irow.locked .t {
+    font-weight: 600;
+    color: var(--muted-fg);
+}
+.mos-s04 .irow.par {
+    padding-left: 44px;
+}
+.mos-s04 .irow .mile {
+    font: 600 12px/16px 'Overpass';
+    color: var(--foreground);
+    border: 1.5px solid var(--foreground);
+    border-radius: 2px;
+    padding: 0 5px;
+    margin-right: 6px;
+}
+.mos-s04 .btn-s {
+    min-height: 40px;
+    padding: 8px 14px;
+    font-size: 15px;
+}
+.mos-s04 .plan-f {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding: 12px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    background: var(--background);
+}
+.mos-s04 .plan-f .add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+    color: var(--primary);
+    text-decoration: none;
+}
+.mos-s04 .fold {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 24px;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+}
+.mos-s04 .fold .g {
+    flex: none;
+}
+.mos-s04 .fold span {
+    flex: 1;
+    color: var(--muted-fg);
+}
+.mos-s04 .habits {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px 8px;
+}
+.mos-s04 .habits h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 4px;
+}
+.mos-s04 .hlist {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+}
+.mos-s04 .hlist li {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+.mos-s04 .hlist .n {
+    font-weight: 600;
+}
+.mos-s04 .hlist .w {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s04 .minis {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+.mos-s04 .minis i {
+    width: 14px;
+    height: 10px;
+    border-radius: 2px;
+    border: 2px solid var(--blaze-ink);
+}
+.mos-s04 .minis i.d {
+    background: var(--blaze);
+}
+.mos-s04 .minis i.gp {
+    border-style: dashed;
+    background: color-mix(in srgb, var(--blaze) 45%, var(--surface));
+}
+.mos-s04 .minis i.f {
+    border-color: var(--border);
+}
+.mos-s04 .side {
+    position: sticky;
+    top: 16px;
+    display: grid;
+    gap: 20px;
+}
+.mos-s04 .card5 {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+.mos-s04 .card5 h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 12px;
+}
+.mos-s04 .p5 {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: p;
+}
+.mos-s04 .p5 > li {
+    counter-increment: p;
+    display: grid;
+    grid-template-columns: 24px 1fr auto;
+    gap: 4px 8px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+}
+.mos-s04 .p5 > li::before {
+    content: counter(p);
+    font: 700 14px/22px 'Overpass';
+    color: var(--muted-fg);
+}
+.mos-s04 .p5 .l {
+    font: 600 13px/20px 'Overpass';
+    color: var(--muted-fg);
+    grid-column: 2;
+}
+.mos-s04 .p5 .v {
+    grid-column: 2;
+    margin: 0;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s04 .p5 .v ul {
+    margin: 0;
+    padding-left: 18px;
+}
+.mos-s04 .p5 .ed {
+    grid-column: 3;
+    grid-row: 1;
+    align-self: start;
+    background: none;
+    border: 0;
+    color: var(--muted-fg);
+    padding: 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    min-width: 32px;
+    min-height: 32px;
+}
+.mos-s04 .p5 .ed:hover {
+    background: var(--sunken);
+    color: var(--foreground);
+}
+.mos-s04 .bar {
+    height: 8px;
+    border-radius: 2px;
+    background: var(--sunken);
+    margin: 8px 0 4px;
+    overflow: hidden;
+}
+.mos-s04 .bar i {
+    display: block;
+    height: 100%;
+    background: var(--blaze-ink);
+}
+.mos-s04 .editing {
+    grid-column: 2/-1;
+}
+.mos-s04 .editing textarea {
+    min-height: 104px;
+    font-size: 15px;
+}
+.mos-s04 .editing .row {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+}
+.mos-s04 .cmap {
+    display: grid;
+    gap: 12px;
+}
+.mos-s04 .zone h3 {
+    font: 600 14px/20px 'Overpass';
+    margin: 0 0 6px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+}
+.mos-s04 .zone ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s04 .zone li {
+    font-size: 15px;
+    line-height: 22px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    background: var(--background);
+    margin: 0 0 4px;
+}
+.mos-s04 .zone.out li {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted-fg);
+}
+.mos-s04 .zone .note {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin: 4px 0 0;
+}
+.mos-s04 .neutral {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+}
+.mos-s04 .neutral .q {
+    margin: 12px 0 0;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.mos-s04 .sugg {
+    background: var(--attention-bg);
+    border-left: 3px solid var(--attention);
+    border-radius: 6px;
+    padding: 14px 16px;
+}
+.mos-s04 .sugg p {
+    margin: 0 0 10px;
+}
+@media (max-width: 1100px) {
+    .mos-s04 .layout {
+        grid-template-columns: 1fr;
+    }
+    .mos-s04 .side {
+        position: static;
+    }
+}
+@media (max-width: 640px) {
+    .mos-s04 .irow {
+        grid-template-columns: 28px 1fr;
+        padding: 12px 16px;
+    }
+    .mos-s04 .irow .k {
+        display: none;
+    }
+    .mos-s04 .irow .r {
+        grid-column: 2;
+        justify-content: flex-start;
+        text-align: left;
+    }
+    .mos-s04 .irow.par {
+        padding-left: 16px;
+    }
+}
+/* screen 05: 05-objective-form.html */
+.mos-s05 .fhead {
+    margin: 0 0 28px;
+}
+.mos-s05 .fhead h1 {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+}
+.mos-s05 .fhead p {
+    margin: 0;
+    color: var(--muted-fg);
+    max-width: 68ch;
+}
+.mos-s05 .flayout {
+    display: grid;
+    grid-template-columns: minmax(0, 760px) 320px;
+    gap: 40px;
+    align-items: start;
+}
+.mos-s05 .fsec {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px 28px 8px;
+    margin: 0 0 20px;
+}
+.mos-s05 .fsec > h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 4px;
+}
+.mos-s05 .fsec > p.sec-sub {
+    margin-bottom: 20px;
+}
+.mos-s05 .two {
+    display: grid;
+    grid-template-columns: 1fr 180px;
+    gap: 16px;
+}
+.mos-s05 .three {
+    display: grid;
+    grid-template-columns: 1fr 120px 120px;
+    gap: 12px;
+}
+.mos-s05 .pt {
+    display: grid;
+    grid-template-columns: 32px 1fr;
+    gap: 0 12px;
+    padding: 4px 0 0;
+}
+.mos-s05 .pt .n {
+    font: 700 16px/24px 'Overpass';
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--input);
+    display: grid;
+    place-items: center;
+    font-size: 14px;
+    margin-top: -2px;
+}
+.mos-s05 .pt .n.ok {
+    background: var(--blaze);
+    border-color: var(--blaze-ink);
+    color: var(--blaze-fg);
+}
+.mos-s05 .pt .n.miss {
+    border-style: dashed;
+    border-color: var(--attention);
+    color: var(--attention);
+}
+.mos-s05 textarea.in {
+    min-height: 80px;
+    resize: vertical;
+}
+.mos-s05 .risk {
+    display: flex;
+    gap: 8px;
+    margin: 0 0 8px;
+}
+.mos-s05 .risk .in {
+    flex: 1;
+}
+.mos-s05 .risk button {
+    background: none;
+    border: 0;
+    color: var(--muted-fg);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+    padding: 0 8px;
+    border-radius: 6px;
+}
+.mos-s05 .risk button:hover {
+    background: var(--sunken);
+}
+.mos-s05 .addl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 0;
+    padding: 8px 0;
+    color: var(--primary);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+}
+.mos-s05 .whenthen {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 8px 12px;
+    align-items: center;
+}
+.mos-s05 .whenthen span {
+    font-weight: 600;
+}
+.mos-s05 .cmap3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 16px;
+}
+.mos-s05 .zone h3 {
+    font: 600 14px/20px 'Overpass';
+    margin: 0 0 8px;
+}
+.mos-s05 .zone ul {
+    list-style: none;
+    margin: 0 0 8px;
+    padding: 0;
+}
+.mos-s05 .zone li {
+    font-size: 15px;
+    line-height: 22px;
+    padding: 8px 10px;
+    border-radius: 6px;
+    background: var(--background);
+    margin: 0 0 6px;
+}
+.mos-s05 .zone.out li {
+    background: transparent;
+    border: 1px dashed var(--border);
+    color: var(--muted-fg);
+}
+.mos-s05 .zone .in {
+    min-height: 40px;
+    font-size: 15px;
+    padding: 6px 10px;
+}
+.mos-s05 .zone .note {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin: 8px 0 0;
+}
+.mos-s05 .check5 {
+    position: sticky;
+    top: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+.mos-s05 .check5 h2 {
+    font: 700 18px/24px 'Overpass';
+    margin: 0 0 12px;
+}
+.mos-s05 .check5 ol {
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+}
+.mos-s05 .check5 li {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    min-height: 36px;
+    font-size: 15px;
+}
+.mos-s05 .check5 li i {
+    flex: none;
+    width: 22px;
+    height: 16px;
+    border-radius: 2px;
+    border: 2px solid var(--blaze-ink);
+    background: var(--blaze);
+}
+.mos-s05 .check5 li.miss i {
+    background: transparent;
+    border-style: dashed;
+    border-color: var(--attention);
+}
+.mos-s05 .check5 li.miss {
+    color: var(--attention);
+    font-weight: 600;
+}
+.mos-s05 .check5 .btn {
+    width: 100%;
+}
+.mos-s05 .check5 .why {
+    margin: 10px 0 0;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s05 .check5 .alt {
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s05 .err {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    border: 1px solid color-mix(in srgb, var(--destructive) 45%, var(--border));
+    border-left: 4px solid var(--destructive);
+    background: color-mix(in srgb, var(--destructive) 7%, var(--surface));
+    border-radius: 6px;
+    padding: 12px 14px;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s05 .err svg {
+    color: var(--destructive);
+    margin-top: 1px;
+}
+.mos-s05 .err b {
+    display: block;
+}
+.mos-s05 .attn-box {
+    background: var(--attention-bg);
+    border-left: 3px solid var(--attention);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 22px;
+    margin-top: 12px;
+}
+@media (max-width: 1100px) {
+    .mos-s05 .flayout {
+        grid-template-columns: 1fr;
+    }
+    .mos-s05 .check5 {
+        position: static;
+    }
+}
+@media (max-width: 700px) {
+    .mos-s05 .cmap3,
+    .mos-s05 .two,
+    .mos-s05 .three {
+        grid-template-columns: 1fr;
+    }
+    .mos-s05 .fsec {
+        padding: 20px 16px 4px;
+    }
+}
+/* screen 06: 06-plan-detail.html */
+.mos-s06 .phead {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin: 0 0 28px;
+}
+.mos-s06 .phead h1 {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s06 .phead .meta {
+    margin: 6px 0 0;
+    color: var(--muted-fg);
+}
+.mos-s06 .phead .acts {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.mos-s06 .ladder {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin: 16px 0 0;
+    flex-wrap: wrap;
+}
+.mos-s06 .rung {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 6px 12px;
+    border: 2px solid var(--input);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.mos-s06 .rung.on {
+    border-color: var(--blaze-ink);
+    background: color-mix(in srgb, var(--blaze) 18%, var(--surface));
+    font-weight: 600;
+}
+.mos-s06 .rung.next {
+    border-style: dashed;
+    color: var(--muted-fg);
+}
+.mos-s06 .ladder .link {
+    width: 32px;
+    height: 3px;
+    background: var(--border);
+}
+.mos-s06 .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 360px;
+    gap: 32px;
+    align-items: start;
+}
+.mos-s06 .plan {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+.mos-s06 .plan-h {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 18px 24px;
+    align-items: baseline;
+    flex-wrap: wrap;
+}
+.mos-s06 .plan-h h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0;
+}
+.mos-s06 .items {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s06 .irow {
+    display: grid;
+    grid-template-columns: 36px 72px minmax(0, 1fr) auto;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 16px 12px 24px;
+    border-top: 1px solid var(--border);
+    min-height: 64px;
+}
+.mos-s06 .irow .g {
+    justify-self: center;
+}
+.mos-s06 .irow .k {
+    font: 600 13px/16px 'Overpass';
+    color: var(--muted-fg);
+    font-variant-numeric: tabular-nums;
+}
+.mos-s06 .irow .t {
+    font-weight: 600;
+}
+.mos-s06 .irow .two {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    font-weight: 400;
+}
+.mos-s06 .irow .two b {
+    font-weight: 600;
+    color: var(--blaze-ink);
+}
+.mos-s06 .irow.locked .t {
+    color: var(--muted-fg);
+}
+.mos-s06 .irow.active {
+    background: color-mix(in srgb, var(--blaze) 10%, var(--surface));
+}
+.mos-s06 .irow .mile {
+    font: 600 12px/16px 'Overpass';
+    color: var(--foreground);
+    border: 1.5px solid var(--foreground);
+    border-radius: 2px;
+    padding: 0 5px;
+    margin-right: 6px;
+}
+.mos-s06 .mv {
+    display: flex;
+    gap: 2px;
+}
+.mos-s06 .mv button {
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 1px solid transparent;
+    background: none;
+    border-radius: 6px;
+    color: var(--muted-fg);
+    cursor: pointer;
+}
+.mos-s06 .mv button:hover {
+    background: var(--sunken);
+    color: var(--foreground);
+    border-color: var(--border);
+}
+.mos-s06 .mv button:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+.mos-s06 .addf {
+    border-top: 2px solid var(--primary);
+    padding: 20px 24px 24px;
+    background: var(--background);
+}
+.mos-s06 .addf h3 {
+    font: 700 16px/24px 'Overpass';
+    margin: 0 0 4px;
+}
+.mos-s06 .addf .sub {
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s06 .seg {
+    display: inline-flex;
+    background: var(--sunken);
+    border-radius: 6px;
+    padding: 3px;
+    gap: 3px;
+    margin: 0 0 16px;
+}
+.mos-s06 .seg button {
+    font: 600 14px/20px 'Overpass';
+    border: 0;
+    background: transparent;
+    color: var(--muted-fg);
+    padding: 8px 14px;
+    border-radius: 4px;
+    min-height: 36px;
+    cursor: pointer;
+}
+.mos-s06 .seg button[aria-pressed='true'] {
+    background: var(--surface);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.12);
+}
+.mos-s06 .fld.two-min > span.l {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.mos-s06 .two-min .l i {
+    display: block;
+    width: 18px;
+    height: 12px;
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+    background: var(--blaze);
+}
+.mos-s06 .row2 {
+    display: grid;
+    grid-template-columns: 1fr 220px;
+    gap: 16px;
+}
+.mos-s06 .chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 44px;
+    padding: 6px;
+    border: 2px solid var(--input);
+    border-radius: 6px;
+    background: var(--surface);
+}
+.mos-s06 .chips span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--sunken);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font-size: 14px;
+}
+.mos-s06 .chips span button {
+    background: none;
+    border: 0;
+    color: var(--muted-fg);
+    cursor: pointer;
+    padding: 0 2px;
+    font-size: 16px;
+    line-height: 1;
+}
+.mos-s06 .chips input {
+    border: 0;
+    background: transparent;
+    color: var(--foreground);
+    font: 400 15px/20px 'Overpass';
+    flex: 1;
+    min-width: 120px;
+    outline: none;
+}
+.mos-s06 .addf .foot {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 4px;
+}
+.mos-s06 .addf .foot .why {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s06 .side {
+    display: grid;
+    gap: 20px;
+    position: sticky;
+    top: 16px;
+}
+.mos-s06 .card5 {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+.mos-s06 .card5 h2 {
+    font: 700 18px/24px 'Overpass';
+    margin: 0 0 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 8px;
+}
+.mos-s06 .card5 h2 a {
+    font: 600 14px/20px 'Overpass';
+}
+.mos-s06 .card5 dl {
+    margin: 0;
+}
+.mos-s06 .card5 dt {
+    font: 600 13px/20px 'Overpass';
+    color: var(--muted-fg);
+    margin-top: 12px;
+}
+.mos-s06 .card5 dd {
+    margin: 0;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s06 .bar {
+    height: 8px;
+    border-radius: 2px;
+    background: var(--sunken);
+    margin: 8px 0 4px;
+    overflow: hidden;
+}
+.mos-s06 .bar i {
+    display: block;
+    height: 100%;
+    background: var(--blaze-ink);
+}
+.mos-s06 .hl {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s06 .hl li {
+    padding: 10px 0;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+}
+.mos-s06 .hl li:first-child {
+    border-top: 0;
+}
+.mos-s06 .hl .w {
+    display: block;
+    font-size: 14px;
+    color: var(--muted-fg);
+}
+.mos-s06 .fsec {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px 4px;
+}
+.mos-s06 .fsec h4 {
+    font: 700 18px/24px 'Overpass';
+    margin: 0 0 16px;
+}
+.mos-s06 .done-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px 24px;
+}
+.mos-s06 .done-card .row {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+@media (max-width: 1100px) {
+    .mos-s06 .layout {
+        grid-template-columns: 1fr;
+    }
+    .mos-s06 .side {
+        position: static;
+    }
+}
+@media (max-width: 640px) {
+    .mos-s06 .irow {
+        grid-template-columns: 28px 1fr auto;
+        padding: 12px 12px;
+    }
+    .mos-s06 .irow .k {
+        display: none;
+    }
+    .mos-s06 .row2 {
+        grid-template-columns: 1fr;
+    }
+    .mos-s06 .addf {
+        padding: 16px;
+    }
+}
+/* screen 07: 07-item-detail.html */
+.mos-s07 .ihead {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    margin: 0 0 28px;
+}
+.mos-s07 .ihead .top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 6px;
+    flex-wrap: wrap;
+}
+.mos-s07 .key {
+    font: 600 13px/16px 'Overpass';
+    color: var(--muted-fg);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 2px 6px;
+}
+.mos-s07 .ihead h1 {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0;
+    max-width: 30ch;
+}
+.mos-s07 .ihead .acts {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.mos-s07 .btn kbd {
+    margin-left: 8px;
+}
+.mos-s07 .layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 32px;
+    align-items: start;
+}
+.mos-s07 .box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    margin: 0 0 20px;
+}
+.mos-s07 .box > h2 {
+    font: 700 18px/24px 'Overpass';
+    margin: 0 0 12px;
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: baseline;
+}
+.mos-s07 .box > h2 a,
+.mos-s07 .box > h2 button {
+    font: 600 14px/20px 'Overpass';
+}
+.mos-s07 .chip2 {
+    max-width: 560px;
+}
+.mos-s07 .desc {
+    margin: 16px 0 0;
+    max-width: 68ch;
+}
+.mos-s07 .hist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    position: relative;
+}
+.mos-s07 .hist li {
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 12px;
+    padding: 12px 0;
+    border-top: 1px solid var(--border);
+    align-items: start;
+}
+.mos-s07 .hist li:first-child {
+    border-top: 0;
+}
+.mos-s07 .hist i {
+    display: block;
+    width: 20px;
+    height: 14px;
+    border-radius: 2px;
+    border: 2px solid var(--blaze-ink);
+    margin-top: 4px;
+}
+.mos-s07 .hist li.cur i {
+    background: var(--blaze);
+}
+.mos-s07 .hist .txt {
+    font-size: 16px;
+    line-height: 24px;
+}
+.mos-s07 .hist li:not(.cur) .txt {
+    color: var(--muted-fg);
+}
+.mos-s07 .hist .src {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    white-space: nowrap;
+    text-align: right;
+}
+.mos-s07 .hist .src b {
+    display: block;
+    font-weight: 600;
+    color: var(--foreground);
+}
+.mos-s07 .sess {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    font-size: 15px;
+}
+.mos-s07 .sess div span {
+    display: block;
+    font-size: 13px;
+    color: var(--muted-fg);
+}
+.mos-s07 .sess div b {
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+.mos-s07 .nb {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+.mos-s07 .nb .ln {
+    fill: none;
+    stroke-width: 5;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.mos-s07 .nb .dot {
+    stroke-dasharray: 0 10;
+}
+.mos-s07 .nb text {
+    font-family: 'Overpass', system-ui, sans-serif;
+    font-size: 13px;
+    fill: var(--foreground);
+}
+.mos-s07 .nb .mt {
+    fill: var(--muted-fg);
+}
+.mos-s07 .nb .b {
+    font-weight: 700;
+}
+.mos-s07 .deps h3 {
+    font: 600 13px/20px 'Overpass';
+    color: var(--muted-fg);
+    margin: 16px 0 4px;
+}
+.mos-s07 .deps ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s07 .deps li {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    align-items: center;
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    font-size: 15px;
+}
+.mos-s07 .deps li:first-child {
+    border-top: 0;
+}
+.mos-s07 .deps .l2 {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+.mos-s07 .addl {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 0;
+    padding: 10px 0 0;
+    color: var(--primary);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+}
+.mos-s07 dl.fields {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 10px 12px;
+    font-size: 15px;
+}
+.mos-s07 dl.fields dt {
+    color: var(--muted-fg);
+    font-size: 14px;
+}
+.mos-s07 dl.fields dd {
+    margin: 0;
+}
+.mos-s07 .retire {
+    margin: 8px 0 0;
+    font-size: 14px;
+    color: var(--muted-fg);
+}
+.mos-s07 .lockbox {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    background: var(--sunken);
+    border: 1px dashed var(--input);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 12px 0 16px;
+}
+.mos-s07 .lockbox svg {
+    color: var(--muted-fg);
+    margin-top: 2px;
+}
+.mos-s07 .neutral {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    font-size: 15px;
+}
+.mos-s07 .attn {
+    background: var(--attention-bg);
+    border-left: 3px solid var(--attention);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s07 .attn b {
+    display: block;
+}
+.mos-s07 .summit-ask .in {
+    margin: 8px 0 12px;
+}
+@media (max-width: 1100px) {
+    .mos-s07 .layout {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Compensations for Tailwind's preflight, which the static mockups did not have. */
+.mos-s04 .p5 .v ul {
+    list-style: disc;
+}
+.mos .sr {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+.mos-s06 .irow .t a {
+    color: var(--foreground);
+    text-decoration: none;
+}
+.mos-s06 .irow .t a:hover {
+    text-decoration: underline;
+}
+.mos-s04 .irow .t a:hover {
+    text-decoration: underline;
+}
+
+/* Control-map entry actions stay quiet until the entry is pointed at or focused. */
+.mos .zone li .acts .linkbtn {
+    font-size: 13px;
+    line-height: 18px;
+    padding: 2px;
+}
+@media (hover: hover) {
+    .mos .zone li .acts {
+        opacity: 0;
+        transition: opacity 100ms ease-out;
+    }
+    .mos .zone li:hover .acts,
+    .mos .zone li:focus-within .acts {
+        opacity: 1;
+    }
+}
+.mos-s06 .ladder a.rung {
+    color: var(--foreground);
+}
+.mos-s06 .ladder a.rung.next {
+    color: var(--muted-fg);
+}

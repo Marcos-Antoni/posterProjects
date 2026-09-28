@@ -15,7 +15,7 @@ test('appearance shared prop defaults to system for guests without a cookie', fu
 test('appearance shared prop defaults to system for authenticated users without a cookie', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get('/projects', [
+    $response = $this->actingAs($user)->get('/objectives', [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
     ]);

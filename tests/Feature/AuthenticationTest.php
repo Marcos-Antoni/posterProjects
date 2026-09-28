@@ -37,9 +37,10 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticatedAs($user);
-    // Redirects straight to /projects (not /) so a fresh login doesn't need
-    // a second hop through the root's own auth-branching redirect.
-    $response->assertRedirect(route('projects.index', absolute: false));
+    // Redirects straight to /objectives (not /) so a fresh login doesn't need
+    // a second hop through the root's own auth-branching redirect. (Phase 3
+    // moves the landing to the Now screen.)
+    $response->assertRedirect(route('objectives.index', absolute: false));
 });
 
 test('users cannot authenticate with an invalid password', function () {

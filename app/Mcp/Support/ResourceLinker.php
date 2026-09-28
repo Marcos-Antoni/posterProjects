@@ -2,62 +2,48 @@
 
 namespace App\Mcp\Support;
 
-use App\Models\BoardColumn;
-use App\Models\Comment;
 use App\Models\Habit;
-use App\Models\Issue;
-use App\Models\Label;
-use App\Models\Project;
-use App\Models\Sprint;
+use App\Models\Item;
+use App\Models\Objective;
+use App\Models\Plan;
 
 /**
  * The single place that maps a model to the absolute web URL (APP_URL
- * based) every MCP tool response links to. Resources without a page of
- * their own fall back to the closest page that shows them.
+ * based) every MCP tool response links to.
  */
 class ResourceLinker
 {
-    public function project(Project $project): string
+    public function objective(Objective $objective): string
     {
-        // Trashed projects have no live board — the trash page is where
-        // the web shows (and restores) them.
-        if ($project->trashed()) {
-            return route('projects.trash');
-        }
-
-        return route('projects.board', ['project' => $project->key]);
+        return route('objectives.show', $objective->key);
     }
 
-    public function issue(Issue $issue): string
+    public function plan(Plan $plan): string
     {
-        return route('projects.issues.show', [
-            'project' => $issue->project->key,
-            'issueKey' => $issue->key,
-        ]);
+        return route('objectives.plans.show', [$plan->objective->key, $plan->id]);
+    }
+
+    /**
+     * An item's deep link. Pass the objective when the caller already has
+     * it, so the key accessor never lazy-loads.
+     */
+    public function item(Item $item, ?Objective $objective = null): string
+    {
+        $objective ??= $item->objective;
+
+        return route('objectives.items.show', [$objective->key, sprintf('%s-%d', $objective->key, $item->number)]);
+    }
+
+    /**
+     * An item's deep link from its public key ("SALUD-7").
+     */
+    public function itemKey(string $itemKey): string
+    {
+        return route('objectives.items.show', [substr($itemKey, 0, (int) strrpos($itemKey, '-')), $itemKey]);
     }
 
     public function habit(Habit $habit): string
     {
         return route('habits.show', ['habit' => $habit->id]);
-    }
-
-    public function sprint(Sprint $sprint): string
-    {
-        return route('projects.backlog', ['project' => $sprint->project->key]);
-    }
-
-    public function boardColumn(BoardColumn $column): string
-    {
-        return route('projects.board', ['project' => $column->project->key]);
-    }
-
-    public function label(Label $label): string
-    {
-        return route('projects.labels.index', ['project' => $label->project->key]);
-    }
-
-    public function comment(Comment $comment): string
-    {
-        return $this->issue($comment->issue);
     }
 }

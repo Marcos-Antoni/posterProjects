@@ -4,10 +4,10 @@ use App\Models\User;
 use Laravel\Sanctum\PersonalAccessToken;
 
 /**
- * Real login (through the form, not `actingAs`) followed by the sidebar
- * dropdown → MCP token settings flow: generate, then regenerate.
+ * Real login (through the form, not `actingAs`) followed by the appbar's
+ * Ajustes link → MCP token settings flow: generate, then regenerate.
  */
-test('a user logs in through the form, opens the mcp token settings from the sidebar, and generates then regenerates the token', function () {
+test('a user logs in through the form, opens the mcp token settings from the appbar, and generates then regenerates the token', function () {
     // The factory's default password is 'password' (see UserFactory).
     $user = User::factory()->create(['email' => 'pilot@example.com']);
 
@@ -17,10 +17,10 @@ test('a user logs in through the form, opens the mcp token settings from the sid
         ->fill('email', 'pilot@example.com')
         ->fill('password', 'password')
         ->press('button[type="submit"]')
-        ->assertPathIs('/projects')
+        ->assertPathIs('/objectives')
         ->assertNoJavascriptErrors();
 
-    $page->click($user->name)
+    $page->click('a[aria-label="Ajustes"]')
         ->assertSee('Token MCP')
         ->click('Token MCP')
         ->assertPathIs('/settings/mcp-token')
