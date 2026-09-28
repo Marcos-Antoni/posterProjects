@@ -45,4 +45,9 @@ Route::middleware(['auth:sanctum', 'abilities:mobile'])->group(function (): void
     Route::post('habits/{habit}/decrement', [HabitEntryController::class, 'decrement'])
         ->whereNumber('habit')
         ->name('api.v1.habits.decrement');
+    // --- phase 4: habits ---
+    Route::post('habits/{habit}/two-minute', [HabitEntryController::class, 'twoMinute'])
+        ->whereNumber('habit')
+        ->name('api.v1.habits.two-minute');
+    // --- end phase 4 ---
 });

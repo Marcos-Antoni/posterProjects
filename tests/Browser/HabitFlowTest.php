@@ -1,102 +1,135 @@
 <?php
 
+use App\Models\Habit;
+use App\Models\HabitDay;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 
-/**
- * Full habit lifecycle through the UI: create a quantitative habit, log
- * an entry, check the detail page, then archive and reactivate it from
- * management.
- */
-test('a user creates a quantitative habit, logs an entry, views the detail page, and archives then reactivates it', function () {
+/*
+| Phase 4 habit screens in a real browser (mockups 18–21): a habit is
+| created only with its 2-minute version, logged from "Hábitos de hoy"
+| (mark done, stepper, only the 2 minutes with its undo, restart after a
+| miss), inspected on its detail, archived and reactivated from "Todos",
+| and its identity votes read as a proportion.
+*/
+
+test('a habit is created only with its 2-minute version, then logged from today', function () {
     $user = User::factory()->create();
-
     $this->actingAs($user);
 
     $page = visit('/habits/manage');
 
-    $page->assertSee('Gestión de hábitos')
+    $page->assertSee('Todos los hábitos')
         ->click('Nuevo hábito')
         ->assertSee('Nuevo hábito')
-        ->fill('#habit-name', 'Read')
-        // Radix's Select is not a native <select>: open the trigger, then
-        // pick the option by its accessible role/name (a plain text click
-        // on the item is flaky here — Playwright times out waiting for it
-        // to become actionable while the item-aligned content repositions).
-        ->click('Sí / No')
-        ->click('internal:role=option[name="Cuantitativo"]')
-        ->fill('#habit-unit', 'pages')
-        ->fill('#habit-target', '20')
+        ->fill('input[name="name"]', 'Leer 2 páginas de Control')
+        ->click('Una cantidad')
+        ->fill('input[name="daily_target"]', '2')
+        ->fill('input[name="unit"]', 'páginas')
         ->click('Crear hábito')
-        ->assertSee('Read')
+        ->assertSee('Falta la versión de 2 minutos. Es lo que vas a hacer los días difíciles.')
         ->assertNoJavascriptErrors();
 
-    // "Today" view: log one entry through the real quantity input + button.
+    expect(Habit::query()->count())->toBe(0);
+
+    $page->fill('input[name="two_minute_version"]', 'Abrir el libro en el separador')
+        ->click('Crear hábito')
+        ->assertSee('2 min: Abrir el libro en el separador')
+        ->assertSee('Nunca dos veces seguidas')
+        ->assertNoJavascriptErrors();
+
+    $habit = Habit::query()->sole();
+
+    expect($habit->two_minute_version)->toBe('Abrir el libro en el separador')
+        ->and($habit->daily_target)->toBe(2);
+
     $page = visit('/habits');
 
-    $page->assertSee('Read')
-        ->fill('amount', '5')
-        ->click('Registrar')
-        ->assertSee('Read')
+    $page->assertSee('Hábitos de hoy')
+        ->assertSee('0 de 2 páginas')
+        ->click('button[aria-label="Uno más"]')
+        ->assertSee('1 de 2 páginas')
+        ->click('Solo los 2 minutos')
+        ->assertSee('Hecho: 2 minutos.')
         ->assertNoJavascriptErrors();
 
-    // Detail page: streak and completion labels are visible.
-    $page->click('Read')
-        ->assertSee('Racha actual')
-        ->assertSee('Mejor racha')
-        ->assertSee('días')
+    $day = $habit->days()->sole();
+
+    expect($day->two_minute_logged)->toBeTrue()
+        ->and($day->completed)->toBeFalse()
+        ->and($day->accumulated_amount)->toBe(1);
+
+    $page->click('Deshacer')
+        ->assertSee('Solo los 2 minutos')
         ->assertNoJavascriptErrors();
 
-    // Back to management: archive, confirm it moved to "Archivados", then
-    // reactivate it back into the active list.
-    $page = visit('/habits/manage');
-
-    $page->assertSee('Read')
-        ->click('Archivar')
-        ->assertSee('Archivados')
-        ->assertSee('Reactivar')
-        ->assertNoJavascriptErrors();
-
-    $page->click('Reactivar')
-        ->assertSee('Read')
-        ->assertNoJavascriptErrors();
+    expect($day->fresh()->two_minute_logged)->toBeFalse();
 });
 
-/**
- * Regression test for a bug this suite's browser coverage uncovered:
- * the entry amount used to be guarded with `is_int($amount)`, which is
- * never true for a real browser submission — Inertia's `<Form>` reads
- * field values via the native `FormData` API, which stringifies every
- * value — so the web UI silently logged 1 no matter what the user
- * typed. The guard now casts numeric input instead; this test pins the
- * intended behavior end to end (partial entries accumulate and the
- * percent can exceed 100).
- */
-test('a user logs partial entries through the ui past the daily target and sees the overshoot', function () {
+test('after a miss the row offers to restart with 2 minutes, never a count of missed days', function () {
     $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->create([
+        'name' => 'Dormir 22:00',
+        'two_minute_version' => 'Dejar el teléfono cargando fuera del cuarto',
+        'created_at' => now()->subDays(20),
+    ]);
+
+    $yesterday = Carbon::parse(Habit::todayLocalDate())->subDay();
+
+    foreach (range(2, 12) as $daysAgo) {
+        HabitDay::factory()->for($habit)->create(['entry_date' => $yesterday->clone()->subDays($daysAgo - 1)->toDateString()]);
+    }
 
     $this->actingAs($user);
 
-    visit('/habits/manage')
-        ->click('Nuevo hábito')
-        ->fill('#habit-name', 'Read')
-        ->click('Sí / No')
-        ->click('internal:role=option[name="Cuantitativo"]')
-        ->fill('#habit-unit', 'pages')
-        ->fill('#habit-target', '20')
-        ->click('Crear hábito');
-
     $page = visit('/habits');
 
-    $page->fill('amount', '15')
-        ->click('Registrar')
-        ->assertSee('15 / 20');
+    $page->assertSee('Retomar con 2 minutos')
+        ->assertSee('hoy toca volver')
+        ->assertDontSee('perdiste')
+        ->assertDontSee('faltaste')
+        ->click('Retomar con 2 minutos')
+        ->assertSee('Hecho: 2 minutos.')
+        ->assertDontSee('Retomar con 2 minutos')
+        ->assertNoJavascriptErrors();
 
-    $page->fill('amount', '10')
-        ->click('Registrar')
-        ->assertSee('25 / 20')
-        ->assertSee('125%')
-        ->assertSee('Cumplido');
+    expect($habit->fresh()->history()->streak()->state->value)->toBe('ok');
+});
 
-    $page->click('Read')
-        ->assertSee('Racha actual');
+test('a habit is archived and reactivated from "Todos", keeping its history', function () {
+    $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->create(['name' => 'Meditar']);
+    HabitDay::factory()->for($habit)->create(['entry_date' => Habit::todayLocalDate()->subDays(3)->toDateString()]);
+    $this->actingAs($user);
+
+    $page = visit('/habits/manage');
+
+    $page->assertSee('Meditar')
+        ->click('Archivar')
+        ->assertSee('Reactivar')
+        ->assertSee('1 día registrado')
+        ->click('Reactivar')
+        ->assertSee('No hay hábitos archivados.')
+        ->assertNoJavascriptErrors();
+
+    expect($habit->fresh()->archived_at)->toBeNull()
+        ->and($habit->days()->count())->toBe(1);
+});
+
+test('identity votes read as a proportion per statement', function () {
+    $user = User::factory()->create();
+    $habit = Habit::factory()->for($user)->create([
+        'name' => 'Gimnasio',
+        'identity_statement' => 'Soy alguien que entrena',
+        'created_at' => now()->subDays(40),
+    ]);
+    HabitDay::factory()->for($habit)->create(['entry_date' => Habit::todayLocalDate()->subDay()->toDateString()]);
+    $this->actingAs($user);
+
+    visit('/habits/identity')
+        ->assertSee('Votos de identidad')
+        ->assertSee('“Soy alguien que entrena”')
+        ->assertSee('1 de 6 votos')
+        ->assertDontSee('%')
+        ->assertNoJavascriptErrors();
 });

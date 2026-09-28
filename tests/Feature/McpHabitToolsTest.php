@@ -1,7 +1,6 @@
 <?php
 
 use App\Enums\HabitType;
-use App\Enums\RecurrenceType;
 use App\Mcp\Servers\PosterServer;
 use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
@@ -15,49 +14,43 @@ use App\Models\Habit;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-test('create-habit creates a yes/no daily habit', function () {
+// Marcos OS (Phase 4, ai-operations spec): creating or changing a habit is a
+// MAJOR AI operation. Over MCP the AI is refused (until Phase 8 turns it into
+// a proposal) and nothing is written; the web form's validation still runs
+// first, so a bad payload answers its validation error.
+test('create-habit is a major AI operation: refused, nothing created', function () {
     $user = User::factory()->create();
 
     $response = PosterServer::actingAs($user)->tool(CreateHabit::class, [
         'name' => 'Meditate',
         'habit_type' => 'yes_no',
         'recurrence_type' => 'daily',
+        'two_minute_version' => 'Sentarme en el piso',
     ]);
 
-    $response->assertOk()
-        ->assertSee('Meditate')
-        ->assertSee(route('habits.show', ['habit' => Habit::query()->where('name', 'Meditate')->firstOrFail()->id]));
+    $response->assertHasErrors(['propose-change']);
 
-    $habit = Habit::query()->where('user_id', $user->id)->firstOrFail();
-    expect($habit->habit_type)->toBe(HabitType::YesNo)
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::Daily)
-        ->and($habit->unit)->toBeNull()
-        ->and($habit->daily_target)->toBeNull();
+    expect(Habit::query()->where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-test('create-habit creates a quantitative habit with a unit and daily target', function () {
+test('create-habit validates the payload exactly like the web form', function () {
     $user = User::factory()->create();
 
     $response = PosterServer::actingAs($user)->tool(CreateHabit::class, [
         'name' => 'Read',
         'habit_type' => 'quantitative',
-        'unit' => 'pages',
         'daily_target' => 20,
         'recurrence_type' => 'specific_weekdays',
         'weekdays' => [1, 3, 5],
+        'two_minute_version' => 'Abrir el libro',
     ]);
 
-    $response->assertOk();
+    $response->assertHasErrors(['La unidad es obligatoria para hábitos cuantitativos.']);
 
-    $habit = Habit::query()->where('name', 'Read')->firstOrFail();
-    expect($habit->habit_type)->toBe(HabitType::Quantitative)
-        ->and($habit->unit)->toBe('pages')
-        ->and($habit->daily_target)->toBe(20)
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::SpecificWeekdays)
-        ->and($habit->weekdays)->toBe([1, 3, 5]);
+    expect(Habit::query()->count())->toBe(0);
 });
 
-test('update-habit switching from quantitative to yes/no clears unit and daily target', function () {
+test('update-habit is a major AI operation: refused, the habit is unchanged', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create(['name' => 'Read']);
 
@@ -67,17 +60,15 @@ test('update-habit switching from quantitative to yes/no clears unit and daily t
         'habit_type' => 'yes_no',
         'recurrence_type' => 'times_per_week',
         'times_per_week' => 5,
+        'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertOk()->assertSee('Meditate');
+    $response->assertHasErrors(['propose-change']);
 
     $habit->refresh();
-    expect($habit->name)->toBe('Meditate')
-        ->and($habit->habit_type)->toBe(HabitType::YesNo)
-        ->and($habit->unit)->toBeNull()
-        ->and($habit->daily_target)->toBeNull()
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::TimesPerWeek)
-        ->and($habit->times_per_week)->toBe(5);
+    expect($habit->name)->toBe('Read')
+        ->and($habit->habit_type)->toBe(HabitType::Quantitative)
+        ->and($habit->daily_target)->toBe(20);
 });
 
 test('update-habit is not found for another user\'s habit', function () {

@@ -32,11 +32,16 @@ function habitTodayPayload(Habit $habit, array $overrides = []): array
         'peak_amount' => 0,
         'times_per_week' => $habit->times_per_week,
         'week_recorded_days' => null,
+        'two_minute_version' => (string) $habit->two_minute_version,
+        'shown_up' => false,
+        'streak_current' => 0,
+        'streak_state' => 'ok',
+        'objective_key' => null,
         ...$overrides,
     ];
 }
 
-test('the today list is ordered by name, scoped to scheduled active habits, and pinned to exactly 12 fields', function () {
+test('the today list is ordered by name, scoped to scheduled active habits, and pinned to exactly 17 fields (12 legacy + 5 Marcos OS)', function () {
     $user = User::factory()->create();
     $token = $user->createToken(TokenName::Mobile->value, [TokenName::Mobile->value])->plainTextToken;
 
@@ -50,7 +55,7 @@ test('the today list is ordered by name, scoped to scheduled active habits, and 
         habitTodayPayload($apple),
         habitTodayPayload($zebra),
     ]);
-    expect(array_keys($response->json('data.0')))->toHaveCount(12);
+    expect(array_keys($response->json('data.0')))->toHaveCount(17);
 });
 
 test('a habit with no day row yet is flattened to zero and false, never null', function () {

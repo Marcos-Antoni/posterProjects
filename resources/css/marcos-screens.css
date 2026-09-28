@@ -2966,6 +2966,50 @@
 }
 /* screen 09 only */
 .mos-s09 .ghead h1 {
+/* ---------- phase 4: habit screens 18-21 (generated from visual/screens/18..21 <style> blocks) ---------- */
+/* screens 18-20: shared block of the habit mockups (18-habits-today, 19-habits-manage, 20-habit-detail) */
+:is(.mos-s18, .mos-s19, .mos-s20) .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .btn kbd {
+    margin-left: 4px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .btn-md {
+    min-height: 40px;
+    padding: 8px 16px;
+    font-size: 15px;
+    line-height: 20px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .btn-text {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: none;
+    border: 0;
+    padding: 6px 4px;
+    color: var(--primary);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    min-height: 32px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .btn-text.quiet {
+    color: var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 24px;
+    flex-wrap: wrap;
+    margin: 0 0 32px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .h1 {
     font: 700 30px/36px 'Overpass';
     letter-spacing: -0.01em;
     margin: 0;
@@ -2991,6 +3035,197 @@
 .mos-s09 .sel {
     min-height: 40px;
     padding: 6px 32px 6px 12px;
+:is(.mos-s18, .mos-s19, .mos-s20) .lede {
+    margin: 8px 0 0;
+    color: var(--muted-fg);
+    max-width: 64ch;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .slab {
+    font-family: 'Zilla Slab', Georgia, serif;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 6px;
+    background: var(--sunken);
+    color: var(--muted-fg);
+    font: 600 13px/18px 'Overpass';
+    white-space: nowrap;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .pill.on {
+    background: var(--attention-bg);
+    color: var(--attention);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .pill.ok {
+    background: transparent;
+    padding-left: 0;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk {
+    display: inline-block;
+    flex: none;
+    width: 28px;
+    height: 20px;
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+    position: relative;
+    background: transparent;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.d {
+    background: var(--blaze);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.g {
+    border-style: dashed;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.r {
+    border-style: dashed;
+    background: color-mix(in srgb, var(--blaze) 45%, var(--surface));
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.t {
+    background: linear-gradient(90deg, var(--blaze) 50%, transparent 50%);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.p {
+    border-style: solid;
+    box-shadow:
+        0 0 0 2px var(--surface),
+        0 0 0 3.5px var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.f {
+    border-color: var(--border);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.o {
+    border-color: transparent;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.o::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin: -2px 0 0 -2px;
+    border-radius: 50%;
+    background: var(--input);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.x {
+    border-color: transparent;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.x::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: -4px;
+    bottom: -4px;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .mk.sm {
+    width: 18px;
+    height: 13px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .strp {
+    display: inline-flex;
+    gap: 6px;
+    align-items: flex-start;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .strp .cell {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .strp small {
+    font: 600 11px/14px 'Overpass';
+    color: var(--muted-fg);
+    font-variant-numeric: tabular-nums;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .strp.tight {
+    gap: 4px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .legend .mk {
+    width: 20px;
+    height: 14px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .chip-attn {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 2px solid var(--attention);
+    background: var(--attention-bg);
+    color: var(--attention);
+    font: 600 15px/20px 'Overpass';
+    cursor: pointer;
+    text-align: left;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .chip-attn:hover {
+    background: color-mix(in srgb, var(--attention-bg) 80%, var(--attention));
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .two {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 15px/22px 'Overpass';
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .two .mini {
+    width: 18px;
+    height: 13px;
+    background: var(--blaze);
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+    flex: none;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .votes-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .votes-row i {
+    display: block;
+    width: 12px;
+    height: 9px;
+    border: 1.5px solid var(--blaze-ink);
+    border-radius: 1px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .votes-row i.v {
+    background: var(--blaze);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .votes-row i.n {
+    border-style: dashed;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .in,
+:is(.mos-s18, .mos-s19, .mos-s20) select.in,
+:is(.mos-s18, .mos-s19, .mos-s20) textarea.in {
+    width: 100%;
+    min-height: 44px;
+    padding: 9px 12px;
     border-radius: 6px;
     border: 2px solid var(--input);
     background: var(--surface);
@@ -3016,6 +3251,108 @@
     display: block;
 }
 .mos-s09 .gside .dist {
+    font: 400 16px/24px 'Overpass';
+}
+:is(.mos-s18, .mos-s19, .mos-s20) textarea.in {
+    min-height: 88px;
+    resize: vertical;
+    display: block;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) select.in {
+    appearance: none;
+    background-image:
+        linear-gradient(45deg, transparent 50%, var(--muted-fg) 50%),
+        linear-gradient(135deg, var(--muted-fg) 50%, transparent 50%);
+    background-position:
+        calc(100% - 18px) 50%,
+        calc(100% - 13px) 50%;
+    background-size: 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 36px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .in::placeholder {
+    color: var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .in.focus {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .fld {
+    display: block;
+    margin: 0 0 20px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .fld > .l {
+    display: block;
+    font: 600 14px/20px 'Overpass';
+    margin: 0 0 6px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .fld > .l em {
+    font-style: normal;
+    font-weight: 400;
+    color: var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .fld .ex {
+    display: block;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin: 0 0 8px;
+    max-width: 68ch;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .fld .after {
+    display: block;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    margin-top: 6px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .seg {
+    display: inline-flex;
+    padding: 3px;
+    gap: 2px;
+    border-radius: 8px;
+    background: var(--sunken);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .seg button {
+    font: 600 14px/20px 'Overpass';
+    border: 0;
+    background: transparent;
+    color: var(--muted-fg);
+    padding: 7px 14px;
+    min-height: 36px;
+    border-radius: 6px;
+    cursor: pointer;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .seg button[aria-pressed='true'],
+:is(.mos-s18, .mos-s19, .mos-s20) .seg button[aria-selected='true'] {
+    background: var(--surface);
+    color: var(--foreground);
+    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.14);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .subnav {
+    display: flex;
+    gap: 4px;
+    margin: 0 0 20px;
+    border-bottom: 1px solid var(--border);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .subnav a {
+    padding: 8px 12px 10px;
+    font: 600 15px/20px 'Overpass';
+    color: var(--muted-fg);
+    text-decoration: none;
+    border-bottom: 3px solid transparent;
+    margin-bottom: -1px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .subnav a[aria-current='page'] {
+    color: var(--foreground);
+    border-bottom-color: var(--primary);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .meta {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .why {
     margin: 0;
     font-size: 14px;
     line-height: 20px;
@@ -3026,3 +3363,1062 @@
     stroke: var(--muted-fg);
     stroke-width: 2;
 }
+:is(.mos-s18, .mos-s19, .mos-s20) .hatch {
+    background: repeating-linear-gradient(
+        45deg,
+        var(--node-retired) 0 2px,
+        transparent 2px 7px
+    );
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .err {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 6px;
+    border: 1.5px solid var(--destructive);
+    color: var(--foreground);
+    background: var(--surface);
+    font-size: 14px;
+    line-height: 20px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .err svg {
+    color: var(--destructive);
+    margin-top: 1px;
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .err b {
+    color: var(--destructive);
+}
+:is(.mos-s18, .mos-s19, .mos-s20) .disabled-why {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+@media (prefers-reduced-motion: reduce) {
+    :is(.mos-s18, .mos-s19, .mos-s20) * {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+    }
+}
+/* screen 18: 18-habits-today.html */
+.mos-s18 .hd-grid {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 24px;
+}
+.mos-s18 .hl {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+.mos-s18 .hb {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr) 240px;
+    gap: 18px;
+    padding: 22px 24px;
+    border-bottom: 1px solid var(--border);
+}
+.mos-s18 .hb:last-child {
+    border-bottom: 0;
+}
+.mos-s18 .hb .bigmk {
+    width: 36px;
+    height: 26px;
+    border-width: 2.5px;
+    margin-top: 2px;
+}
+.mos-s18 .hb h3 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0;
+}
+.mos-s18 .hb .when {
+    margin: 2px 0 10px;
+}
+.mos-s18 .hb .two {
+    margin: 0 0 14px;
+}
+.mos-s18 .hb .strp {
+    margin: 0 0 8px;
+}
+.mos-s18 .hb .tramo {
+    margin: 0;
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s18 .hb .tramo b {
+    font-weight: 600;
+}
+.mos-s18 .hb .acts {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+}
+.mos-s18 .stepper {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    border: 2px solid var(--input);
+    border-radius: 6px;
+    overflow: hidden;
+    align-self: flex-start;
+}
+.mos-s18 .stepper button {
+    width: 40px;
+    height: 40px;
+    border: 0;
+    background: transparent;
+    color: var(--foreground);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+}
+.mos-s18 .stepper span {
+    min-width: 92px;
+    text-align: center;
+    font: 600 14px/20px 'Overpass';
+    font-variant-numeric: tabular-nums;
+}
+.mos-s18 .intent-line {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin: 10px 0 0;
+}
+.mos-s18 .rest-h {
+    font: 700 16px/24px 'Overpass';
+    margin: 32px 0 8px;
+    color: var(--muted-fg);
+}
+.mos-s18 .hb.rest {
+    opacity: 1;
+    background: transparent;
+}
+.mos-s18 .hb.rest h3 {
+    color: var(--muted-fg);
+}
+.mos-s18 .side {
+    padding: 20px 24px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1.2fr;
+    gap: 24px;
+    align-items: start;
+}
+.mos-s18 .side .legend {
+    display: none;
+}
+.mos-s18 .side h2 {
+    font: 700 16px/24px 'Overpass';
+    margin: 0;
+    grid-column: 1/-1;
+}
+.mos-s18 .side .idn {
+    margin: 0;
+}
+.mos-s18 .side .idn p {
+    margin: 0 0 6px;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s18 .side .idn p b {
+    font-weight: 600;
+}
+.mos-s18 .side .legend {
+    flex-direction: column;
+    gap: 10px;
+}
+.mos-s18 .rule {
+    margin: 0;
+    padding-left: 20px;
+    border-left: 1px solid var(--border);
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s18 .rule b {
+    color: var(--foreground);
+}
+.mos-s18 .frame .hb {
+    grid-template-columns: 44px minmax(0, 1fr);
+    padding: 0;
+    border: 0;
+}
+.mos-s18 .frame .hb .acts {
+    grid-column: 2;
+}
+@media (max-width: 980px) {
+    .mos-s18 .side {
+        grid-template-columns: 1fr;
+    }
+    .mos-s18 .rule {
+        padding-left: 0;
+        border-left: 0;
+    }
+    .mos-s18 .hb {
+        grid-template-columns: 44px minmax(0, 1fr);
+    }
+    .mos-s18 .hb .acts {
+        grid-column: 2;
+    }
+}
+/* screen 19: 19-habits-manage.html */
+.mos-s19 .tbl {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+.mos-s19 .tbl th {
+    font: 600 13px/18px 'Overpass';
+    color: var(--muted-fg);
+    text-align: left;
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+}
+.mos-s19 .tbl td {
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s19 .tbl tr:last-child td {
+    border-bottom: 0;
+}
+.mos-s19 .tbl .nm b {
+    display: block;
+    font: 700 17px/24px 'Overpass';
+}
+.mos-s19 .tbl .nm .two {
+    font-size: 14px;
+    line-height: 20px;
+    margin-top: 4px;
+}
+.mos-s19 .ladder {
+    display: flex;
+    gap: 3px;
+    align-items: flex-end;
+    margin-bottom: 6px;
+}
+.mos-s19 .ladder i {
+    display: block;
+    width: 16px;
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+}
+.mos-s19 .ladder i.on {
+    background: var(--blaze);
+}
+.mos-s19 .ladder i:nth-child(1) {
+    height: 8px;
+}
+.mos-s19 .ladder i:nth-child(2) {
+    height: 13px;
+}
+.mos-s19 .ladder i:nth-child(3) {
+    height: 18px;
+}
+.mos-s19 .ladder.single i {
+    height: 10px;
+}
+.mos-s19 .sugg-row td {
+    padding-top: 0;
+}
+.mos-s19 .sugg {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 10px 14px;
+    border-radius: 6px;
+    background: var(--attention-bg);
+    color: var(--attention);
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s19 .sugg b {
+    font-weight: 600;
+}
+.mos-s19 .rowacts {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+.mos-s19 .rowacts .btn-sm {
+    min-height: 36px;
+    padding: 6px 10px;
+}
+.mos-s19 .toolbar {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin: 32px 0 12px;
+}
+.mos-s19 .toolbar h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0;
+}
+.mos-s19 .switch {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+}
+.mos-s19 .switch i {
+    position: relative;
+    width: 40px;
+    height: 24px;
+    border-radius: 12px;
+    background: var(--primary);
+}
+.mos-s19 .switch i::after {
+    content: '';
+    position: absolute;
+    right: 3px;
+    top: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary-fg);
+}
+.mos-s19 .retired td {
+    color: var(--muted-fg);
+}
+.mos-s19 .retired .nm {
+    display: flex;
+    gap: 14px;
+}
+.mos-s19 .retired .bar {
+    flex: none;
+    width: 6px;
+    border-radius: 2px;
+    align-self: stretch;
+    border: 1px solid var(--node-retired);
+}
+.mos-s19 .retired .nm b {
+    color: var(--foreground);
+}
+.mos-s19 .reason {
+    font-style: normal;
+}
+@media (max-width: 900px) {
+    .mos-s19 .tbl thead {
+        display: none;
+    }
+    .mos-s19 .tbl,
+    .mos-s19 .tbl tbody,
+    .mos-s19 .tbl tr,
+    .mos-s19 .tbl td {
+        display: block;
+        width: 100%;
+    }
+    .mos-s19 .tbl tr {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        border-bottom: 1px solid var(--border);
+        padding: 12px 0;
+    }
+    .mos-s19 .tbl td {
+        border: 0;
+        padding: 4px 16px;
+    }
+    .mos-s19 .tbl td.nm,
+    .mos-s19 .tbl td[colspan],
+    .mos-s19 .tbl td:last-child {
+        grid-column: 1/-1;
+    }
+    .mos-s19 .rowacts {
+        justify-content: flex-start;
+    }
+}
+/* screen 20: 20-habit-detail.html */
+.mos-s20 .hdl {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 40px;
+    align-items: start;
+}
+.mos-s20 .hname {
+    font: 700 30px/36px 'Overpass';
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s20 .hsub {
+    margin: 6px 0 20px;
+    color: var(--muted-fg);
+}
+.mos-s20 .hsub svg {
+    vertical-align: -3px;
+}
+.mos-s20 .chip2 {
+    max-width: 560px;
+}
+.mos-s20 .iint {
+    margin: 14px 0 0;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--muted-fg);
+}
+.mos-s20 .iint b {
+    color: var(--foreground);
+    font-weight: 600;
+}
+.mos-s20 .sec {
+    margin-top: 40px;
+}
+.mos-s20 .sec h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 4px;
+}
+.mos-s20 .stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin: 16px 0 20px;
+}
+.mos-s20 .stat {
+    padding: 16px 18px;
+}
+.mos-s20 .stat b {
+    display: block;
+    font: 700 24px/32px 'Overpass';
+    font-variant-numeric: tabular-nums;
+}
+.mos-s20 .stat span {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s20 .rulebox {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 10px 16px;
+    align-items: center;
+    padding: 14px 18px;
+    border-radius: 10px;
+    background: var(--sunken);
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s20 .rulebox .strp {
+    gap: 4px;
+}
+.mos-s20 .rulebox .mk {
+    width: 20px;
+    height: 14px;
+}
+.mos-s20 .cal {
+    display: grid;
+    grid-template-columns: 64px repeat(7, 32px) minmax(0, 1fr);
+    column-gap: 6px;
+    row-gap: 6px;
+    align-items: center;
+    margin-top: 16px;
+}
+.mos-s20 .cal .dh {
+    font: 600 12px/16px 'Overpass';
+    color: var(--muted-fg);
+    text-align: center;
+}
+.mos-s20 .cal .wk {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    font-variant-numeric: tabular-nums;
+}
+.mos-s20 .cal .c {
+    display: grid;
+    place-items: center;
+}
+.mos-s20 .cal .note {
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--muted-fg);
+    padding-left: 12px;
+}
+.mos-s20 .cal .note b {
+    color: var(--foreground);
+    font-weight: 600;
+}
+.mos-s20 .cal .brk {
+    grid-column: 1/-1;
+    height: 0;
+    border-top: 2px dashed var(--border);
+    margin: 4px 0;
+}
+.mos-s20 .ids {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-top: 16px;
+}
+.mos-s20 .ids p {
+    margin: 0 0 8px;
+}
+.mos-s20 .ids p b {
+    font-weight: 600;
+}
+.mos-s20 .lad {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    margin: 16px 0;
+}
+.mos-s20 .step {
+    flex: 1;
+    border: 2px solid var(--blaze-ink);
+    border-radius: 2px;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 20px;
+    background: var(--surface);
+}
+.mos-s20 .step b {
+    display: block;
+    font-weight: 700;
+    font-size: 15px;
+}
+.mos-s20 .step.s1 {
+    min-height: 70px;
+}
+.mos-s20 .step.s2 {
+    min-height: 96px;
+}
+.mos-s20 .step.s3 {
+    min-height: 122px;
+    border-style: dashed;
+}
+.mos-s20 .step.done {
+    background: color-mix(in srgb, var(--blaze) 35%, var(--surface));
+}
+.mos-s20 .step.cur {
+    background: var(--blaze);
+    color: var(--blaze-fg);
+}
+.mos-s20 .step.cur span,
+.mos-s20 .step.done span {
+    color: inherit;
+}
+.mos-s20 .step span {
+    color: var(--muted-fg);
+}
+.mos-s20 .lvlup {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 14px 16px;
+    border-radius: 10px;
+    background: var(--attention-bg);
+    color: var(--attention);
+    font-size: 15px;
+    line-height: 22px;
+}
+.mos-s20 .lvlup b {
+    font-weight: 700;
+}
+.mos-s20 .lvlup .btn {
+    border-color: var(--attention);
+    color: var(--attention);
+}
+.mos-s20 .form {
+    padding: 24px;
+    position: sticky;
+    top: 24px;
+}
+.mos-s20 .form h2 {
+    font: 700 20px/28px 'Overpass';
+    margin: 0 0 20px;
+}
+.mos-s20 .days {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+.mos-s20 .days button {
+    width: 44px;
+    height: 40px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: transparent;
+    color: var(--foreground);
+    font: 600 14px/20px 'Overpass';
+    cursor: pointer;
+}
+.mos-s20 .days button[aria-pressed='true'] {
+    background: var(--primary);
+    border-color: var(--primary);
+    color: var(--primary-fg);
+}
+.mos-s20 .row2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+.mos-s20 .ifthen {
+    display: grid;
+    gap: 8px;
+}
+.mos-s20 .ifthen .in {
+    min-height: 40px;
+}
+.mos-s20 .lvl-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 6px;
+}
+.mos-s20 .lvl-list li {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    gap: 8px;
+    align-items: center;
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s20 .lvl-list .n {
+    font-weight: 700;
+    color: var(--muted-fg);
+    text-align: center;
+}
+.mos-s20 .form-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+@media (max-width: 1100px) {
+    .mos-s20 .hdl {
+        grid-template-columns: 1fr;
+    }
+    .mos-s20 .form {
+        position: static;
+    }
+}
+@media (max-width: 700px) {
+    .mos-s20 .stats,
+    .mos-s20 .ids {
+        grid-template-columns: 1fr;
+    }
+    .mos-s20 .cal {
+        grid-template-columns: 48px repeat(7, 26px);
+    }
+    .mos-s20 .cal .note {
+        grid-column: 2/-1;
+        padding-left: 0;
+    }
+    .mos-s20 .lad {
+        flex-direction: column;
+        align-items: stretch;
+    }
+}
+/* screen 21: 21-identity-votes.html */
+.mos-s21 .page-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 32px;
+}
+.mos-s21 h1 {
+    font:
+        700 30px/36px 'Overpass',
+        sans-serif;
+    letter-spacing: -0.01em;
+    margin: 0;
+}
+.mos-s21 .lede {
+    color: var(--muted-fg);
+    max-width: 68ch;
+    margin-top: 8px;
+}
+.mos-s21 h2 {
+    font:
+        700 20px/28px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s21 h3 {
+    font:
+        600 16px/24px 'Overpass',
+        sans-serif;
+    margin: 0;
+}
+.mos-s21 .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    min-height: 40px;
+    padding: 8px 16px;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    font:
+        600 15px/20px 'Overpass',
+        sans-serif;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition:
+        background-color 100ms ease-out,
+        transform 100ms ease-out;
+}
+.mos-s21 .btn:active {
+    transform: translateY(1px);
+}
+.mos-s21 .btn-primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+}
+.mos-s21 .btn-primary:hover {
+    background: color-mix(in srgb, var(--primary) 92%, var(--foreground));
+}
+.mos-s21 .btn-outline {
+    background: transparent;
+    color: var(--foreground);
+    border-color: var(--input);
+}
+.mos-s21 .btn-outline:hover {
+    background: var(--sunken);
+}
+.mos-s21 .btn-ghost {
+    background: transparent;
+    color: var(--foreground);
+    border-color: transparent;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+}
+.mos-s21 .btn-ghost:hover {
+    background: var(--sunken);
+}
+.mos-s21 .btn-danger {
+    background: var(--destructive);
+    color: var(--primary-fg);
+}
+.mos-s21 .btn-sm {
+    min-height: 36px;
+    padding: 6px 12px;
+    font-size: 14px;
+}
+.mos-s21 .btn:disabled,
+.mos-s21 .btn[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+.mos-s21 .panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+.mos-s21 .field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.mos-s21 .field label,
+.mos-s21 .label {
+    font:
+        600 14px/20px 'Overpass',
+        sans-serif;
+}
+.mos-s21 .help {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+}
+.mos-s21 .input,
+.mos-s21 textarea.input,
+.mos-s21 select.input {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 6px;
+    border: 2px solid var(--input);
+    background: var(--surface);
+    color: var(--foreground);
+    font:
+        400 16px/24px 'Overpass',
+        sans-serif;
+}
+.mos-s21 textarea.input {
+    resize: vertical;
+    min-height: 88px;
+}
+.mos-s21 .input::placeholder {
+    color: var(--muted-fg);
+}
+.mos-s21 .tier-minor {
+    background: var(--sunken);
+    color: var(--muted-fg);
+}
+.mos-s21 .tier-major {
+    background: var(--attention-bg);
+    color: var(--attention);
+}
+.mos-s21 .tier-grant {
+    background: transparent;
+    color: var(--primary);
+    box-shadow: inset 0 0 0 1.5px var(--primary);
+}
+@media (prefers-reduced-motion: reduce) {
+    .mos-s21 * {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+.mos-s21 .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 24px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin: 0 0 24px;
+}
+.mos-s21 .legend span {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+.mos-s21 .ledger {
+    padding: 8px 32px;
+}
+.mos-s21 .idn {
+    display: grid;
+    grid-template-columns: minmax(240px, 1.1fr) minmax(220px, 0.9fr) minmax(
+            260px,
+            1fr
+        );
+    gap: 32px;
+    padding: 32px 0;
+    align-items: start;
+}
+.mos-s21 .idn + .idn {
+    border-top: 1px solid var(--border);
+}
+.mos-s21 .stmt {
+    font:
+        700 24px/32px 'Overpass',
+        sans-serif;
+    letter-spacing: -0.01em;
+    max-width: 22ch;
+    margin-bottom: 8px;
+}
+.mos-s21 .feeds {
+    list-style: none;
+    margin: 16px 0 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s21 .feeds li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    color: var(--muted-fg);
+}
+.mos-s21 .feeds a {
+    color: var(--foreground);
+}
+.mos-s21 .win {
+    font: 600 14px/20px 'Overpass';
+    color: var(--muted-fg);
+}
+.mos-s21 .prop {
+    font-size: 16px;
+    line-height: 24px;
+    margin: 2px 0 14px;
+}
+.mos-s21 .prop b {
+    font: 700 24px/32px 'Overpass';
+    letter-spacing: -0.01em;
+}
+.mos-s21 .two-note {
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    margin-top: 12px;
+    max-width: 34ch;
+}
+.mos-s21 .mk {
+    display: inline-block;
+    width: 26px;
+    height: 18px;
+    border-radius: 2px;
+    border: 2px solid var(--blaze-ink);
+    background: transparent;
+    position: relative;
+}
+.mos-s21 .mk.v {
+    background: var(--blaze);
+}
+.mos-s21 .mk.v2 {
+    background: color-mix(in srgb, var(--blaze) 45%, var(--surface));
+}
+.mos-s21 .mk.v2::after {
+    content: '2';
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    font: 700 10px/1 'Overpass';
+    color: var(--foreground);
+}
+.mos-s21 .mk.m {
+    border-style: dashed;
+    border-color: var(--input);
+}
+.mos-s21 .mk.n {
+    border-color: transparent;
+}
+.mos-s21 .mk.n::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 4px;
+    height: 4px;
+    margin: -2px;
+    border-radius: 50%;
+    background: var(--input);
+}
+.mos-s21 .mk.o {
+    border-color: transparent;
+    visibility: hidden;
+}
+.mos-s21 .mk.sm {
+    width: 18px;
+    height: 13px;
+    border-width: 1.5px;
+}
+.mos-s21 .mk.sm.v2::after {
+    font-size: 8px;
+}
+.mos-s21 .wk {
+    display: flex;
+    gap: 6px;
+}
+.mos-s21 .wk-l {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+.mos-s21 .wk-l span {
+    width: 26px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 14px;
+    color: var(--muted-fg);
+}
+.mos-s21 .wk-l b {
+    font-weight: 600;
+}
+.mos-s21 .mgrid {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+.mos-s21 .mrow {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+}
+.mos-s21 .mh {
+    width: 18px;
+    text-align: center;
+    font-size: 11px;
+    line-height: 12px;
+    color: var(--muted-fg);
+}
+.mos-s21 .mrow-l {
+    width: 48px;
+    font-size: 12px;
+    line-height: 14px;
+    color: var(--muted-fg);
+}
+.mos-s21 .aside-note {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    margin-top: 24px;
+    font-size: 14px;
+    line-height: 20px;
+    color: var(--muted-fg);
+    max-width: 80ch;
+}
+.mos-s21 .empty {
+    padding: 40px 32px;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 20px;
+    align-items: start;
+    max-width: 760px;
+}
+.mos-s21 .empty .ghost {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+}
+.mos-s21 .empty p {
+    max-width: 56ch;
+}
+.mos-s21 .empty .btn {
+    margin-top: 16px;
+}
+@media (max-width: 1100px) {
+    .mos-s21 .idn {
+        grid-template-columns: 1fr 1fr;
+    }
+    .mos-s21 .idn-who {
+        grid-column: 1/-1;
+    }
+    .mos-s21 .stmt {
+        max-width: none;
+    }
+}
+@media (max-width: 640px) {
+    .mos-s21 .idn {
+        grid-template-columns: 1fr;
+    }
+    .mos-s21 .ledger {
+        padding: 0 16px;
+    }
+    .mos-s21 .empty {
+        grid-template-columns: 1fr;
+        padding: 24px 16px;
+    }
+}
+.mos-s21 p {
+    margin: 0;
+}
+.mos-s21 .num {
+    font-variant-numeric: tabular-nums;
+}
+.mos-s21 .sm {
+    font-size: 14px;
+    line-height: 20px;
+}
+.mos-s21 .ic {
+    flex: none;
+    vertical-align: -3px;
+}
+/* phase 4 fix: the calendar note's run length never wraps mid-phrase */
+.mos-s20 .cal .note b {
+    white-space: nowrap;
+}
+/* ---------- end phase 4 ---------- */

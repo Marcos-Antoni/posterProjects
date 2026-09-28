@@ -7,6 +7,11 @@ use Illuminate\Support\Carbon;
 
 // All metric tests run against a frozen "now": 2026-07-22 18:00 UTC,
 // which is Wednesday 2026-07-22 12:00 in the feature's UTC-6 zone.
+//
+// Marcos OS (Phase 4): streaks are TOLERANT — "never miss twice" (habits
+// spec, design D5). A single missed opportunity no longer breaks the run;
+// times-per-week streaks count closed weeks. The expectations below were
+// updated from the removed "Streaks Are Recurrence-Aware" requirement.
 beforeEach(function () {
     $this->travelTo(Carbon::parse('2026-07-22 18:00:00', 'UTC'));
 });
@@ -54,7 +59,7 @@ test('a still-pending today does not break the daily streak', function () {
     expect($habit->currentStreak())->toBe(2);
 });
 
-test('a missed day breaks the daily streak but the best streak remembers the longest run', function () {
+test('a single missed day does not break the daily streak (never miss twice)', function () {
     $habit = Habit::factory()->daily()->create();
     createDays($habit, [
         '2026-07-17' => [],
@@ -65,11 +70,11 @@ test('a missed day breaks the daily streak but the best streak remembers the lon
         '2026-07-22' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(2)
-        ->and($habit->bestStreak())->toBe(3);
+    expect($habit->currentStreak())->toBe(5)
+        ->and($habit->bestStreak())->toBe(5);
 });
 
-test('a partial day below the target breaks the daily streak', function () {
+test('a partial day below the target is a miss, and a single miss does not break the streak', function () {
     $habit = Habit::factory()->quantitative('pages', 20)->daily()->create();
     createDays($habit, [
         '2026-07-20' => [],
@@ -77,8 +82,8 @@ test('a partial day below the target breaks the daily streak', function () {
         '2026-07-22' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(1)
-        ->and($habit->bestStreak())->toBe(1);
+    expect($habit->currentStreak())->toBe(2)
+        ->and($habit->bestStreak())->toBe(2);
 });
 
 test('specific weekdays streak skips unscheduled days without breaking', function () {
@@ -94,7 +99,7 @@ test('specific weekdays streak skips unscheduled days without breaking', functio
         ->and($habit->bestStreak())->toBe(3);
 });
 
-test('a missed scheduled day breaks the specific weekdays streak', function () {
+test('a single missed scheduled day does not break the specific weekdays streak', function () {
     // Scheduled Mon/Wed/Fri: completed Mon 13, Wed 15, Fri 17 — then
     // missed Mon 20 — then completed Wed 22 (today).
     $habit = Habit::factory()->specificWeekdays([1, 3, 5])->create();
@@ -105,8 +110,8 @@ test('a missed scheduled day breaks the specific weekdays streak', function () {
         '2026-07-22' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(1)
-        ->and($habit->bestStreak())->toBe(3);
+    expect($habit->currentStreak())->toBe(4)
+        ->and($habit->bestStreak())->toBe(4);
 });
 
 test('a pending scheduled today does not break the specific weekdays streak', function () {
@@ -120,7 +125,7 @@ test('a pending scheduled today does not break the specific weekdays streak', fu
     expect($habit->currentStreak())->toBe(2);
 });
 
-test('times per week streak accumulates recorded days across fulfilled weeks', function () {
+test('times per week streak counts fulfilled weeks; the week in progress counts once its quota is reached', function () {
     // Quota 3: last week recorded Mon 13, Wed 15, Fri 17 (met), current
     // week recorded Mon 20 and Tue 21.
     $habit = Habit::factory()->timesPerWeek(3)->create();
@@ -132,11 +137,15 @@ test('times per week streak accumulates recorded days across fulfilled weeks', f
         '2026-07-21' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(5)
-        ->and($habit->bestStreak())->toBe(5);
+    expect($habit->currentStreak())->toBe(1)
+        ->and($habit->bestStreak())->toBe(1);
+
+    $habit->days()->create(['entry_date' => '2026-07-22', 'completed' => true, 'accumulated_amount' => 1, 'peak_amount' => 1, 'completion_percent' => 100]);
+
+    expect($habit->fresh()->currentStreak())->toBe(2);
 });
 
-test('the times per week streak only breaks when a week closes under quota', function () {
+test('a single week closed under quota does not break the times per week streak', function () {
     // Quota 3: week of Jul 6 met (3 records), week of Jul 13 closed with
     // a single record — the streak peaked at 4 during that week, then
     // broke at its close. Current week has 2 records.
@@ -150,8 +159,9 @@ test('the times per week streak only breaks when a week closes under quota', fun
         '2026-07-21' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(2)
-        ->and($habit->bestStreak())->toBe(4);
+    expect($habit->currentStreak())->toBe(1)
+        ->and($habit->bestStreak())->toBe(1)
+        ->and($habit->history()->streak()->state->value)->toBe('at_risk');
 });
 
 test('empty days in the in-progress week never break the times per week streak', function () {
@@ -165,7 +175,7 @@ test('empty days in the in-progress week never break the times per week streak',
         '2026-07-15' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(3);
+    expect($habit->currentStreak())->toBe(1);
 });
 
 test('a sunday under quota does not break the streak while it is still today', function () {
@@ -183,10 +193,11 @@ test('a sunday under quota does not break the streak while it is still today', f
         '2026-07-14' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(4);
+    expect($habit->currentStreak())->toBe(1)
+        ->and($habit->history()->streak()->state->value)->toBe('ok');
 });
 
-test('a recorded but uncompleted day still counts toward the weekly quota', function () {
+test('a recorded but uncompleted day does not count toward the weekly quota, a 2-minute day does', function () {
     // Quota 2 last week: one full day and one partial day — the week
     // still closes fulfilled, so the current-week day extends the run.
     $habit = Habit::factory()->quantitative('pages', 20)->timesPerWeek(2)->create();
@@ -196,7 +207,11 @@ test('a recorded but uncompleted day still counts toward the weekly quota', func
         '2026-07-21' => [],
     ]);
 
-    expect($habit->currentStreak())->toBe(3);
+    expect($habit->currentStreak())->toBe(0);
+
+    $habit->days()->where('entry_date', '2026-07-16')->update(['two_minute_logged' => true]);
+
+    expect($habit->fresh()->currentStreak())->toBe(1);
 });
 
 test('completion for period on a daily habit is completed days over calendar days', function () {
@@ -252,16 +267,15 @@ test('completion for period on times per week pro-rates the weekly quota', funct
     expect($percent)->toBe(50);
 });
 
-test('the habit detail returns metrics and the daily series for the period', function () {
+test('the habit detail returns the tolerant streak and the 8-week calendar of marks', function () {
     $user = User::factory()->create();
-    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->daily()->create();
+    $habit = Habit::factory()->for($user)->quantitative('pages', 20)->daily()->create(['created_at' => '2026-07-20 12:00:00']);
     createDays($habit, [
         '2026-07-21' => ['completed' => false, 'completion_percent' => 50],
         '2026-07-22' => ['completion_percent' => 120],
     ]);
-    $habit->days()->where('entry_date', '2026-07-22')->update(['planned_delta_minutes' => 25]);
 
-    $response = $this->actingAs($user)->get("/habits/{$habit->id}?days=7", [
+    $response = $this->actingAs($user)->get("/habits/{$habit->id}", [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
     ]);
@@ -269,21 +283,14 @@ test('the habit detail returns metrics and the daily series for the period', fun
     $response->assertOk();
     $response->assertJsonPath('component', 'habits/show');
 
-    $metrics = $response->json('props.metrics');
-    $series = $response->json('props.series');
+    $marks = collect($response->json('props.habit.calendar'))->flatMap(fn (array $week) => $week['days'])->pluck('mark', 'date');
 
-    expect($metrics['current_streak'])->toBe(1)
-        ->and($metrics['best_streak'])->toBe(1)
-        ->and($series)->toHaveCount(7)
-        ->and($series[6]['date'])->toBe('2026-07-22')
-        ->and($series[6]['completion_percent'])->toBe(120)
-        ->and($series[6]['completed'])->toBeTrue()
-        ->and($series[6]['planned_delta_minutes'])->toBe(25)
-        ->and($series[5]['date'])->toBe('2026-07-21')
-        ->and($series[5]['completion_percent'])->toBe(50)
-        ->and($series[5]['completed'])->toBeFalse()
-        ->and($series[0]['completion_percent'])->toBe(0)
-        ->and($series[0]['scheduled'])->toBeTrue();
+    expect($response->json('props.habit.streak.current'))->toBe(1)
+        ->and($response->json('props.habit.streak.best'))->toBe(1)
+        ->and($response->json('props.habit.calendar'))->toHaveCount(8)
+        ->and($marks['2026-07-21'])->toBe('r')
+        ->and($marks['2026-07-22'])->toBe('d')
+        ->and($marks)->not->toHaveKey('2026-07-23');
 });
 
 test('a user cannot view another user\'s habit detail', function () {

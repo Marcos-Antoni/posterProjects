@@ -57,6 +57,17 @@ class Plan extends Model
     }
 
     /**
+     * Habits hanging from this plan (phase 4). Informational link: the
+     * plan's lifecycle never archives, retires or modifies them.
+     *
+     * @return HasMany<Habit, $this>
+     */
+    public function habits(): HasMany
+    {
+        return $this->hasMany(Habit::class);
+    }
+
+    /**
      * The plan's items in manual order.
      *
      * @return HasMany<Item, $this>

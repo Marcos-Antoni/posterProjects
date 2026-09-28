@@ -8,6 +8,7 @@ use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
 use App\Mcp\Tools\Habits\ListHabits;
 use App\Mcp\Tools\Habits\LogHabitEntry;
+use App\Mcp\Tools\Habits\LogTwoMinute;
 use App\Mcp\Tools\Habits\ShowHabit;
 use App\Mcp\Tools\Habits\TodayHabits;
 use App\Mcp\Tools\Habits\UnarchiveHabit;
@@ -57,5 +58,8 @@ class PosterServer extends Server
         ListHabits::class,
         ShowHabit::class,
         LogHabitEntry::class,
+        // --- phase 4: habits ---
+        LogTwoMinute::class,
+        // --- end phase 4 ---
     ];
 }

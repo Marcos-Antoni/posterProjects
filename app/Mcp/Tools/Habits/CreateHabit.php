@@ -2,9 +2,12 @@
 
 namespace App\Mcp\Tools\Habits;
 
-use App\Enums\HabitType;
-use App\Enums\RecurrenceType;
+use App\Actions\Habits\CreateHabit as CreateHabitAction;
+use App\Actions\Support\Actor;
+use App\Actions\Support\MajorOperationRequiresProposal;
 use App\Http\Requests\StoreHabitRequest;
+use App\Mcp\Support\HabitInputSchema;
+use App\Mcp\Support\PresentsHabits;
 use App\Mcp\Support\ReplaysFormRequest;
 use App\Mcp\Support\ResolvesAuthenticatedUser;
 use App\Mcp\Support\ResourceLinker;
@@ -16,13 +19,16 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Create a new personal habit for the authenticated user: yes/no or quantitative, on a daily, specific-weekdays, or times-per-week recurrence. Fields that do not apply to the chosen type or recurrence are dropped, mirroring the web form.')]
+#[Description('Nivel IA: major — creating a habit is a major operation: the AI never applies it on its own (it is refused and must be proposed to Marco). Same validation as the web form: a 2-minute version is required; yes/no or quantitative, on a daily, specific-weekdays or times-per-week recurrence; optional identity statement, objective (by key) and plan link, and level ladder. Fields that do not apply to the chosen type or recurrence are dropped.')]
 class CreateHabit extends Tool
 {
+    use HabitInputSchema;
+    use PresentsHabits;
     use ResolvesAuthenticatedUser;
 
     public function __construct(
         private ReplaysFormRequest $formRequests,
+        private CreateHabitAction $createHabit,
         private ResourceLinker $links,
     ) {}
 
@@ -33,28 +39,26 @@ class CreateHabit extends Tool
     {
         $user = $this->authenticatedUser($request);
 
+        $payload = $this->habitPayloadFromInput($user, $request->all());
+
+        if ($payload instanceof Response) {
+            return $payload;
+        }
+
         $validated = $this->formRequests
-            ->replay(StoreHabitRequest::class, $request->all(), $user)
+            ->replay(StoreHabitRequest::class, $payload, $user)
             ->validated();
 
-        $habit = Habit::create([
-            ...$validated,
-            'user_id' => $user->id,
-        ]);
+        try {
+            $habit = ($this->createHabit)(Actor::aiMcp($user), $validated);
+        } catch (MajorOperationRequiresProposal $exception) {
+            return Response::error($exception->getMessage());
+        }
+
+        $habit->load(['days', 'schedulePeriods', 'objective']);
 
         return Response::json([
-            'habit' => [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'habit_type' => $habit->habit_type,
-                'unit' => $habit->unit,
-                'daily_target' => $habit->daily_target,
-                'recurrence_type' => $habit->recurrence_type,
-                'weekdays' => $habit->weekdays,
-                'times_per_week' => $habit->times_per_week,
-                'planned_time' => $habit->planned_time,
-                'url' => $this->links->habit($habit),
-            ],
+            'habit' => $this->habitPayload($habit, $habit->history(Habit::todayLocalDate()), $this->links),
         ]);
     }
 
@@ -65,29 +69,6 @@ class CreateHabit extends Tool
      */
     public function schema(JsonSchema $schema): array
     {
-        return [
-            'name' => $schema->string()
-                ->description('Habit name.')
-                ->required(),
-            'habit_type' => $schema->string()
-                ->description('How completion is measured.')
-                ->enum(HabitType::class)
-                ->required(),
-            'unit' => $schema->string()
-                ->description('Unit of measurement (e.g. "pages"). Required when habit_type is "quantitative"; ignored otherwise.'),
-            'daily_target' => $schema->integer()
-                ->description('Daily target amount. Required when habit_type is "quantitative"; ignored otherwise.'),
-            'recurrence_type' => $schema->string()
-                ->description('How often the habit is expected.')
-                ->enum(RecurrenceType::class)
-                ->required(),
-            'weekdays' => $schema->array()
-                ->items($schema->integer()->min(1)->max(7))
-                ->description('ISO-8601 weekdays (1=Monday..7=Sunday), at least one, no duplicates. Required when recurrence_type is "specific_weekdays"; ignored otherwise.'),
-            'times_per_week' => $schema->integer()
-                ->description('Times per week, between 1 and 7. Required when recurrence_type is "times_per_week"; ignored otherwise.'),
-            'planned_time' => $schema->string()
-                ->description('Optional planned time of day, "H:i" (e.g. "07:30").'),
-        ];
+        return $this->habitSchema($schema);
     }
 }

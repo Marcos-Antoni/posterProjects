@@ -53,15 +53,15 @@
 
 ## 4. Phase 4 — Habits adaptation
 
-- [ ] 4.1 Migration: habits add objective_id, plan_id, two_minute_version, identity_statement, level, level_ladder; habit_days add two_minute_logged
-- [ ] 4.2 Test + implement 2-minute version required on create/update; logging it counts as shown-up but never `completed` (`habits`)
-- [ ] 4.3 Test + implement tolerant streak "never miss twice" for daily, weekdays and times-per-week, `streak_state` ok/at_risk/restart, best streak (design D5)
-- [ ] 4.4 Test + implement identity votes per identity statement over rolling 7 and 30 UTC-6 days, inheritance from objective (`habits`)
-- [ ] 4.5 Test + implement level ladder suggestions (≥80% over 14 days up, step down after break), owner-applied only
-- [ ] 4.6 Test + implement objective/plan links without cascading lifecycle effects
-- [ ] 4.7 Screens: Habits today (volver + 2-minute), Habits manage, Habit detail/form, Identity votes (screens 18–21) (mockups: visual/screens/18-habits-today.html, 19-habits-manage.html, 20-habit-detail.html, 21-identity-votes.html)
-- [ ] 4.8 API: extend `habits/today` to the 17-field shape keeping the 12 legacy fields; add `POST /api/v1/habits/{habit}/two-minute`; OpenAPI + contract test (`api-habits`)
-- [ ] 4.9 MCP: habit tools accept/return 2-minute version, streak state; add `log-two-minute`
+- [x] 4.1 Migration: habits add objective_id, plan_id, two_minute_version, identity_statement, level, level_ladder; habit_days add two_minute_logged
+- [x] 4.2 Test + implement 2-minute version required on create/update; logging it counts as shown-up but never `completed` (`habits`)
+- [x] 4.3 Test + implement tolerant streak "never miss twice" for daily, weekdays and times-per-week, `streak_state` ok/at_risk/restart, best streak (design D5)
+- [x] 4.4 Test + implement identity votes per identity statement over rolling 7 and 30 UTC-6 days, inheritance from objective (`habits`)
+- [x] 4.5 Test + implement level ladder suggestions (≥80% over 14 days up, step down after break), owner-applied only
+- [x] 4.6 Test + implement objective/plan links without cascading lifecycle effects
+- [x] 4.7 Screens: Habits today (volver + 2-minute), Habits manage, Habit detail/form, Identity votes (screens 18–21) (mockups: visual/screens/18-habits-today.html, 19-habits-manage.html, 20-habit-detail.html, 21-identity-votes.html)
+- [x] 4.8 API: extend `habits/today` to the 17-field shape keeping the 12 legacy fields; add `POST /api/v1/habits/{habit}/two-minute`; OpenAPI + contract test (`api-habits`)
+- [x] 4.9 MCP: habit tools accept/return 2-minute version, streak state; add `log-two-minute`
 
 ## 5. Phase 5 — Unlock graphs
 

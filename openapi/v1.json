@@ -860,7 +860,12 @@
                       "completed": true,
                       "peak_amount": 1,
                       "times_per_week": null,
-                      "week_recorded_days": null
+                      "week_recorded_days": null,
+                      "two_minute_version": "Llenar el vaso",
+                      "shown_up": true,
+                      "streak_current": 12,
+                      "streak_state": "ok",
+                      "objective_key": "SALUD"
                     },
                     {
                       "id": 7,
@@ -874,7 +879,12 @@
                       "completed": false,
                       "peak_amount": 3,
                       "times_per_week": null,
-                      "week_recorded_days": null
+                      "week_recorded_days": null,
+                      "two_minute_version": "Llenar el vaso",
+                      "shown_up": false,
+                      "streak_current": 12,
+                      "streak_state": "ok",
+                      "objective_key": "SALUD"
                     }
                   ]
                 }
@@ -964,7 +974,12 @@
                     "completed": false,
                     "peak_amount": 4,
                     "times_per_week": null,
-                    "week_recorded_days": null
+                    "week_recorded_days": null,
+                    "two_minute_version": "Llenar el vaso",
+                    "shown_up": false,
+                    "streak_current": 12,
+                    "streak_state": "ok",
+                    "objective_key": "SALUD"
                   }
                 }
               }
@@ -1066,7 +1081,12 @@
                     "completed": false,
                     "peak_amount": 4,
                     "times_per_week": null,
-                    "week_recorded_days": null
+                    "week_recorded_days": null,
+                    "two_minute_version": "Llenar el vaso",
+                    "shown_up": false,
+                    "streak_current": 12,
+                    "streak_state": "ok",
+                    "objective_key": "SALUD"
                   }
                 }
               }
@@ -1134,6 +1154,113 @@
                       "No hay nada que descontar hoy."
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/habits/{habit}/two-minute": {
+      "post": {
+        "operationId": "logHabitTwoMinute",
+        "tags": [
+          "Habits"
+        ],
+        "summary": "Log the 2-minute version today",
+        "description": "Records that the habit's 2-minute version was done on the current UTC-6 day: the day counts as shown-up for the tolerant streak (`streak_current`, `streak_state`) and for identity votes, but it never marks the day `completed` and never changes accumulated_amount. It is also the \"volver\" (restart) action after a miss. Idempotent within the day: a second call answers the same element and changes nothing. Empty body. Returns the same shape as a GET /habits/today element. Requires the `mobile` ability. Unknown, another user's, or archived `{habit}` all resolve to the identical generic 404.",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "habit",
+            "in": "path",
+            "required": true,
+            "description": "The habit's numeric id.",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The habit's progress for today, with `shown_up: true`.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TodayHabitResponse"
+                },
+                "example": {
+                  "data": {
+                    "id": 7,
+                    "date": "2026-09-27",
+                    "name": "Leer",
+                    "habit_type": "quantitative",
+                    "unit": "páginas",
+                    "target": 2,
+                    "accumulated_amount": 0,
+                    "completion_percent": 0,
+                    "completed": false,
+                    "peak_amount": 0,
+                    "times_per_week": null,
+                    "week_recorded_days": null,
+                    "two_minute_version": "Abrir el libro en el separador",
+                    "shown_up": true,
+                    "streak_current": 13,
+                    "streak_state": "ok",
+                    "objective_key": null
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No token, or a token that does not authenticate.",
+            "headers": {
+              "WWW-Authenticate": {
+                "description": "Bearer challenge.",
+                "schema": {
+                  "type": "string",
+                  "example": "Bearer"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthenticatedResponse"
+                },
+                "example": {
+                  "message": "No autenticado."
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "A valid token that lacks the `mobile` ability (e.g. an `mcp`-only token).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ForbiddenResponse"
+                },
+                "example": {
+                  "message": "Este token no tiene permiso para usar esta API."
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "`{habit}` is unresolvable for the requesting user: unknown id, another user's habit, or an archived habit. All three causes are byte-identical and never disclose which one occurred.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotFoundResponse"
+                },
+                "example": {
+                  "message": "Recurso no encontrado."
                 }
               }
             }
@@ -1261,7 +1388,7 @@
       },
       "TodayHabit": {
         "type": "object",
-        "description": "Exactly these 12 fields. The four day-derived fields (accumulated_amount, completion_percent, completed, peak_amount) are flattened to their zero/false value when nothing has been logged today — never null. peak_amount is the day's high-water mark and is load-bearing: it is the only field on the wire that explains a completed day whose accumulated_amount was corrected downward by a decrement.",
+        "description": "Exactly these 17 fields: the 12 legacy fields (names, types and semantics unchanged, so an unmodified posterMobile build keeps working) plus two_minute_version, shown_up, streak_current, streak_state and objective_key (Marcos OS, additive). The day-derived fields (accumulated_amount, completion_percent, completed, peak_amount, shown_up) are flattened to their zero/false value when nothing has been logged today — never null. peak_amount is the day's high-water mark and is load-bearing: it is the only field on the wire that explains a completed day whose accumulated_amount was corrected downward by a decrement.",
         "required": [
           "id",
           "date",
@@ -1274,7 +1401,12 @@
           "completed",
           "peak_amount",
           "times_per_week",
-          "week_recorded_days"
+          "week_recorded_days",
+          "two_minute_version",
+          "shown_up",
+          "streak_current",
+          "streak_state",
+          "objective_key"
         ],
         "properties": {
           "id": {
@@ -1327,6 +1459,32 @@
             "type": "integer",
             "nullable": true,
             "description": "Days already recorded in the current Monday-based week. Populated only for times_per_week habits; null otherwise."
+          },
+          "two_minute_version": {
+            "type": "string",
+            "description": "The habit's 2-minute version: the smallest physical start. Logging it (POST /habits/{habit}/two-minute) counts as shown-up but never as completed. Empty string only for habits created before Marcos OS that never got one."
+          },
+          "shown_up": {
+            "type": "boolean",
+            "description": "True when today is completed or its 2-minute version was logged."
+          },
+          "streak_current": {
+            "type": "integer",
+            "description": "The tolerant streak (\"never miss twice\"), in opportunities: days (daily), scheduled days (specific weekdays) or weeks (times per week). A single missed opportunity does not break it; two consecutive ones do. A still-pending today never counts as a miss."
+          },
+          "streak_state": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "at_risk",
+              "restart"
+            ],
+            "description": "`at_risk`: exactly the most recent opportunity was missed (\"hoy toca volver\"). `restart`: the two most recent were missed; the run closed and a new one starts with the 2-minute version. `ok` otherwise. Never a count of missed days."
+          },
+          "objective_key": {
+            "type": "string",
+            "nullable": true,
+            "description": "Key of the objective the habit hangs from, or null."
           }
         }
       },

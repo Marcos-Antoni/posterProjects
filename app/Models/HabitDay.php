@@ -15,6 +15,10 @@ use Illuminate\Support\Carbon;
  * and the planned-vs-actual delta of the first entry of the day.
  * `entry_date` is the day in the feature's fixed UTC-6 zone.
  *
+ * `two_minute_logged` records that the habit's 2-minute version was done
+ * that day: it counts as shown-up (streak, identity vote) but never as
+ * `completed`.
+ *
  * `peak_amount` is the day's high-water mark: it never drops, even when
  * `accumulated_amount` is corrected downward by a decrement. `completed`
  * is sticky once `peak_amount` reaches the habit's target and MUST NOT be
@@ -28,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property int $peak_amount
  * @property int $completion_percent
  * @property bool $completed
+ * @property bool $two_minute_logged
  * @property int|null $planned_delta_minutes
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
@@ -39,6 +44,7 @@ use Illuminate\Support\Carbon;
     'peak_amount',
     'completion_percent',
     'completed',
+    'two_minute_logged',
     'planned_delta_minutes',
 ])]
 class HabitDay extends Model
@@ -56,7 +62,26 @@ class HabitDay extends Model
         return [
             'entry_date' => 'date',
             'completed' => 'boolean',
+            'two_minute_logged' => 'boolean',
         ];
+    }
+
+    /**
+     * Shown-up (habits spec): the day was completed, or its 2-minute
+     * version was logged. The 2-minute flag never implies `completed`.
+     */
+    public function isShownUp(): bool
+    {
+        return $this->completed || $this->two_minute_logged;
+    }
+
+    /**
+     * Whether something was actually recorded that day (an amount, a check
+     * or the 2-minute version) — an emptied row left by an undo is not.
+     */
+    public function hasRecord(): bool
+    {
+        return $this->isShownUp() || $this->accumulated_amount > 0 || $this->peak_amount > 0;
     }
 
     /**
