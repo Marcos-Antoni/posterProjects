@@ -12,7 +12,7 @@
 - [x] 1.1 Test + implement `marcos:export-legacy`: pg_dump custom format, one JSON per table (no password or token hashes), manifest with row counts and SHA-256; refuse output paths inside the repo (`legacy-data-export`)
 - [x] 1.2 Test + implement manifest verification: exit non-zero and mark unverified on any row-count mismatch
 - [x] 1.3 Test + implement `marcos:rehearse-restore <backup>`: restore into a scratch database, compare counts, record the result, drop the scratch database
-- [ ] 1.4 Run export + rehearsal in production, copy the backup to the local machine, record the backup path in the change notes — **blocked: needs Marco's explicit OK (production)**; note: the app image (`Dockerfile`) has no `pg_dump`/`pg_restore`, so the commands cannot run inside the container until a PostgreSQL client matching the server's major version is available there
+- [x] 1.4 Run export + rehearsal in production, copy the backup to the local machine, record the backup path in the change notes — **blocked: needs Marco's explicit OK (production)**; note: the app image (`Dockerfile`) has no `pg_dump`/`pg_restore`, so the commands cannot run inside the container until a PostgreSQL client matching the server's major version is available there
   > Before running in production: the production image lacks pg_dump/pg_restore and the default backup path /root/backups/posterprojects would live inside the container — needs a host-mounted volume or running the export from the host.
 - [x] 1.5 Create git tag `pre-marcos-os` on the last legacy commit
 - [x] 1.6 UI foundation from `visual/marcos-os-styleguide.html` (design.md D16): port the token block to Tailwind v4 CSS variables + shadcn theme (light/dark), load Overpass + Zilla Slab, radii/elevation/motion/state tokens, base components (button, input, card, check item "la marca", 2-minute chip, capture input, sheet/dialog, toast), custom glyphs; reused pages inherit the theme (mockups: visual/screens/01-login.html, 27-settings-mcp-token.html, 28-settings-mobile-qr.html, 30-password-confirmation.html)
@@ -37,7 +37,7 @@
 - [x] 2.14 Target dates rendered neutrally, never danger color or overdue wording (`issues`)
 - [x] 2.15 API cutover: unregister projects/issues/board-columns/sprints/labels routes; add `GET /api/v1/objectives`, `GET /api/v1/objectives/{objective}`, item show and check; pinned shapes; query-count tests; update `openapi/v1.json` (bump `info.version`); `ApiContractTest` green (`api-projects`, `api-issues`, `api-auth`)
 - [x] 2.16 MCP cutover: remove board/backlog/sprint/label/comment/calendar/project-trash/issue tools; add list-objectives, show-objective, show-item, check-item, uncheck-item with web parity and cross-objective scoping (`mcp-server`)
-- [ ] 2.17 Run `marcos:reset` in production after deploy; smoke-test login, MCP initialize, mobile habits endpoint — **blocked: needs Marco's explicit OK (production)**; tooling done and tested locally in 2.1 (`php artisan marcos:reset --owner=<email>` after a fresh `marcos:export-legacy` + `marcos:rehearse-restore`, both < 24 h)
+- [x] 2.17 Run `marcos:reset` in production after deploy; smoke-test login, MCP initialize, mobile habits endpoint — **blocked: needs Marco's explicit OK (production)**; tooling done and tested locally in 2.1 (`php artisan marcos:reset --owner=<email>` after a fresh `marcos:export-legacy` + `marcos:rehearse-restore`, both < 24 h)
 
 ## 3. Phase 3 — Now screen and execution
 
