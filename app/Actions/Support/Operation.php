@@ -68,6 +68,17 @@ enum Operation: string
             // for what Marco explicitly named — starting the item he asked
             // for, or triaging the capture he asked to convert.
             self::StartItem, self::ConvertCaptureToItem => AiTier::Minor,
+            // 2026-09-29 decision (supersedes the phase-8 major/minor split for
+            // these): the AI creates and edits structure directly, audited —
+            // only retiring or restoring any element stays a proposal.
+            self::CreateObjective,
+            self::UpdateObjective,
+            self::CreatePlan,
+            self::UpdatePlan,
+            self::AddItem,
+            self::UpdateItem,
+            self::AddDependency,
+            self::RemoveDependency => AiTier::Minor,
             default => AiTier::Major,
         };
     }

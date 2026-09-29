@@ -2,11 +2,6 @@
 
 namespace App\Actions\Proposals;
 
-use App\Actions\Items\AddDependency;
-use App\Actions\Items\AddItem;
-use App\Actions\Items\UpdateItem as UpdateItemAction;
-use App\Actions\Objectives\CreateObjective;
-use App\Actions\Plans\CreatePlan;
 use App\Actions\Retirement\RetireElement;
 use App\Actions\Support\Actor;
 use App\Enums\ProposalKind;
@@ -19,30 +14,24 @@ use App\Models\Objective;
 use App\Models\Plan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Arr;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Applies an accepted proposal exactly as stored, reusing the same domain
- * actions the web and MCP already call (ai-operations spec: "Accepting a
- * proposal ... applies exactly as proposed"). Called with an owner actor
- * (`Actor::ownerWeb`): Marco himself accepted it from the web, so the tier
- * gate's major-operation restriction (which exists for an AI actor, not the
- * owner) does not apply — this trimmed slice has no permission grants.
+ * Applies an accepted proposal exactly as stored (ai-operations spec:
+ * "Accepting a proposal ... applies exactly as proposed"). `retire` is the
+ * only remaining kind (2026-09-29 decision: structural operations —
+ * create_objective, add_items, update_item, add_dependency, create_plan —
+ * moved to direct MCP tools, reusing the same domain actions without a
+ * proposal detour). Called with an owner actor (`Actor::ownerWeb`): Marco
+ * himself accepted it from the web, so the tier gate's major-operation
+ * restriction (which exists for an AI actor, not the owner) does not apply.
  *
- * Returns the primary affected model (the new plan, or the retired element)
- * so the caller can record it on the accepted proposal's audit row.
+ * Returns the retired element so the caller can record it on the accepted
+ * proposal's audit row.
  */
 class ApplyProposal
 {
-    public function __construct(
-        private CreatePlan $createPlan,
-        private AddItem $addItem,
-        private RetireElement $retireElement,
-        private CreateObjective $createObjective,
-        private UpdateItemAction $updateItem,
-        private AddDependency $addDependency,
-    ) {}
+    public function __construct(private RetireElement $retireElement) {}
 
     /**
      * @throws ModelNotFoundException<Model>|ValidationException
@@ -50,151 +39,9 @@ class ApplyProposal
     public function __invoke(Actor $actor, AiProposal $proposal): Model
     {
         return match (ProposalKind::tryFrom($proposal->kind)) {
-            ProposalKind::CreatePlan => $this->applyCreatePlan($actor, $proposal->payload),
             ProposalKind::Retire => $this->applyRetire($actor, $proposal->payload),
-            ProposalKind::CreateObjective => $this->applyCreateObjective($actor, $proposal->payload),
-            ProposalKind::AddItems => $this->applyAddItems($actor, $proposal->payload),
-            ProposalKind::UpdateItem => $this->applyUpdateItem($actor, $proposal->payload),
-            ProposalKind::AddDependency => $this->applyAddDependency($actor, $proposal->payload),
             null => throw ValidationException::withMessages(['kind' => "Tipo de propuesta no soportado: «{$proposal->kind}»."]),
         };
-    }
-
-    /**
-     * @param  array<string, mixed>  $payload
-     *
-     * @throws ModelNotFoundException<Objective>|ValidationException
-     */
-    private function applyCreatePlan(Actor $actor, array $payload): Plan
-    {
-        $objective = $this->findObjective($actor, (string) ($payload['objective_key'] ?? ''));
-
-        $plan = ($this->createPlan)($actor, $objective, [
-            'title' => (string) ($payload['title'] ?? ''),
-            'level' => $payload['level'] ?? null,
-        ]);
-
-        foreach ((array) ($payload['items'] ?? []) as $item) {
-            ($this->addItem)($actor, $plan, (array) $item);
-        }
-
-        return $plan;
-    }
-
-    /**
-     * A new objective, its complete 5-point control plan, and any nested
-     * plans/items/dependencies — one transaction, entirely from EXISTING
-     * domain actions (`CreateObjective`, `CreatePlan`, `AddItem`,
-     * `AddDependency`). Items are created first, in payload order, into a
-     * flat list; `dependencies` then resolves by index into that list, so an
-     * edge may point either way regardless of declaration order.
-     *
-     * @param  array<string, mixed>  $payload
-     *
-     * @throws ValidationException
-     */
-    private function applyCreateObjective(Actor $actor, array $payload): Objective
-    {
-        $objective = ($this->createObjective)($actor, $payload);
-
-        $items = [];
-
-        foreach ((array) ($payload['plans'] ?? []) as $planData) {
-            $planData = (array) $planData;
-            $plan = ($this->createPlan)($actor, $objective, $planData);
-
-            foreach ((array) ($planData['items'] ?? []) as $itemData) {
-                $items[] = ($this->addItem)($actor, $plan, (array) $itemData);
-            }
-        }
-
-        $this->applyDependencies($actor, $items, (array) ($payload['dependencies'] ?? []));
-
-        return $objective;
-    }
-
-    /**
-     * Items (and optional dependencies between them) added to an existing
-     * plan, reusing `AddItem`/`AddDependency` exactly like `create_objective`.
-     *
-     * @param  array<string, mixed>  $payload
-     *
-     * @throws ModelNotFoundException<Model>|ValidationException
-     */
-    private function applyAddItems(Actor $actor, array $payload): Plan
-    {
-        $plan = $this->findPlan($actor, (string) ($payload['objective_key'] ?? ''), (int) ($payload['plan_id'] ?? 0));
-
-        $items = [];
-
-        foreach ((array) ($payload['items'] ?? []) as $itemData) {
-            $items[] = ($this->addItem)($actor, $plan, (array) $itemData);
-        }
-
-        $this->applyDependencies($actor, $items, (array) ($payload['dependencies'] ?? []));
-
-        return $plan;
-    }
-
-    /**
-     * Title, 2-minute version, target date or a move to another plan of the
-     * same objective — only the fields the proposal actually included
-     * (`UpdateItem`'s own "sometimes" semantics).
-     *
-     * @param  array<string, mixed>  $payload
-     *
-     * @throws ModelNotFoundException<Item>|ValidationException
-     */
-    private function applyUpdateItem(Actor $actor, array $payload): Item
-    {
-        $item = $this->findItemByKey($actor, (string) ($payload['item_key'] ?? ''));
-
-        $data = Arr::only($payload, ['title', 'description', 'two_minute_version', 'target_date', 'plan_id', 'position']);
-
-        return ($this->updateItem)($actor, $item, $data);
-    }
-
-    /**
-     * "Completing A unlocks B" between two EXISTING items, resolved by their
-     * public key (may cross objectives, like the web's own dependency form).
-     *
-     * @param  array<string, mixed>  $payload
-     *
-     * @throws ModelNotFoundException<Item>|ValidationException
-     */
-    private function applyAddDependency(Actor $actor, array $payload): Item
-    {
-        $prerequisite = $this->findItemByKey($actor, (string) ($payload['prerequisite_key'] ?? ''));
-        $dependent = $this->findItemByKey($actor, (string) ($payload['dependent_key'] ?? ''));
-
-        ($this->addDependency)($actor, $prerequisite, $dependent);
-
-        return $dependent->refresh();
-    }
-
-    /**
-     * Resolves each `{prerequisite, dependent}` pair by index into `$items`
-     * (the flat list just created, in declaration order) and links them.
-     * `ValidatesProposalPayload` already refused an out-of-range index at
-     * propose time — this is a defensive re-check, never expected to trip.
-     *
-     * @param  list<Item>  $items
-     * @param  list<array<string, mixed>>  $dependencies
-     *
-     * @throws ValidationException
-     */
-    private function applyDependencies(Actor $actor, array $items, array $dependencies): void
-    {
-        foreach ($dependencies as $dependency) {
-            $prerequisite = $items[(int) ($dependency['prerequisite'] ?? -1)] ?? null;
-            $dependent = $items[(int) ($dependency['dependent'] ?? -1)] ?? null;
-
-            if ($prerequisite === null || $dependent === null) {
-                throw ValidationException::withMessages(['dependencies' => 'Una dependencia apunta a una tarea que no está en esta propuesta.']);
-            }
-
-            ($this->addDependency)($actor, $prerequisite, $dependent);
-        }
     }
 
     /**
@@ -266,25 +113,6 @@ class ApplyProposal
     {
         $objective = $this->findObjective($actor, $objectiveKey);
         $item = Item::resolveByKey($objective, $itemKey);
-
-        if ($item === null) {
-            throw (new ModelNotFoundException)->setModel(Item::class, [$itemKey]);
-        }
-
-        return $item;
-    }
-
-    /**
-     * An item by its public key alone (e.g. "SALUD-7"), among the actor's
-     * owned objectives — used by `update_item` and `add_dependency`, whose
-     * payload names one item directly instead of an objective_key/item_key
-     * pair.
-     *
-     * @throws ModelNotFoundException<Item>
-     */
-    private function findItemByKey(Actor $actor, string $itemKey): Item
-    {
-        $item = Item::resolveForOwner($actor->user, $itemKey);
 
         if ($item === null) {
             throw (new ModelNotFoundException)->setModel(Item::class, [$itemKey]);

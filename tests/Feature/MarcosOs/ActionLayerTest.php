@@ -58,10 +58,20 @@ test('only the minor list is minor; every other operation is major', function ()
     expect(Operation::CheckItem->tier())->toBe(AiTier::Minor)
         ->and(Operation::UncheckItem->tier())->toBe(AiTier::Minor)
         ->and(Operation::UpdateMetricCurrent->tier())->toBe(AiTier::Minor)
-        ->and(Operation::AddItem->tier())->toBe(AiTier::Major)
-        ->and(Operation::UpdatePlan->tier())->toBe(AiTier::Major)
-        ->and(Operation::AddDependency->tier())->toBe(AiTier::Major)
-        ->and(Operation::CreateObjective->tier())->toBe(AiTier::Major);
+        // 2026-09-29 decision: the AI creates/edits structure directly.
+        ->and(Operation::CreateObjective->tier())->toBe(AiTier::Minor)
+        ->and(Operation::UpdateObjective->tier())->toBe(AiTier::Minor)
+        ->and(Operation::CreatePlan->tier())->toBe(AiTier::Minor)
+        ->and(Operation::UpdatePlan->tier())->toBe(AiTier::Minor)
+        ->and(Operation::AddItem->tier())->toBe(AiTier::Minor)
+        ->and(Operation::UpdateItem->tier())->toBe(AiTier::Minor)
+        ->and(Operation::AddDependency->tier())->toBe(AiTier::Minor)
+        ->and(Operation::RemoveDependency->tier())->toBe(AiTier::Minor)
+        // retire/restore (any element kind) stay major — the only ones still
+        // going through `propose`.
+        ->and(Operation::RetireElement->tier())->toBe(AiTier::Major)
+        ->and(Operation::RestoreElement->tier())->toBe(AiTier::Major)
+        ->and(Operation::ActivateObjective->tier())->toBe(AiTier::Major);
 });
 
 test('owner actors pass through the gate for any operation', function (Operation $operation) {
@@ -80,7 +90,7 @@ test('an AI actor may apply a minor operation', function () {
 });
 
 test('an AI actor cannot apply a major operation without a grant', function () {
-    app(TierGate::class)->authorize(Actor::aiMcp(User::factory()->make()), Operation::AddItem);
+    app(TierGate::class)->authorize(Actor::aiMcp(User::factory()->make()), Operation::RetireElement);
 })->throws(MajorOperationRequiresProposal::class, 'propose');
 
 test('an AI-applied change is audited with before and after, inside the transaction', function () {
@@ -131,7 +141,7 @@ test('a failed change rolls back and writes no audit entry', function () {
 test('a blocked major AI operation changes nothing', function () {
     $objective = Objective::factory()->create(['title' => 'Original']);
 
-    expect(fn () => app(DomainTransaction::class)->run(Actor::aiMcp($objective->user), Operation::UpdateObjective, $objective, function () use ($objective): void {
+    expect(fn () => app(DomainTransaction::class)->run(Actor::aiMcp($objective->user), Operation::ActivateObjective, $objective, function () use ($objective): void {
         $objective->update(['title' => 'Cambiado por la IA']);
     }))->toThrow(MajorOperationRequiresProposal::class);
 

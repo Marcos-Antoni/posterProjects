@@ -176,74 +176,16 @@ test('start-item is a minor MCP tool (phase 8): an AI actor starts an available 
         ->and($audit->target_id)->toBe($item->id);
 });
 
-test('propose create_objective, once accepted, creates the objective, its control plan, plans, items and dependencies in one go', function () {
-    $user = User::factory()->create();
-
-    $payload = [
-        ...mosObjectiveData(['key' => 'AIOBJ']),
-        'plans' => [
-            [
-                'title' => 'Semana 1',
-                'items' => [
-                    ['title' => 'Investigar', 'two_minute_version' => 'Abrir el navegador'],
-                    ['title' => 'Escribir informe', 'kind' => 'milestone', 'two_minute_version' => 'Abrir el editor'],
-                ],
-            ],
-        ],
-        'dependencies' => [
-            ['prerequisite' => 0, 'dependent' => 1],
-        ],
-    ];
-
-    $response = PosterServer::actingAs($user)->tool(Propose::class, [
-        'kind' => 'create_objective',
-        'payload' => $payload,
-        'summary' => 'Crear el objetivo AIOBJ con su plan de la semana 1.',
-    ]);
-
-    $response->assertOk();
-
-    $proposal = AiProposal::query()->where('user_id', $user->id)->sole();
-
-    expect($proposal->kind)->toBe('create_objective')
-        ->and($proposal->status)->toBe(ProposalStatus::Pending)
-        ->and(Objective::query()->count())->toBe(0);
-
-    $this->actingAs($user)
-        ->post(route('ai.proposals.accept', $proposal))
-        ->assertRedirect();
-
-    $objective = Objective::query()->where('key', 'AIOBJ')->sole();
-    $plan = $objective->plans()->sole();
-    $items = $plan->items()->orderBy('id')->get();
-
-    expect($objective->controlPlan)->not->toBeNull()
-        ->and($objective->controlPlan->outcome)->not->toBeNull()
-        ->and($plan->title)->toBe('Semana 1')
-        ->and($items)->toHaveCount(2)
-        ->and($items[1]->prerequisites->pluck('id')->all())->toBe([$items[0]->id]);
-
-    $audit = AiAuditLog::query()->where('proposal_id', $proposal->id)->sole();
-
-    expect($audit->target_type)->toBe('objective')
-        ->and($audit->target_id)->toBe($objective->id);
-});
-
-test('propose create_objective with an incomplete control plan is rejected at propose time, nothing written', function () {
+test('propose no longer accepts a structural kind (2026-09-29 decision: those are direct MCP tools now)', function (string $kind) {
     $user = User::factory()->create();
 
     $response = PosterServer::actingAs($user)->tool(Propose::class, [
-        'kind' => 'create_objective',
-        'payload' => [
-            'key' => 'AIBAD',
-            'title' => 'Objetivo incompleto',
-            // outcome/deadline/metric/risks/contingency are missing on purpose.
-        ],
-        'summary' => 'Crear un objetivo sin plan de control (debería rechazarse).',
+        'kind' => $kind,
+        'payload' => ['key' => 'AIOBJ'],
+        'summary' => 'Debería rechazarse: ya no es un kind de propose.',
     ]);
 
-    $response->assertHasErrors(['Falta el resultado']);
+    $response->assertHasErrors(['Tipo de propuesta no soportado']);
 
-    expect(AiProposal::query()->count())->toBe(0)
-        ->and(Objective::query()->where('key', 'AIBAD')->exists())->toBeFalse();
-});
+    expect(AiProposal::query()->count())->toBe(0);
+})->with(['create_objective', 'create_plan', 'add_items', 'update_item', 'add_dependency']);
