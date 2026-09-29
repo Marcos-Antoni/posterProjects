@@ -5,8 +5,8 @@ use App\Models\Item;
 use App\Models\ItemDependency;
 use App\Models\Objective;
 use App\Models\Plan;
+use App\Models\Retirement;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 /*
 | Task 5.1 — graph read models (unlock-graph spec): the per-objective graph
@@ -62,10 +62,8 @@ test('retired items are excluded from nodes and edges and listed apart with thei
     $b = Item::factory()->for($plan)->create();
     graphEdge($a, $retired);
     graphEdge($retired, $b);
-    DB::table('retirements')->insert([
-        'retirable_type' => 'item', 'retirable_id' => $retired->id, 'reason' => 'planificar sin práctica',
-        'decision' => 'archive', 'retired_at' => now(), 'created_at' => now(), 'updated_at' => now(),
-    ]);
+    // Phase 6 retirements schema (user_id, kind, objective_id…) via its factory.
+    Retirement::factory()->create(['retirable_id' => $retired->id, 'reason' => 'planificar sin práctica']);
 
     $graph = UnlockGraph::forObjective($objective);
 

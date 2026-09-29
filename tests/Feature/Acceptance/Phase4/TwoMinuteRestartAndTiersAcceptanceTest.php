@@ -137,7 +137,7 @@ test('the restart (2-minute) logs today only and never back-fills the missed day
 
 test('spec: an archived habit rejects the 2-minute version and entries on web, API and MCP', function () {
     $user = User::factory()->create();
-    $habit = p4aHabit('2026-09-01', ['archived_at' => now()], user: $user);
+    $habit = p4aHabit('2026-09-01', ['retired_at' => now()], user: $user);
 
     $this->actingAs($user)->post("/habits/{$habit->id}/two-minute");
     $this->actingAs($user)->post("/habits/{$habit->id}/entries", ['amount' => 1]);

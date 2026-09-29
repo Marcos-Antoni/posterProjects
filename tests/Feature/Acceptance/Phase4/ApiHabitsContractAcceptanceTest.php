@@ -143,7 +143,7 @@ test('two-minute after completing the day keeps completed and does not double-co
 test('two-minute shares the non-disclosing 404 set: unknown, another user\'s and archived habits', function () {
     $user = User::factory()->create();
     $foreign = p4aHabit('2026-09-01');
-    $archived = p4aHabit('2026-09-01', ['archived_at' => now()], user: $user);
+    $archived = p4aHabit('2026-09-01', ['retired_at' => now()], user: $user);
     $headers = p4aBearer($user);
 
     $bodies = [];

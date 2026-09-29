@@ -91,9 +91,10 @@ test('screen 19: every habit with link, level, streak and a due level suggestion
             ->where('habits.1.suggestion.direction', 'up')
             ->where('habits.1.suggestion.cast', 14)
             ->where('habits.1.suggestion.possible', 14)
-            ->has('retired', 1)
-            ->where('retired.0.id', $old->id)
-            ->where('retired.0.recorded_days', 9));
+            // Retired habits are visible only in Retirados (retirement spec):
+            // the manage screen just counts them and links there.
+            ->missing('retired')
+            ->where('retired_count', 1));
 });
 
 test('screen 20: detail with 8-week calendar, votes for its identity, ladder, suggestion and the form options', function () {

@@ -4,8 +4,8 @@ use App\Models\Item;
 use App\Models\ItemDependency;
 use App\Models\Objective;
 use App\Models\Plan;
+use App\Models\Retirement;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 /*
 | Tasks 5.2 / 5.3 in a real browser, with the mockups' 14-day program: the
@@ -42,10 +42,8 @@ function seedMockupProgram(User $owner): void
     $d13 = Item::factory()->for($week2)->milestone()->create(['title' => 'Especificar “Ahora”']);
     $d14 = Item::factory()->for($close)->create(['title' => 'Backlog y primera tarea']);
     $retired = Item::factory()->for($week1)->retired()->create(['title' => 'Diseñar segundo cerebro completo']);
-    DB::table('retirements')->insert([
-        'retirable_type' => 'item', 'retirable_id' => $retired->id, 'reason' => 'planificar sin práctica',
-        'decision' => 'archive', 'retired_at' => now(), 'created_at' => now(), 'updated_at' => now(),
-    ]);
+    // Phase 6 retirements schema (user_id, kind, objective_id…) via its factory.
+    Retirement::factory()->create(['retirable_id' => $retired->id, 'reason' => 'planificar sin práctica']);
 
     $link($d1, $d2);
     $link($d2, $d3);

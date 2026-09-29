@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { Fragment, useState } from 'react';
 import type { ReactElement } from 'react';
 
@@ -6,18 +6,12 @@ import {
     ArchiveIcon,
     ArrowDownIcon,
     ArrowUpIcon,
-    RestartIcon,
 } from '@/components/habits/marks';
 import { PencilIcon, PlusIcon } from '@/components/marcos/icons';
 import { RetireDialog } from '@/components/marcos/retire-dialog';
 import AppLayout from '@/layouts/app-layout';
 import { scheduleLabel, streakCount } from '@/lib/habits';
-import type {
-    HabitSummary,
-    LevelSuggestion,
-    RecurrenceType,
-} from '@/lib/habits';
-import { formatLongDate } from '@/lib/marcos';
+import type { HabitSummary, LevelSuggestion } from '@/lib/habits';
 import {
     create as habitCreate,
     index as habitsIndex,
@@ -26,20 +20,9 @@ import {
     show as habitShow,
     today as habitsToday,
 } from '@/routes/habits';
-import { restore as retiredRestore } from '@/routes/retired';
+import { index as retiredIndex } from '@/routes/retired';
 
 type ManagedHabit = HabitSummary & { suggestion: LevelSuggestion | null };
-
-type RetiredHabit = {
-    id: number;
-    name: string;
-    two_minute_version: string;
-    recurrence_type: RecurrenceType;
-    retired_at: string | null;
-    reason: string | null;
-    retirement_id: number | null;
-    recorded_days: number;
-};
 
 /**
  * Screen 19 (mockup visual/screens/19-habits-manage.html): every habit with
@@ -47,17 +30,17 @@ type RetiredHabit = {
  * streak — never a count of misses. A level suggestion (≥ 80 % over 14 days,
  * or a step down after a break) shows under its row; Marco decides. Nothing
  * is deleted: a habit is retired with a written reason (the shared retire
- * dialog, Phase 6) and "Devolver" restores it with its history intact.
+ * dialog, Phase 6). Retired habits are visible only in Retirados (retirement
+ * spec), where "Devolver al mapa" restores them with their history intact;
+ * this screen only counts them and links there.
  */
 export default function HabitsManage({
     habits,
-    retired,
+    retired_count: retiredCount,
 }: {
     habits: ManagedHabit[];
-    retired: RetiredHabit[];
+    retired_count: number;
 }) {
-    const [showRetired, setShowRetired] = useState(true);
-
     return (
         <div className="mos-s19">
             <Head title="Todos los hábitos" />
@@ -125,113 +108,19 @@ export default function HabitsManage({
 
             <div className="toolbar">
                 <h2>Retirados</h2>
-                <button
-                    type="button"
-                    className="switch"
-                    role="switch"
-                    aria-checked={showRetired}
-                    onClick={() => setShowRetired(!showRetired)}
-                    style={{
-                        background: 'none',
-                        border: 0,
-                        color: 'inherit',
-                        padding: 0,
-                    }}
-                >
-                    <i
-                        aria-hidden="true"
-                        style={
-                            showRetired
-                                ? undefined
-                                : { background: 'var(--input)' }
-                        }
-                    />
-                    Mostrar retirados
-                </button>
             </div>
-
-            {showRetired && (
-                <div className="card">
-                    <table className="tbl retired">
-                        <thead>
-                            <tr>
-                                <th scope="col">Hábito</th>
-                                <th scope="col">Retirado</th>
-                                <th scope="col">Razón</th>
-                                <th scope="col">Historia</th>
-                                <th scope="col">
-                                    <span className="sr">Acciones</span>
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {retired.length === 0 && (
-                                <tr>
-                                    <td colSpan={5}>
-                                        No hay hábitos retirados.
-                                    </td>
-                                </tr>
-                            )}
-                            {retired.map((habit) => (
-                                <tr key={habit.id}>
-                                    <td className="nm">
-                                        <span
-                                            className="bar hatch"
-                                            aria-hidden="true"
-                                        />
-                                        <span>
-                                            <b>{habit.name}</b>
-                                            <span className="meta">
-                                                Archivado tal cual
-                                            </span>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        {habit.retired_at
-                                            ? formatLongDate(
-                                                  habit.retired_at.slice(0, 10),
-                                              )
-                                            : ''}
-                                    </td>
-                                    <td>
-                                        {habit.reason && (
-                                            <q className="reason">
-                                                {habit.reason}
-                                            </q>
-                                        )}
-                                    </td>
-                                    <td>
-                                        {habit.recorded_days}{' '}
-                                        {habit.recorded_days === 1
-                                            ? 'día registrado'
-                                            : 'días registrados'}
-                                    </td>
-                                    <td>
-                                        <div className="rowacts">
-                                            {habit.retirement_id !== null && (
-                                                <button
-                                                    className="btn-sm btn-outline"
-                                                    type="button"
-                                                    onClick={() =>
-                                                        router.post(
-                                                            retiredRestore(
-                                                                habit.retirement_id!,
-                                                            ).url,
-                                                        )
-                                                    }
-                                                >
-                                                    <RestartIcon size={16} />
-                                                    Devolver
-                                                </button>
-                                            )}
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-            )}
+            <div className="card">
+                <p className="meta" style={{ margin: 0, padding: 16 }}>
+                    {retiredCount === 0
+                        ? 'No hay hábitos retirados.'
+                        : `${retiredCount} ${retiredCount === 1 ? 'hábito retirado' : 'hábitos retirados'}, con su razón y su historia.`}{' '}
+                    {retiredCount > 0 && (
+                        <Link href={retiredIndex({ query: { kind: 'habit' } })}>
+                            Verlos en Retirados, desde donde se devuelven
+                        </Link>
+                    )}
+                </p>
+            </div>
         </div>
     );
 }

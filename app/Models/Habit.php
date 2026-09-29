@@ -4,13 +4,12 @@ namespace App\Models;
 
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
-use App\Models\Habits\HabitHistory;
 use App\Models\Concerns\HasRetirement;
 use App\Models\Concerns\Retirable;
+use App\Models\Habits\HabitHistory;
 use Carbon\CarbonInterface;
 use Database\Factories\HabitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;

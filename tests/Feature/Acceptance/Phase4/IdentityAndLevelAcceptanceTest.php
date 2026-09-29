@@ -100,7 +100,7 @@ test('a habit\'s own statement wins over its objective\'s', function () {
 
 test('archived habits and other users\' habits never vote', function () {
     $user = User::factory()->create();
-    $archived = p4aHabit('2026-09-01', ['identity_statement' => 'leo', 'archived_at' => now()], user: $user);
+    $archived = p4aHabit('2026-09-01', ['identity_statement' => 'leo', 'retired_at' => now()], user: $user);
     p4aDays($archived, p4aRange('2026-09-21', '2026-09-26'));
     $foreign = p4aHabit('2026-09-01', ['identity_statement' => 'leo']);
     p4aDays($foreign, p4aRange('2026-09-21', '2026-09-26'));

@@ -31,6 +31,19 @@ class RehearseRestore extends Command
     private const SCRATCH_CONNECTION = 'legacy_backup_scratch';
 
     /**
+     * The scratch database name prefix, derived from the current database
+     * (`<db>_rehearse_`) so rehearsals run from parallel checkouts, each on
+     * its own database, never collide or clean up each other's scratch
+     * databases. Kept short enough for PostgreSQL's 63-byte identifiers.
+     */
+    public static function scratchPrefix(string $database): string
+    {
+        $base = substr((string) preg_replace('/[^a-z0-9_]/', '_', strtolower($database)), 0, 30);
+
+        return $base.'_rehearse_';
+    }
+
+    /**
      * Execute the console command.
      */
     public function handle(ManifestVerifier $verifier): int
@@ -74,7 +87,7 @@ class RehearseRestore extends Command
             return $this->finish($directory, $result);
         }
 
-        $scratch = 'marcos_rehearsal_'.now()->utc()->format('Ymd_His').'_'.Str::lower(Str::random(6));
+        $scratch = self::scratchPrefix(DB::connection()->getDatabaseName()).now()->utc()->format('Ymd_His').'_'.Str::lower(Str::random(6));
         $result['scratch_database'] = $scratch;
 
         $admin = BackupConnections::clone(self::ADMIN_CONNECTION);

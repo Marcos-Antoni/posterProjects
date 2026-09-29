@@ -59,9 +59,10 @@ class HabitController extends Controller
 
     /**
      * Screen 19: every habit with its 2-minute version, level, link and
-     * tolerant streak (plus a level suggestion when due); retired habits
-     * apart (mockup 19 "Retirados"), with their reason, recorded history and
-     * the open retirement "Devolver" restores (retirement protocol, Phase 6).
+     * tolerant streak (plus a level suggestion when due). Retired habits are
+     * NOT listed here: the retirement spec makes them visible only in the
+     * Retired view, so the screen shows how many there are and links there
+     * (where "Devolver al mapa" restores them).
      */
     public function index(Request $request): Response
     {
@@ -75,12 +76,7 @@ class HabitController extends Controller
             ->orderBy('name')
             ->get();
 
-        $retired = Habit::query()
-            ->onlyRetired()
-            ->whereBelongsTo($request->user())
-            ->with(['days', 'retirements' => fn ($query) => $query->open()])
-            ->orderByDesc('retired_at')
-            ->get();
+        $retiredCount = Habit::onlyRetired()->whereBelongsTo($request->user())->count();
 
         return Inertia::render('habits/index', [
             'habits' => $active->map(function (Habit $habit) use ($today): array {
@@ -91,16 +87,7 @@ class HabitController extends Controller
                     'suggestion' => $history->levelSuggestion()?->toArray(),
                 ];
             })->values()->all(),
-            'retired' => $retired->map(fn (Habit $habit): array => [
-                'id' => $habit->id,
-                'name' => $habit->name,
-                'two_minute_version' => (string) $habit->two_minute_version,
-                'recurrence_type' => $habit->recurrence_type->value,
-                'retired_at' => $habit->retired_at?->toIso8601String(),
-                'reason' => $habit->retirements->first()?->reason,
-                'retirement_id' => $habit->retirements->first()?->id,
-                'recorded_days' => $habit->days->filter->isShownUp()->count(),
-            ])->values()->all(),
+            'retired_count' => $retiredCount,
         ]);
     }
 

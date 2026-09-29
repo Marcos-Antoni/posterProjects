@@ -9,8 +9,8 @@ use Illuminate\Support\Carbon;
 | Phase 4 habit screens in a real browser (mockups 18–21): a habit is
 | created only with its 2-minute version, logged from "Hábitos de hoy"
 | (mark done, stepper, only the 2 minutes with its undo, restart after a
-| miss), inspected on its detail, retired (Phase 6 protocol) and restored
-| from "Todos",
+| miss), inspected on its detail, retired from "Todos" (Phase 6 protocol)
+| and restored from Retirados,
 | and its identity votes read as a proportion.
 */
 
@@ -97,7 +97,7 @@ test('after a miss the row offers to restart with 2 minutes, never a count of mi
     expect($habit->fresh()->history()->streak()->state->value)->toBe('ok');
 });
 
-test('a habit is retired with a reason from "Todos", listed under Retirados, and restored keeping its history', function () {
+test('a habit is retired with a reason from "Todos", shows only in Retirados, and is restored there keeping its history', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->create(['name' => 'Meditar']);
     HabitDay::factory()->for($habit)->create(['entry_date' => Habit::todayLocalDate()->subDays(3)->toDateString()]);
@@ -106,28 +106,33 @@ test('a habit is retired with a reason from "Todos", listed under Retirados, and
     $page = visit('/habits/manage');
 
     $page->assertSee('Meditar')
+        ->assertSee('No hay hábitos retirados.')
         ->click('Retirar')
         ->assertSee('¿Por qué lo retirás?')
         ->fill('reason', 'demasiado grande para arrancar')
         ->click('Retirar y archivar')
         ->assertNoJavascriptErrors();
 
-    expect($habit->fresh())->toBeNull()
+    expect(Habit::query()->find($habit->id))->toBeNull()
         ->and(Habit::withRetired()->find($habit->id)->retired_at)->not->toBeNull();
 
     $page = visit('/habits/manage');
 
-    $page->assertSee('Retirados')
+    $page->assertDontSee('Meditar')
+        ->assertSee('1 hábito retirado')
+        ->assertSee('Verlos en Retirados, desde donde se devuelven')
+        ->click('a[href="/retired?kind=habit"]')
+        ->assertSee('Meditar')
         ->assertSee('demasiado grande para arrancar')
-        ->assertSee('1 día registrado')
-        ->click('Devolver')
+        ->click('Devolver al mapa')
+        ->click('internal:role=dialog >> internal:role=button[name="Devolver al mapa"]')
         ->assertSee('Todavía no retiraste nada')
         ->assertNoJavascriptErrors();
 
     expect($habit->fresh()->retired_at)->toBeNull()
         ->and($habit->days()->count())->toBe(1);
 
-    visit('/habits/manage')->assertSee('Meditar')->assertDontSee('demasiado grande para arrancar');
+    visit('/habits/manage')->assertSee('Meditar')->assertSee('No hay hábitos retirados.');
 });
 
 test('identity votes read as a proportion per statement', function () {

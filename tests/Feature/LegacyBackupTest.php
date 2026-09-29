@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\RehearseRestore;
 use App\Console\LegacyBackup\BackupConnections;
 use App\Console\LegacyBackup\PostgresClient;
 use App\Console\LegacyBackup\TableJsonWriter;
@@ -92,7 +93,7 @@ function cleanLegacyData(): void
     $db->table('personal_access_tokens')->where('token', str_repeat('a', 64))->delete();
     $db->table('users')->where('email', 'marco-backup@example.com')->delete();
 
-    foreach ($db->table('pg_database')->where('datname', 'like', 'marcos_rehearsal_%')->pluck('datname') as $scratch) {
+    foreach (scratchDatabases() as $scratch) {
         $db->statement("DROP DATABASE IF EXISTS \"{$scratch}\" WITH (FORCE)");
     }
 
@@ -116,9 +117,20 @@ function readJsonFile(string $path): array
     return json_decode((string) file_get_contents($path), true, flags: JSON_THROW_ON_ERROR);
 }
 
+/**
+ * This checkout's scratch databases only (`<db>_rehearse_*`): parallel
+ * worktrees run on other databases and keep their own.
+ *
+ * @return list<string>
+ */
 function scratchDatabases(): array
 {
-    return legacySeed()->table('pg_database')->where('datname', 'like', 'marcos_rehearsal_%')->pluck('datname')->all();
+    $prefix = RehearseRestore::scratchPrefix(legacySeed()->getDatabaseName());
+
+    return legacySeed()->table('pg_database')
+        ->where('datname', 'like', str_replace('_', '\\_', $prefix).'%')
+        ->pluck('datname')
+        ->all();
 }
 
 beforeEach(function () {
@@ -320,7 +332,7 @@ describe('marcos:rehearse-restore', function () {
 
         expect($result['passed'])->toBeTrue()
             ->and($result['problems'])->toBe([])
-            ->and($result['scratch_database'])->toStartWith('marcos_rehearsal_')
+            ->and($result['scratch_database'])->toStartWith(RehearseRestore::scratchPrefix(legacySeed()->getDatabaseName()))
             ->and($result['scratch_dropped'])->toBeTrue()
             ->and($result['dump_sha256'])->toBe($manifest['dump']['sha256'])
             ->and(array_keys($result['tables']))->toEqualCanonicalizing(array_keys($manifest['tables']));

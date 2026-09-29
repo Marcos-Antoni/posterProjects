@@ -28,6 +28,7 @@ import {
 } from '@/lib/marcos';
 import { LANE_GAP, routePath, rowOffsets, stubPath } from '@/lib/unlock-track';
 import type { TrackRoute } from '@/lib/unlock-track';
+import { now } from '@/routes';
 import { index as mapIndex, show as mapShow } from '@/routes/map';
 import {
     index as objectivesIndex,
@@ -40,6 +41,7 @@ import {
 } from '@/routes/objectives/items';
 import prerequisites from '@/routes/objectives/items/prerequisites';
 import unlocks from '@/routes/objectives/items/unlocks';
+import { index as retiredIndex } from '@/routes/retired';
 import type {
     GraphNode,
     GraphRetired,
@@ -946,6 +948,17 @@ function Panel({
                         ? `Razón: ${retired.reason}.`
                         : 'Retirado: no ocupa la vía ni bloquea a nadie.'}
                 </p>
+                {/* integration (P5 x P6): it goes back to the map from Retirados */}
+                <div className="acts">
+                    <Link
+                        className="btn btn-outline"
+                        href={retiredIndex({
+                            query: { objective: objectiveKey },
+                        })}
+                    >
+                        Ver en Retirados
+                    </Link>
+                </div>
             </>
         );
     }
@@ -1205,15 +1218,17 @@ function ItemPanel({
                 <AddDependency objectiveKey={objectiveKey} itemKey={node.key} />
             )}
             <div className="acts">
+                {node.state === 'active' && (
+                    /* integration (P3 x P5, mockup 08): the active station's primary action */
+                    <Link className="btn btn-primary" href={now()}>
+                        Seguir en Ahora
+                    </Link>
+                )}
                 {writable &&
                     !milestone &&
                     (node.state === 'active' || node.state === 'available') && (
                         <button
-                            className={
-                                node.state === 'active'
-                                    ? 'btn btn-primary'
-                                    : 'btn btn-outline'
-                            }
+                            className="btn btn-outline"
                             type="button"
                             disabled={busy}
                             onClick={check}

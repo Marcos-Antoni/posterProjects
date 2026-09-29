@@ -14,8 +14,8 @@ use App\Models\Item;
 use App\Models\ItemDependency;
 use App\Models\Objective;
 use App\Models\Plan;
+use App\Models\Retirement;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 
 function p5aLink(Item $a, Item $b): void
 {
@@ -62,7 +62,7 @@ function p5aSeed(): array
     $b = Item::factory()->for($p1)->create(['title' => 'B']);
     $c = Item::factory()->for($p1)->milestone()->create(['title' => 'C']);
     $r = Item::factory()->for($p1)->retired()->create(['title' => 'Retirada']);
-    DB::table('retirements')->insert(['retirable_type' => 'item', 'retirable_id' => $r->id, 'reason' => 'demasiado grande', 'decision' => 'archive', 'retired_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+    Retirement::factory()->create(['retirable_id' => $r->id, 'reason' => 'demasiado grande']);
     $orphan = Item::factory()->for($gone)->create(['title' => 'En plan retirado']);
 
     p5aLink($a, $b);
@@ -218,7 +218,7 @@ test('both graph pages and both tools run a constant number of queries: 1 vs 40 
                 p5aLink($prev, $item);
             }
             $gone = Item::factory()->for($plans[$i % 2])->retired()->create();
-            DB::table('retirements')->insert(['retirable_type' => 'item', 'retirable_id' => $gone->id, 'reason' => 'x', 'decision' => 'archive', 'retired_at' => now(), 'created_at' => now(), 'updated_at' => now()]);
+            Retirement::factory()->create(['retirable_id' => $gone->id, 'reason' => 'x']);
             $prev = $item;
         }
 
