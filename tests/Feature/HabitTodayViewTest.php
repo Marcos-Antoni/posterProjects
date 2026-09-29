@@ -36,7 +36,8 @@ test('the today view only lists active habits scheduled for the current utc-6 da
 
     $habits = collect($response->json('props.habits'));
 
-    expect($habits->pluck('id')->all())->toBe([$daily->id, $scheduledToday->id, $weekly->id]);
+    expect($habits->pluck('id')->all())->toBe([$daily->id, $scheduledToday->id, $weekly->id])
+        ->and(collect($response->json('props.resting'))->pluck('name')->all())->toBe(['Not today']);
 });
 
 test('the today view exposes the day progress and the weekly quota count', function () {
@@ -90,7 +91,7 @@ test('the today view exposes peak_amount, which stays put across a decrement', f
         ->and($habits['Read']['today']['peak_amount'])->toBe(15);
 });
 
-test('habits without a record today expose a null progress', function () {
+test('habits without a record today expose a flattened, zero progress', function () {
     $user = User::factory()->create();
     Habit::factory()->for($user)->daily()->create();
 
@@ -101,5 +102,12 @@ test('habits without a record today expose a null progress', function () {
 
     $response->assertOk();
 
-    expect($response->json('props.habits.0.today'))->toBeNull();
+    expect($response->json('props.habits.0.today'))->toBe([
+        'accumulated_amount' => 0,
+        'completion_percent' => 0,
+        'peak_amount' => 0,
+        'completed' => false,
+        'two_minute_logged' => false,
+        'shown_up' => false,
+    ]);
 });

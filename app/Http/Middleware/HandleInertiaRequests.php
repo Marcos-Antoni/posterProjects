@@ -2,10 +2,13 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Project;
+use App\Enums\Appearance;
+use App\Models\Objective;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cookie;
 use Illuminate\Support\Facades\View;
 use Inertia\Middleware;
+use Symfony\Component\HttpFoundation\Cookie as SymfonyCookie;
 
 class HandleInertiaRequests extends Middleware
 {
@@ -39,23 +42,25 @@ class HandleInertiaRequests extends Middleware
     {
         $user = $request->user();
 
-        // Allowlist, not just a type hint: the cookie is client-controlled
-        // and unencrypted (see `bootstrap/app.php`), so any garbage value
-        // must collapse to the safe default instead of reaching the front
-        // end, where `ThemeToggle` looks it up in a fixed icon map.
-        $rawAppearance = $request->cookie('appearance', 'system');
+        // An authenticated user's stored preference is the source of truth
+        // (it follows them to any browser). Guests fall back to the
+        // browser cookie, allowlisted because it is client-controlled and
+        // unencrypted (see `bootstrap/app.php`).
+        $appearance = $user !== null
+            ? $user->appearance
+            : Appearance::fromInput($request->cookie('appearance'));
 
-        /** @var 'light'|'dark'|'system' $appearance */
-        $appearance = in_array($rawAppearance, ['light', 'dark', 'system'], true)
-            ? $rawAppearance
-            : 'system';
+        // Keep the cookie in step with the stored preference, so the guest
+        // login screen after a logout renders the same theme with no flash.
+        if ($user !== null && $request->cookie('appearance') !== $appearance->value) {
+            Cookie::queue(self::appearanceCookie($appearance));
+        }
 
-        // The root Blade view (`app.blade.php`) reads this to set the
-        // initial `.dark` class on `<html>` server-side, avoiding FOUC
-        // for the `dark` case (the `system` case is resolved client-side
-        // by the inline script, since the server can't see the media
-        // query).
-        View::share('appearance', $appearance);
+        // The root Blade view (`app.blade.php`) reads this to render
+        // `data-appearance` and, for `dark`, the `.dark` class on `<html>`
+        // server-side. `system` is resolved by the inline script before
+        // any CSS loads, since only the browser knows the OS setting.
+        View::share('appearance', $appearance->value);
 
         return [
             ...parent::share($request),
@@ -63,24 +68,36 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $user,
             ],
-            'appearance' => $appearance,
+            'appearance' => $appearance->value,
             // One-shot flash: only ever present on the request right
             // after regenerating the MCP token (see McpTokenController).
             // The closure defers session access so the value is consumed
             // exactly once and never re-serialized into later visits.
             'flash' => [
                 'plainMcpToken' => fn (): ?string => $request->session()->get('plainMcpToken'),
+                // Items that became available with the last check (unlock-graph).
+                'unlocked' => fn (): array => $request->session()->get('unlocked', []),
             ],
-            'sidebarProjects' => $user
-                ? $user->projects()
-                    ->orderBy('name')
-                    ->get()
-                    ->map(fn (Project $project): array => [
-                        'id' => $project->id,
-                        'key' => $project->key,
-                        'name' => $project->name,
+            // Navigation shows ONLY the owner's active objectives, in their
+            // manual order (projects spec); nothing for guests.
+            'navigationObjectives' => fn (): array => $user
+                ? $user->objectives()
+                    ->active()
+                    ->get(['id', 'key', 'title'])
+                    ->map(fn (Objective $objective): array => [
+                        'key' => $objective->key,
+                        'title' => $objective->title,
                     ])
+                    ->all()
                 : [],
         ];
+    }
+
+    /**
+     * The long-lived, unencrypted `appearance` cookie guest pages read.
+     */
+    public static function appearanceCookie(Appearance $appearance): SymfonyCookie
+    {
+        return Cookie::make('appearance', $appearance->value, minutes: 60 * 24 * 365, sameSite: 'lax');
     }
 }

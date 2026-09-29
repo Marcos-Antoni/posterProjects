@@ -5,81 +5,87 @@
  * instances — Inertia sends plain JSON over the wire.
  */
 
-export type IssueType = 'epic' | 'story' | 'task' | 'bug';
+/** Mirrors `App\Enums\ObjectiveState`. */
+export type ObjectiveState = 'draft' | 'active' | 'closed' | 'retired';
 
-/** Mirrors `App\Enums\IssuePriority` — 1 (Highest) to 5 (Lowest). */
-export type IssuePriority = 1 | 2 | 3 | 4 | 5;
+/** Mirrors `App\Enums\PlanState`. `done` is reached automatically. */
+export type PlanState = 'draft' | 'active' | 'done' | 'retired';
 
-export type Project = {
+/** Mirrors `App\Enums\ItemKind`. */
+export type ItemKind = 'task' | 'milestone';
+
+/** Mirrors `App\Enums\ItemState` — derived, never stored. */
+export type ItemState = 'locked' | 'available' | 'active' | 'done' | 'retired';
+
+/** Mirrors `App\Enums\ControlZone`. Only `mine`/`influence` may become tasks. */
+export type ControlZone = 'mine' | 'influence' | 'outside';
+
+/** The Control 5-point plan as `ObjectiveTree::controlPlan()` presents it. */
+export type ControlPlan = {
+    outcome: string | null;
+    /** A UTC-6 calendar date, "YYYY-MM-DD". */
+    deadline: string | null;
+    metric: {
+        name: string | null;
+        target: number | null;
+        current: number | null;
+        progress_percent: number | null;
+    };
+    risks: string[];
+    contingency: string | null;
+    /** Keys of the missing points (outcome, deadline, metric, risks, contingency). */
+    missing: string[];
+};
+
+export type ControlMapEntry = {
     id: number;
-    owner_id: number;
+    zone: ControlZone;
+    text: string;
+    can_become_task: boolean;
+};
+
+/** A prerequisite still open, as the tree shows it ("Se abre al terminar …"). */
+export type WaitingOn = {
     key: string;
-    name: string;
-    description: string | null;
-    next_issue_number: number;
-    created_at: string | null;
-    updated_at: string | null;
-    /** Set once the project is archived (soft deleted). See the trash page. */
-    deleted_at: string | null;
-};
-
-export type BoardColumn = {
-    id: number;
-    project_id: number;
-    name: string;
-    position: number;
-    created_at: string | null;
-    updated_at: string | null;
-};
-
-export type Sprint = {
-    id: number;
-    project_id: number;
-    name: string;
-    goal: string | null;
-    start_date: string;
-    end_date: string;
-    created_at: string | null;
-    updated_at: string | null;
-};
-
-export type Label = {
-    id: number;
-    project_id: number;
-    name: string;
-    created_at: string | null;
-    updated_at: string | null;
-};
-
-export type Issue = {
-    id: number;
-    project_id: number;
-    board_column_id: number;
-    sprint_id: number | null;
-    parent_id: number | null;
-    number: number;
-    /** Human-readable key, e.g. "PROJ-123". Computed accessor, not persisted. */
-    key: string;
-    type: IssueType;
-    priority: IssuePriority;
+    kind: ItemKind;
     title: string;
-    description: string | null;
-    story_points: number | null;
-    due_date: string | null;
-    assignee_id: number | null;
-    reporter_id: number;
-    position: number;
-    created_at: string | null;
-    updated_at: string | null;
+    objective_key: string;
+    objective_title: string;
+    external: boolean;
 };
 
-export type Comment = {
+/** One row of an objective's tree (`ObjectiveTree::item()`). */
+export type TreeItem = {
     id: number;
-    issue_id: number;
-    user_id: number;
-    body: string;
-    created_at: string | null;
-    updated_at: string | null;
+    key: string;
+    number: number;
+    kind: ItemKind;
+    title: string;
+    two_minute_version: string;
+    state: ItemState;
+    target_date: string | null;
+    completed_at: string | null;
+    prerequisite_keys: string[];
+    waiting_on: WaitingOn[];
+};
+
+export type TreePlan = {
+    id: number;
+    title: string;
+    state: PlanState;
+    level: number | null;
+    position: number;
+    progress: { done: number; total: number };
+    next_milestone: { title: string; remaining: number } | null;
+    retired_titles: string[];
+    items: TreeItem[];
+};
+
+/** A neighbour of an item (prerequisite or unlock). */
+export type ItemRef = {
+    key: string;
+    title: string;
+    state: ItemState;
 };
 
 export type HabitType = 'yes_no' | 'quantitative';
@@ -99,8 +105,8 @@ export type Habit = {
     times_per_week: number | null;
     /** Time of day "HH:MM:SS" in the feature's fixed UTC-6 zone. */
     planned_time: string | null;
-    /** Set once the habit is archived. Archived habits keep their history. */
-    archived_at: string | null;
+    /** Set once the habit is retired (hidden; history kept; restore from Retirados). */
+    retired_at: string | null;
     created_at: string | null;
     updated_at: string | null;
 };

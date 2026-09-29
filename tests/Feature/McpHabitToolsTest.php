@@ -1,63 +1,56 @@
 <?php
 
 use App\Enums\HabitType;
-use App\Enums\RecurrenceType;
 use App\Mcp\Servers\PosterServer;
-use App\Mcp\Tools\Habits\ArchiveHabit;
 use App\Mcp\Tools\Habits\CreateHabit;
 use App\Mcp\Tools\Habits\ListHabits;
 use App\Mcp\Tools\Habits\LogHabitEntry;
+use App\Mcp\Tools\Habits\RestoreHabit;
+use App\Mcp\Tools\Habits\RetireHabit;
 use App\Mcp\Tools\Habits\ShowHabit;
 use App\Mcp\Tools\Habits\TodayHabits;
-use App\Mcp\Tools\Habits\UnarchiveHabit;
 use App\Mcp\Tools\Habits\UpdateHabit;
 use App\Models\Habit;
 use App\Models\User;
 use Illuminate\Support\Carbon;
 
-test('create-habit creates a yes/no daily habit', function () {
+// Marcos OS (Phase 4, ai-operations spec): creating or changing a habit is a
+// MAJOR AI operation. Over MCP the AI is refused (until Phase 8 turns it into
+// a proposal) and nothing is written; the web form's validation still runs
+// first, so a bad payload answers its validation error.
+test('create-habit is a major AI operation: refused, nothing created', function () {
     $user = User::factory()->create();
 
     $response = PosterServer::actingAs($user)->tool(CreateHabit::class, [
         'name' => 'Meditate',
         'habit_type' => 'yes_no',
         'recurrence_type' => 'daily',
+        'two_minute_version' => 'Sentarme en el piso',
     ]);
 
-    $response->assertOk()
-        ->assertSee('Meditate')
-        ->assertSee(route('habits.show', ['habit' => Habit::query()->where('name', 'Meditate')->firstOrFail()->id]));
+    $response->assertHasErrors(['propose-change']);
 
-    $habit = Habit::query()->where('user_id', $user->id)->firstOrFail();
-    expect($habit->habit_type)->toBe(HabitType::YesNo)
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::Daily)
-        ->and($habit->unit)->toBeNull()
-        ->and($habit->daily_target)->toBeNull();
+    expect(Habit::query()->where('user_id', $user->id)->exists())->toBeFalse();
 });
 
-test('create-habit creates a quantitative habit with a unit and daily target', function () {
+test('create-habit validates the payload exactly like the web form', function () {
     $user = User::factory()->create();
 
     $response = PosterServer::actingAs($user)->tool(CreateHabit::class, [
         'name' => 'Read',
         'habit_type' => 'quantitative',
-        'unit' => 'pages',
         'daily_target' => 20,
         'recurrence_type' => 'specific_weekdays',
         'weekdays' => [1, 3, 5],
+        'two_minute_version' => 'Abrir el libro',
     ]);
 
-    $response->assertOk();
+    $response->assertHasErrors(['La unidad es obligatoria para hábitos cuantitativos.']);
 
-    $habit = Habit::query()->where('name', 'Read')->firstOrFail();
-    expect($habit->habit_type)->toBe(HabitType::Quantitative)
-        ->and($habit->unit)->toBe('pages')
-        ->and($habit->daily_target)->toBe(20)
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::SpecificWeekdays)
-        ->and($habit->weekdays)->toBe([1, 3, 5]);
+    expect(Habit::query()->count())->toBe(0);
 });
 
-test('update-habit switching from quantitative to yes/no clears unit and daily target', function () {
+test('update-habit is a major AI operation: refused, the habit is unchanged', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->quantitative('pages', 20)->create(['name' => 'Read']);
 
@@ -67,17 +60,15 @@ test('update-habit switching from quantitative to yes/no clears unit and daily t
         'habit_type' => 'yes_no',
         'recurrence_type' => 'times_per_week',
         'times_per_week' => 5,
+        'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertOk()->assertSee('Meditate');
+    $response->assertHasErrors(['propose-change']);
 
     $habit->refresh();
-    expect($habit->name)->toBe('Meditate')
-        ->and($habit->habit_type)->toBe(HabitType::YesNo)
-        ->and($habit->unit)->toBeNull()
-        ->and($habit->daily_target)->toBeNull()
-        ->and($habit->recurrence_type)->toBe(RecurrenceType::TimesPerWeek)
-        ->and($habit->times_per_week)->toBe(5);
+    expect($habit->name)->toBe('Read')
+        ->and($habit->habit_type)->toBe(HabitType::Quantitative)
+        ->and($habit->daily_target)->toBe(20);
 });
 
 test('update-habit is not found for another user\'s habit', function () {
@@ -95,36 +86,31 @@ test('update-habit is not found for another user\'s habit', function () {
     expect($habit->refresh()->name)->toBe('Private');
 });
 
-test('archive-habit and unarchive-habit toggle archived_at', function () {
+test('retire-habit and restore-habit replace archive/unarchive and are major: refused for the AI without a proposal', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->create();
 
-    PosterServer::actingAs($user)->tool(ArchiveHabit::class, ['habit_id' => $habit->id])
-        ->assertOk();
+    PosterServer::actingAs($user)->tool(RetireHabit::class, ['habit_id' => $habit->id, 'reason' => 'ya no me sirve este hábito'])
+        ->assertHasErrors(['propose-change']);
 
-    expect($habit->refresh()->archived_at)->not->toBeNull();
-
-    PosterServer::actingAs($user)->tool(UnarchiveHabit::class, ['habit_id' => $habit->id])
-        ->assertOk();
-
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 });
 
-test('a user cannot archive or unarchive another user\'s habit', function () {
+test('a user cannot retire or restore another user\'s habit', function () {
     $stranger = User::factory()->create();
     $habit = Habit::factory()->create();
 
-    PosterServer::actingAs($stranger)->tool(ArchiveHabit::class, ['habit_id' => $habit->id])
+    PosterServer::actingAs($stranger)->tool(RetireHabit::class, ['habit_id' => $habit->id, 'reason' => 'ya no me sirve este hábito'])
         ->assertHasErrors(["Habit not found: {$habit->id}"]);
 
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 
-    $archived = Habit::factory()->archived()->create();
+    $retired = Habit::factory()->retired()->create();
 
-    PosterServer::actingAs($stranger)->tool(UnarchiveHabit::class, ['habit_id' => $archived->id])
-        ->assertHasErrors(["Habit not found: {$archived->id}"]);
+    PosterServer::actingAs($stranger)->tool(RestoreHabit::class, ['habit_id' => $retired->id])
+        ->assertHasErrors(["Retired habit not found: {$retired->id}"]);
 
-    expect($archived->refresh()->archived_at)->not->toBeNull();
+    expect($retired->refresh()->retired_at)->not->toBeNull();
 });
 
 // Frozen "now": 2026-07-22 18:00 UTC == Wednesday 2026-07-22 12:00 UTC-6.
@@ -135,7 +121,7 @@ test('today-habits lists only habits scheduled for the current utc-6 day', funct
     Habit::factory()->for($user)->daily()->create(['name' => 'Daily']);
     Habit::factory()->for($user)->specificWeekdays([3])->create(['name' => 'Wednesdays']);
     Habit::factory()->for($user)->specificWeekdays([2, 4])->create(['name' => 'Not today']);
-    Habit::factory()->for($user)->archived()->create(['name' => 'Archived']);
+    Habit::factory()->for($user)->retired()->create(['name' => 'Archived']);
     Habit::factory()->daily()->create(['name' => "Someone else's"]);
 
     $response = PosterServer::actingAs($user)->tool(TodayHabits::class);
@@ -158,17 +144,17 @@ test('today-habits exposes peak_amount, which stays put across a decrement', fun
     $response->assertOk()->assertSee(['"accumulated_amount":14', '"peak_amount":15']);
 });
 
-test('list-habits returns every habit including archived ones', function () {
+test('list-habits returns every non-retired habit (retired ones live in retired-view)', function () {
     $user = User::factory()->create();
     Habit::factory()->for($user)->create(['name' => 'Active']);
-    Habit::factory()->for($user)->archived()->create(['name' => 'Archived']);
+    Habit::factory()->for($user)->retired()->create(['name' => 'Archived']);
     Habit::factory()->create(['name' => 'Not mine']);
 
     $response = PosterServer::actingAs($user)->tool(ListHabits::class);
 
     $response->assertOk()
         ->assertSee('Active')
-        ->assertSee('Archived')
+        ->assertDontSee('Archived')
         ->assertDontSee('Not mine');
 });
 
@@ -199,15 +185,15 @@ test('log-habit-entry accumulates into the current utc-6 day and returns its sta
         ->and($day->completed)->toBeTrue();
 });
 
-test('log-habit-entry rejects an archived habit, matching the web behavior', function () {
+test('log-habit-entry rejects a retired habit, matching the web behavior (hidden: not found)', function () {
     $user = User::factory()->create();
-    $habit = Habit::factory()->for($user)->archived()->create();
+    $habit = Habit::factory()->for($user)->retired()->create();
 
     $response = PosterServer::actingAs($user)->tool(LogHabitEntry::class, [
         'habit_id' => $habit->id,
     ]);
 
-    $response->assertHasErrors(['No podés registrar en un hábito archivado.']);
+    $response->assertHasErrors(["Habit not found: {$habit->id}"]);
     expect($habit->entries()->count())->toBe(0);
 });
 

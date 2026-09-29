@@ -4,9 +4,13 @@ namespace App\Models;
 
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
+use App\Models\Concerns\HasRetirement;
+use App\Models\Concerns\Retirable;
+use App\Models\Habits\HabitHistory;
 use Carbon\CarbonInterface;
 use Database\Factories\HabitFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -20,7 +24,11 @@ use Illuminate\Validation\ValidationException;
 /**
  * @property int $id
  * @property int $user_id
+ * @property int|null $objective_id
+ * @property int|null $plan_id
  * @property string $name
+ * @property string|null $two_minute_version
+ * @property string|null $identity_statement
  * @property HabitType $habit_type
  * @property string|null $unit
  * @property int|null $daily_target
@@ -28,13 +36,20 @@ use Illuminate\Validation\ValidationException;
  * @property list<int>|null $weekdays
  * @property int|null $times_per_week
  * @property string|null $planned_time
- * @property Carbon|null $archived_at
+ * @property int|null $level
+ * @property list<array{label: string, target: int|null, two_minute_version: string}>|null $level_ladder
+ * @property Carbon|null $level_started_on
+ * @property Carbon|null $retired_at
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
 #[Fillable([
     'user_id',
+    'objective_id',
+    'plan_id',
     'name',
+    'two_minute_version',
+    'identity_statement',
     'habit_type',
     'unit',
     'daily_target',
@@ -42,12 +57,17 @@ use Illuminate\Validation\ValidationException;
     'weekdays',
     'times_per_week',
     'planned_time',
-    'archived_at',
+    'level',
+    'level_ladder',
+    'level_started_on',
+    'retired_at',
 ])]
-class Habit extends Model
+class Habit extends Model implements Retirable
 {
     /** @use HasFactory<HabitFactory> */
     use HasFactory;
+
+    use HasRetirement;
 
     /**
      * Get the attributes that should be cast.
@@ -63,8 +83,28 @@ class Habit extends Model
             'habit_type' => HabitType::class,
             'recurrence_type' => RecurrenceType::class,
             'weekdays' => 'array',
-            'archived_at' => 'datetime',
+            'level' => 'integer',
+            'level_ladder' => 'array',
+            'level_started_on' => 'date',
+            'retired_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Retired habits carry `retired_at` (habits spec: retire, never delete).
+     *
+     * @param  Builder<covariant Model>  $query
+     */
+    public function constrainRetired(Builder $query, bool $retired): void
+    {
+        $retired
+            ? $query->whereNotNull($this->qualifyColumn('retired_at'))
+            : $query->whereNull($this->qualifyColumn('retired_at'));
+    }
+
+    public function isRetired(): bool
+    {
+        return $this->retired_at !== null;
     }
 
     /**
@@ -73,6 +113,77 @@ class Habit extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /**
+     * The objective the habit hangs from, if any. The link is informational:
+     * the objective's lifecycle never archives or modifies the habit.
+     *
+     * @return BelongsTo<Objective, $this>
+     */
+    public function objective(): BelongsTo
+    {
+        return $this->belongsTo(Objective::class);
+    }
+
+    /**
+     * The plan (of the linked objective) the habit hangs from, if any.
+     *
+     * @return BelongsTo<Plan, $this>
+     */
+    public function plan(): BelongsTo
+    {
+        return $this->belongsTo(Plan::class);
+    }
+
+    /**
+     * The schedules this habit had before its current one, oldest first
+     * (effective-dated: see `HabitSchedulePeriod`).
+     *
+     * @return HasMany<HabitSchedulePeriod, $this>
+     */
+    public function schedulePeriods(): HasMany
+    {
+        return $this->hasMany(HabitSchedulePeriod::class)->orderBy('valid_until')->orderBy('id');
+    }
+
+    /**
+     * The habit's day history read model (tolerant streak, marks, votes,
+     * level suggestion), computed on read from the `days` relation. Loads
+     * every day of the habit unless the relation is already loaded, so a
+     * caller listing many habits eager-loads `days` once.
+     */
+    public function history(?Carbon $today = null): HabitHistory
+    {
+        return new HabitHistory($this, $today ?? self::todayLocalDate());
+    }
+
+    /**
+     * The identity statement this habit votes for: its own, else its
+     * objective's (habits spec: inheritance from objective).
+     */
+    public function effectiveIdentityStatement(): ?string
+    {
+        $own = trim((string) $this->identity_statement);
+
+        if ($own !== '') {
+            return $own;
+        }
+
+        $inherited = trim((string) $this->objective?->identity_statement);
+
+        return $inherited !== '' ? $inherited : null;
+    }
+
+    /**
+     * The day's target amount: `max(1, daily_target)` for quantitative
+     * habits, 1 for yes/no.
+     */
+    public function targetAmount(): int
+    {
+        return $this->habit_type === HabitType::Quantitative
+            ? max(1, (int) $this->daily_target)
+            : 1;
     }
 
     /**
@@ -101,7 +212,7 @@ class Habit extends Model
      * The day row is claimed with `INSERT ... ON CONFLICT DO NOTHING`
      * and then re-read under `lockForUpdate`, so concurrent entries
      * against the same day serialize instead of losing increments
-     * (same locking pattern as `Project::allocateNextIssueNumber()`).
+     * (same locking pattern as `Objective::allocateNextItemNumber()`).
      */
     public function recordEntry(int $amount): HabitEntry
     {
@@ -205,96 +316,20 @@ class Habit extends Model
     }
 
     /**
-     * The current streak, computed on read (never cached), in days:
-     *
-     * - daily: consecutive completed days ending today (a still-pending
-     *   today doesn't break the run).
-     * - specific weekdays: same, but only scheduled days count — the
-     *   days in between are skipped without breaking.
-     * - times per week: every recorded day adds one, with weekly
-     *   forgiveness — the run only resets when a week closes under
-     *   quota (the in-progress week can never break it).
+     * The current tolerant streak ("never miss twice", design D5), in
+     * opportunities: days, scheduled weekdays or weeks. See `HabitHistory`.
      */
     public function currentStreak(): int
     {
-        $days = $this->daysByDate();
-
-        if ($days->isEmpty()) {
-            return 0;
-        }
-
-        if ($this->recurrence_type === RecurrenceType::TimesPerWeek) {
-            return $this->timesPerWeekStreaks($days)['current'];
-        }
-
-        $today = $this->todayLocalDate();
-        $earliest = Carbon::parse((string) $days->keys()->first());
-        $streak = 0;
-
-        for ($cursor = $today->clone(); $cursor->gte($earliest); $cursor->subDay()) {
-            if (! $this->isScheduledOn($cursor)) {
-                continue;
-            }
-
-            $day = $days->get($cursor->toDateString());
-
-            if ($day !== null && $day->completed) {
-                $streak++;
-
-                continue;
-            }
-
-            if ($cursor->isSameDay($today)) {
-                continue;
-            }
-
-            break;
-        }
-
-        return $streak;
+        return $this->history()->streak()->current;
     }
 
     /**
-     * The best streak across the habit's whole history, under the same
-     * rules as `currentStreak()`.
+     * The best tolerant streak across the habit's whole history.
      */
     public function bestStreak(): int
     {
-        $days = $this->daysByDate();
-
-        if ($days->isEmpty()) {
-            return 0;
-        }
-
-        if ($this->recurrence_type === RecurrenceType::TimesPerWeek) {
-            return $this->timesPerWeekStreaks($days)['best'];
-        }
-
-        $today = $this->todayLocalDate();
-        $earliest = Carbon::parse((string) $days->keys()->first());
-        $best = 0;
-        $run = 0;
-
-        for ($cursor = $earliest->clone(); $cursor->lte($today); $cursor->addDay()) {
-            if (! $this->isScheduledOn($cursor)) {
-                continue;
-            }
-
-            $day = $days->get($cursor->toDateString());
-
-            if ($day !== null && $day->completed) {
-                $run++;
-                $best = max($best, $run);
-
-                continue;
-            }
-
-            if (! $cursor->isSameDay($today)) {
-                $run = 0;
-            }
-        }
-
-        return $best;
+        return $this->history()->streak()->best;
     }
 
     /**
@@ -356,43 +391,5 @@ class Habit extends Model
             ->orderBy('entry_date')
             ->get()
             ->keyBy(fn (HabitDay $day): string => $day->entry_date->toDateString());
-    }
-
-    /**
-     * Day-by-day chronological walk implementing the weekly-forgiveness
-     * streak: every recorded day adds one immediately, and the run only
-     * resets when a Monday-based week closes (its Sunday is strictly in
-     * the past) with fewer recorded days than the quota.
-     *
-     * @param  Collection<string, HabitDay>  $days
-     * @return array{current: int, best: int}
-     */
-    private function timesPerWeekStreaks(Collection $days): array
-    {
-        $quota = max(1, (int) $this->times_per_week);
-        $today = $this->todayLocalDate();
-        $start = Carbon::parse((string) $days->keys()->first())->startOfWeek(CarbonInterface::MONDAY);
-
-        $streak = 0;
-        $best = 0;
-        $recordedThisWeek = 0;
-
-        for ($cursor = $start->clone(); $cursor->lte($today); $cursor->addDay()) {
-            if ($days->has($cursor->toDateString())) {
-                $streak++;
-                $recordedThisWeek++;
-                $best = max($best, $streak);
-            }
-
-            if ($cursor->dayOfWeekIso === 7) {
-                if ($cursor->lt($today) && $recordedThisWeek < $quota) {
-                    $streak = 0;
-                }
-
-                $recordedThisWeek = 0;
-            }
-        }
-
-        return ['current' => $streak, 'best' => $best];
     }
 }

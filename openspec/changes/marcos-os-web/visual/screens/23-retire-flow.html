@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Retirar (diálogo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('theme');
+  var t=q||(function(){try{return localStorage.getItem('mos-theme')}catch(e){return null}})();
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  function cur(){var a=document.documentElement.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function paint(){var b=document.getElementById('themeBtn');if(!b)return;var d=cur()==='dark';b.setAttribute('aria-pressed',String(d));b.querySelector('span').textContent=d?'Pasar a claro':'Pasar a oscuro'}
+  document.addEventListener('DOMContentLoaded',function(){
+    paint();
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
+      try{localStorage.setItem('mos-theme',n)}catch(e){}paint();
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif;padding-top:44px}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+p{margin:0}
+.ic{flex:none;vertical-align:-3px}
+kbd{font:600 12px/16px "Overpass",sans-serif;padding:1px 6px;border-radius:4px;border:1px solid var(--border);background:var(--sunken);color:var(--muted-fg)}
+code{font:inherit;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.sm{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mock chrome (not part of the product) */
+.mock-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px;background:var(--sunken);border-bottom:1px dashed var(--border);font-size:13px;line-height:16px;color:var(--muted-fg)}
+.mock-bar .mock-name{margin-right:auto;font-weight:600}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--foreground);font:600 13px/16px "Overpass",sans-serif;text-decoration:none;cursor:pointer}
+
+/* app shell */
+.app-nav{display:flex;align-items:center;gap:24px;min-height:60px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:700 17px/24px "Overpass",sans-serif;color:var(--foreground);text-decoration:none;flex:none}
+.brand-mark{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.app-nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.app-nav nav a{position:relative;padding:18px 10px;font:600 14px/20px "Overpass",sans-serif;color:var(--muted-fg);text-decoration:none;white-space:nowrap}
+.app-nav nav a:hover{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:10px;height:4px;background:var(--blaze);border:1px solid var(--blaze-ink);border-radius:2px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted-fg);text-decoration:none;cursor:pointer;font:600 13px/16px "Overpass"}
+.icon-btn:hover{background:var(--sunken);color:var(--foreground)}
+.icon-btn[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:32px}
+h1{font:700 30px/36px "Overpass",sans-serif;letter-spacing:-.01em;margin:0}
+.lede{color:var(--muted-fg);max-width:68ch;margin-top:8px}
+h2{font:700 20px/28px "Overpass",sans-serif;margin:0}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:6px;border:2px solid transparent;font:600 15px/20px "Overpass",sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-danger{background:var(--destructive);color:var(--primary-fg)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font:600 14px/20px "Overpass",sans-serif}
+.help{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.input,textarea.input,select.input{width:100%;min-height:44px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass",sans-serif}
+textarea.input{resize:vertical;min-height:88px}
+.input::placeholder{color:var(--muted-fg)}
+
+/* alternate-state label */
+.state-tag{display:inline-flex;align-items:center;gap:8px;font:600 13px/16px "Overpass",sans-serif;color:var(--muted-fg);padding:6px 10px;border:1px dashed var(--input);border-radius:6px;margin:48px 0 16px;background:var(--background)}
+.state-block{border-top:1px dashed var(--border);margin-top:56px}
+.state-block>.state-tag{margin-top:24px}
+
+/* tiers (AI) */
+.tier{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:6px;font:600 13px/20px "Overpass",sans-serif;white-space:nowrap}
+.tier-minor{background:var(--sunken);color:var(--muted-fg)}
+.tier-major{background:var(--attention-bg);color:var(--attention)}
+.tier-grant{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+
+/* design note */
+.design-note{max-width:1200px;margin:0 auto 64px;padding:0 32px}
+.design-note details{border:1px dashed var(--input);border-radius:10px;background:var(--surface);padding:0 20px}
+.design-note summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font:600 15px/20px "Overpass";color:var(--muted-fg)}
+.design-note ul{margin:0 0 20px;padding-left:20px;max-width:88ch;font-size:15px;line-height:24px}
+.design-note li+li{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:900px){
+  .app-nav{padding:0 16px;gap:12px}
+  .page{padding:28px 16px 48px}
+  .design-note{padding:0 16px}
+  .hide-md{display:none!important}
+}
+
+
+.stage{position:relative;min-height:1010px;overflow:hidden}
+.bg-page{max-width:1200px;margin:0 auto;padding:40px 32px;filter:saturate(.9)}
+.bg-page .crumb{font-size:14px;color:var(--muted-fg)}
+.bg-page h1{margin:8px 0 16px}
+.bg-chip{display:inline-flex;gap:10px;align-items:center;min-height:48px;padding:10px 16px;border-radius:6px;border:2px solid var(--blaze-ink);background:color-mix(in srgb,var(--blaze) 20%,var(--surface));font-weight:600}
+.bg-chip i{width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.bg-cols{display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:32px}
+.bg-cols .panel{padding:20px;min-height:220px}
+.scrim{position:absolute;inset:0;background:color-mix(in srgb,var(--foreground) 40%,transparent)}
+[data-theme="dark"] .scrim{background:rgb(5 10 11 / .6)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .scrim{background:rgb(5 10 11 / .6)}}
+.dlg{position:relative;width:min(680px,calc(100% - 32px));margin:0 auto;background:var(--surface);border-radius:16px;border:1px solid var(--border);box-shadow:0 16px 48px hsl(var(--shadow-color)/.20)}
+.stage .dlg{position:absolute;left:50%;top:48px;transform:translateX(-50%)}
+.dlg-head{padding:24px 28px 0;display:flex;gap:16px;justify-content:space-between;align-items:flex-start}
+.dlg-head h2{font:700 22px/30px "Overpass";letter-spacing:-.005em}
+.dlg-head p{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:4px}
+.close{flex:none}
+.dlg-body{padding:8px 28px 0}
+.step{padding:20px 0;border-bottom:1px solid var(--border)}
+.step:last-child{border-bottom:0}
+.step-h{display:flex;gap:12px;align-items:baseline;margin-bottom:12px}
+.step-n{flex:none;width:24px;height:24px;border-radius:6px;background:var(--sunken);display:grid;place-items:center;font:700 13px/1 "Overpass";color:var(--muted-fg)}
+.step-n.ok{background:var(--primary);color:var(--primary-fg)}
+.step-h h3{font:700 16px/24px "Overpass"}
+.reuse{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:10px;font-size:13px;color:var(--muted-fg)}
+.reuse button{border:1px solid var(--border);background:var(--background);border-radius:6px;padding:4px 10px;min-height:32px;font:600 13px/18px "Overpass";color:var(--foreground);cursor:pointer}
+.count{display:flex;justify-content:space-between;margin-top:6px;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.count .okt{color:var(--primary);font-weight:600;display:inline-flex;gap:4px;align-items:center}
+.opts{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opt{position:relative;display:flex;flex-direction:column;gap:4px;padding:12px 14px;border:1.5px solid var(--input);border-radius:10px;cursor:pointer;background:var(--surface);min-height:96px}
+.opt input{position:absolute;opacity:0}
+.opt .t{display:flex;gap:8px;align-items:center;font:700 15px/22px "Overpass"}
+.opt .d{font-size:13px;line-height:18px;color:var(--muted-fg)}
+.opt.on{border:2px solid var(--primary);background:color-mix(in srgb,var(--primary) 7%,var(--surface))}
+.opt.on .t::after{content:"";margin-left:auto;width:10px;height:10px;border-radius:50%;background:var(--primary);box-shadow:0 0 0 3px var(--surface),0 0 0 4.5px var(--primary)}
+.opt .def{font-size:12px;line-height:16px;font-weight:600;color:var(--muted-fg)}
+.split-box{margin-top:14px;padding:14px;border-radius:10px;background:var(--background);border:1px solid var(--border)}
+.newt{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;align-items:start;padding:8px 0}
+.newt+.newt{border-top:1px dashed var(--border)}
+.newt .k{font:700 13px/40px "Overpass";color:var(--muted-fg);text-align:center}
+.newt .input{min-height:40px;padding:8px 12px;font-size:15px;border-width:1.5px}
+.newt .two{display:flex;gap:8px;align-items:center}
+.newt .two i{flex:none;width:16px;height:12px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.cols-h{display:grid;grid-template-columns:24px 1fr 1fr;gap:8px;font:600 13px/18px "Overpass";color:var(--muted-fg)}
+.addrow{margin-top:6px}
+.inherit{margin-top:12px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.inherit .path{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:8px}
+.nd{display:inline-flex;align-items:center;gap:6px;padding:2px 10px;border-radius:6px;font-size:13px;line-height:20px;color:var(--foreground);background:var(--surface);border:1.5px solid var(--line-1)}
+.nd.lock{border-style:dashed;border-color:var(--node-locked)}
+.nd.new{border-color:var(--primary);font-weight:600}
+.nd.done{background:var(--blaze);border-color:var(--blaze-ink);color:var(--blaze-fg)}
+.arr{color:var(--muted-fg)}
+.dlg-foot{display:flex;flex-wrap:wrap;gap:12px 16px;align-items:center;justify-content:space-between;padding:16px 28px 24px;border-top:1px solid var(--border);background:color-mix(in srgb,var(--sunken) 40%,var(--surface));border-radius:0 0 16px 16px}
+.dlg-foot p{font-size:14px;line-height:20px;color:var(--muted-fg);display:flex;gap:8px;align-items:center;max-width:36ch}
+.dlg-foot .row{display:flex;gap:8px;flex-wrap:wrap}
+.hint{font-size:14px;line-height:20px;color:var(--muted-fg);width:100%;text-align:right}
+.field-err{font-size:13px;line-height:18px;color:var(--attention);margin-top:6px;display:flex;gap:6px;align-items:center}
+.move-box{margin-top:14px;padding:14px;border-radius:10px;background:var(--background);border:1px solid var(--border);display:grid;gap:10px}
+.move-box ul{margin:0;padding-left:18px;font-size:14px;line-height:22px}
+.alone{padding:0 0 64px}
+@media (max-width:760px){.opts{grid-template-columns:1fr}.opt{min-height:0}.newt,.cols-h{grid-template-columns:20px 1fr}.newt .two,.cols-h span:last-child{grid-column:2}.bg-cols{grid-template-columns:1fr}.stage{min-height:1560px}.dlg-head,.dlg-body,.dlg-foot{padding-left:16px;padding-right:16px}}
+
+</style>
+</head>
+<body>
+<div class="mock-bar" role="region" aria-label="Controles del mockup"><span class="mock-name">Pantalla 23 de 30 (web): Retirar (diálogo)</span><button type="button" id="themeBtn" aria-pressed="false"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Tema</span></button><a href="index.html"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Índice</a></div>
+<header class="app-nav"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>Marcos OS</a><nav aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html" aria-current="page">Mapa</a><a href="18-habits-today.html">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="22-retired-view.html">Retirados</a><a href="24-ai-proposals.html">IA</a></nav><div class="nav-right"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="hide-md">Capturar</span> <kbd>C</kbd></button><button class="icon-btn hide-md" type="button" aria-label="Buscar o ir a (Ctrl+K)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><kbd>Ctrl K</kbd></button><a class="icon-btn" href="27-settings-mcp-token.html" aria-label="Ajustes"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></a></div></header>
+
+<main>
+  <div class="stage">
+<div class="bg-page" aria-hidden="true">
+  <p class="crumb">Marcos OS en uso diario / Plan Semana 1 / Tarea 3</p>
+  <h1>Clasificar y elegir prioridad</h1>
+  <span class="bg-chip"><i></i>2 min: abrir el inbox y leer la primera captura</span>
+  <div class="bg-cols"><div class="panel"><h3>Se abre al terminar</h3><p class="muted sm" style="margin-top:8px">Captura 10 min</p></div><div class="panel"><h3>Abre</h3><p class="muted sm" style="margin-top:8px">Revisar video Física, Revisar fórmula cuadrática, Poster desde el teléfono</p></div></div>
+</div><div class="scrim" aria-hidden="true"></div>
+<div class="dlg" role="dialog" aria-modal="true" aria-labelledby="dA">
+  <div class="dlg-head">
+    <div><h2 id="dA">Retirar “Clasificar y elegir prioridad”</h2><p>Tarea 3 de Marcos OS en uso diario, plan Semana 1. Está disponible.</p></div>
+    <button class="icon-btn close" type="button" aria-label="Cerrar sin retirar"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="step">
+      <div class="step-h"><span class="step-n ok">1</span><h3><label for="whyA">¿Por qué la retirás?</label></h3></div>
+      <textarea id="whyA" class="input" rows="2">demasiado grande: mezcla dos decisiones distintas y no sé por cuál arrancar</textarea>
+      <div class="count"><span>Queda escrita en Retirados, para ver patrones después.</span><span class="okt"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Lista</span></div>
+      <div class="reuse"><span>Razones que ya usaste:</span><button type="button">demasiado grande</button><button type="button">planificar sin práctica</button><button type="button">ya no aplica</button></div>
+    </div>
+    <div class="step">
+      <div class="step-h"><span class="step-n ok">2</span><h3 id="decA">¿Qué hacés con lo que contiene?</h3></div>
+      <div class="opts" role="radiogroup" aria-labelledby="decA">
+        <label class="opt"><input type="radio" name="dA"><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>Mover</span><span class="d">Lo que abre pasa a colgar de otra tarea que elijas.</span></label>
+        <label class="opt on"><input type="radio" name="dA" checked><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg>Dividir</span><span class="d">La reemplazás por dos o más tareas más chicas.</span></label>
+        <label class="opt"><input type="radio" name="dA"><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Archivar tal cual</span><span class="d">Se retira sola; lo que abre queda esperando otra cosa.</span></label>
+      </div>
+      <div class="split-box">
+        <div class="cols-h"><span></span><span>Nueva tarea</span><span>Su versión de 2 minutos</span></div>
+        <div class="newt"><span class="k">a</span><input class="input" aria-label="Nueva tarea a" value="Clasificar las capturas del inbox"><span class="two"><i aria-hidden="true"></i><input class="input" aria-label="Versión de 2 minutos de la tarea a" value="Mover una captura"></span></div>
+        <div class="newt"><span class="k">b</span><input class="input" aria-label="Nueva tarea b" value="Elegir la prioridad de la semana"><span class="two"><i aria-hidden="true"></i><input class="input" aria-label="Versión de 2 minutos de la tarea b" value="Escribir un nombre en la prioridad"></span></div>
+        <button class="btn btn-ghost btn-sm addrow" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Agregar otra tarea</button>
+        <div class="inherit">Las dos heredan su lugar en el camino, en el mismo plan:
+          <div class="path"><span class="nd done">Captura 10 min</span><span class="arr"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="nd new">a y b</span><span class="arr"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span><span class="nd lock">Revisar video Física</span><span class="nd lock">Revisar fórmula cuadrática</span><span class="nd lock">Poster desde el teléfono</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <p><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Nada se borra. La vas a ver en Retirados y la podés devolver al mapa.</p>
+    <div class="row"><button class="btn btn-outline" type="button">Cancelar</button><button class="btn btn-primary" type="button">Retirar y dividir</button></div>
+  </div>
+</div></div>
+  <div class="page alone">
+    <div class="state-block">
+    <p class="state-tag"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Estado: plan con contenido, decisión Mover, razón todavía corta (botón deshabilitado con motivo)</p>
+    
+<div class="dlg" role="dialog" aria-labelledby="dB">
+  <div class="dlg-head">
+    <div><h2 id="dB">Retirar el plan “Repaso general”</h2><p>Plan de Aprobar finales, con 3 tareas disponibles.</p></div>
+    <button class="icon-btn close" type="button" aria-label="Cerrar sin retirar"><svg class="ic" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="step">
+      <div class="step-h"><span class="step-n">1</span><h3><label for="whyB">¿Por qué lo retirás?</label></h3></div>
+      <textarea id="whyB" class="input" rows="2" aria-describedby="whyBh">no va</textarea>
+      <p class="field-err" id="whyBh"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>Escribí al menos 10 caracteres para que te sirva después. Faltan 5.</p>
+    </div>
+    <div class="step">
+      <div class="step-h"><span class="step-n ok">2</span><h3 id="decB">¿Qué hacés con lo que contiene?</h3></div>
+      <div class="opts" role="radiogroup" aria-labelledby="decB">
+        <label class="opt on"><input type="radio" name="dB" checked><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>Mover</span><span class="d">Sus tareas pasan a otro plan del mismo objetivo.</span></label>
+        <label class="opt"><input type="radio" name="dB"><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M8 3H3v5"/><path d="M12 22v-8.3a4 4 0 0 0-1.172-2.872L3 3"/><path d="m15 9 6-6"/></svg>Dividir</span><span class="d">Lo reemplazás por planes más chicos.</span></label>
+        <label class="opt"><input type="radio" name="dB"><span class="t"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Archivar tal cual</span><span class="d">Sus 3 tareas se retiran con la misma razón.</span></label>
+      </div>
+      <div class="move-box">
+        <div class="field"><label for="tgt">Mover sus tareas a</label><select id="tgt" class="input"><option>Plan Física II</option><option>Plan Microeconomía</option></select></div>
+        <ul>
+          <li>Física II: repasar unidades 1 a 3</li>
+          <li>Micro: repasar elasticidad</li>
+          <li>Hacer un simulacro cronometrado</li>
+        </ul>
+        <p class="help">Conservan su número y sus dependencias.</p>
+      </div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <p><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Nada se borra. Lo vas a ver en Retirados.</p>
+    <div class="row"><button class="btn btn-outline" type="button">Cancelar</button><button class="btn btn-primary" type="button" aria-disabled="true" aria-describedby="whyBh">Retirar y mover</button></div>
+  </div>
+</div>
+    </div>
+  </div>
+</main>
+<aside class="design-note"><details><summary>Nota de diseño</summary><ul><li>Prevención de errores (Nielsen 5) sin “¿Estás seguro?”: el botón se habilita solo con razón de 10+ caracteres y una decisión, y el motivo del deshabilitado está escrito al lado.</li><li>El botón nombra la acción completa (“Retirar y dividir”, “Retirar y mover”) y es pino, no rojo: retirar no destruye nada.</li><li>Dividir pide la versión de 2 minutos de cada tarea nueva (requisito de toda tarea) y muestra qué heredan en el camino, con los mismos nodos del grafo.</li><li>Reconocer antes que recordar: las razones que ya usaste son atajos de un clic, y alimentan los conteos de la vista Retirados.</li><li>Para una hoja sin contenido, “Archivar tal cual” viene elegido por defecto (menos decisiones).</li></ul></details></aside>
+
+</body>
+</html>

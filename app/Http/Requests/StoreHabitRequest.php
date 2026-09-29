@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Actions\Habits\HabitWriter;
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
 use Illuminate\Contracts\Validation\ValidationRule;
@@ -39,6 +40,15 @@ class StoreHabitRequest extends FormRequest
             'weekdays.*' => ['integer', 'between:1,7', 'distinct'],
             'times_per_week' => ['exclude_unless:recurrence_type,times_per_week', 'required', 'integer', 'between:1,7'],
             'planned_time' => ['nullable', 'date_format:H:i,H:i:s'],
+            'two_minute_version' => ['required', 'string', 'max:255'],
+            'identity_statement' => ['nullable', 'string', 'max:255'],
+            'objective_id' => ['nullable', 'integer'],
+            'plan_id' => ['nullable', 'integer'],
+            'level' => ['nullable', 'integer', 'min:1'],
+            'level_ladder' => ['nullable', 'array', 'max:10'],
+            'level_ladder.*.label' => ['required', 'string', 'max:255'],
+            'level_ladder.*.target' => ['nullable', 'integer', 'min:1'],
+            'level_ladder.*.two_minute_version' => ['required', 'string', 'max:255'],
         ];
     }
 
@@ -69,6 +79,14 @@ class StoreHabitRequest extends FormRequest
             'times_per_week.integer' => 'Las veces por semana deben ser un número entero.',
             'times_per_week.between' => 'Las veces por semana deben estar entre :min y :max.',
             'planned_time.date_format' => 'La hora planificada no es válida.',
+            'two_minute_version.required' => HabitWriter::MISSING_TWO_MINUTE,
+            'two_minute_version.max' => 'La versión de 2 minutos no puede tener más de :max caracteres.',
+            'identity_statement.max' => 'La identidad no puede tener más de :max caracteres.',
+            'level.min' => 'El nivel actual tiene que ser uno de la escalera.',
+            'level_ladder.max' => 'La escalera tiene como mucho :max niveles.',
+            'level_ladder.*.label.required' => 'Cada nivel necesita una descripción.',
+            'level_ladder.*.target.min' => 'La meta de un nivel debe ser al menos :min.',
+            'level_ladder.*.two_minute_version.required' => 'Cada nivel necesita su versión de 2 minutos.',
         ];
     }
 }

@@ -1,0 +1,566 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mapa del objetivo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif}
+a{color:var(--primary)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn{font:600 16px/24px "Overpass",sans-serif;min-height:48px;padding:12px 20px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.theme-toggle{display:flex;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.theme-toggle button{font:600 14px/20px "Overpass",sans-serif;border:0;background:transparent;color:var(--foreground);padding:10px 14px;min-height:44px;border-radius:6px;cursor:pointer}
+.theme-toggle button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+
+
+
+
+/* grid of components */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+.caption{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:12px}
+
+/* check item: the blaze */
+.check{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 12px;background:transparent;border:0;border-radius:6px;color:var(--foreground);font:400 16px/24px "Overpass";text-align:left;cursor:pointer}
+.check:hover{background:var(--sunken)}
+.blaze{position:relative;flex:none;width:28px;height:20px;border:2px solid var(--blaze-ink);border-radius:2px;overflow:hidden}
+.blaze::before{content:"";position:absolute;inset:0;background:var(--blaze);transform:scaleX(0);transform-origin:left;transition:transform 180ms var(--ease-paint)}
+.blaze svg{position:absolute;inset:0;margin:auto;width:14px;height:14px;opacity:0;transition:opacity 60ms linear 120ms}
+.check[aria-checked="true"] .blaze::before{transform:scaleX(1)}
+.check[aria-checked="true"] .blaze svg{opacity:1}
+.blaze.gap{border-style:dashed}
+.check .sub{display:block;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.toast{margin-top:12px;display:inline-flex;gap:12px;align-items:center;background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:6px;font-size:14px;line-height:20px;visibility:hidden}
+.toast.show{visibility:visible}
+.toast button{background:none;border:0;color:inherit;font:600 14px/20px "Overpass";text-decoration:underline;cursor:pointer;min-height:24px}
+
+/* now card */
+.now{position:relative;background:var(--surface);border-radius:10px;padding:32px 24px 24px;box-shadow:0 1px 2px hsl(var(--shadow-color)/.10),0 4px 12px hsl(var(--shadow-color)/.06);overflow:hidden;max-width:640px}
+.cue{position:absolute;left:0;right:0;top:0;height:3px;background:var(--sunken)}
+.cue i{display:block;height:100%;width:52%;background:var(--blaze-ink)}
+.cue-note{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:16px}
+.cue-note .dot{width:8px;height:8px;border-radius:50%;background:var(--blaze)}
+.cue-note button{background:none;border:0;color:var(--foreground);font:600 14px/20px "Overpass";text-decoration:underline;padding:4px;cursor:pointer}
+.ctx{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.now h3.task{font:700 30px/36px "Overpass";letter-spacing:-.01em;margin:8px 0 24px;max-width:45ch}
+.chip2{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 16px;border-radius:6px;border:2px solid var(--blaze-ink);background:color-mix(in srgb,var(--blaze) 20%,var(--surface));color:var(--foreground);font:600 16px/24px "Overpass";text-align:left;cursor:pointer}
+.chip2 .mini{width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px;flex:none}
+.chip2 code{font:inherit}
+.reentry{margin:16px 0 0;font-size:16px}
+.reentry b{font-weight:600}
+.opens{display:flex;align-items:center;gap:8px;margin:12px 0 24px;font-size:14px;color:var(--muted-fg);flex-wrap:wrap}
+.opens .node-mini{border:2px dashed var(--node-locked);border-radius:6px;padding:2px 10px;color:var(--foreground)}
+.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stuck-result{margin-top:16px;background:var(--attention-bg);color:var(--foreground);border-left:3px solid var(--attention);border-radius:6px;padding:12px 16px;display:none}
+.stuck-result.show{display:block}
+.stuck-result p{margin:0 0 8px}
+
+/* progress */
+.strip{display:flex;gap:8px;align-items:center}
+.strip span{width:28px;height:20px;border-radius:2px;border:2px solid var(--blaze-ink)}
+.strip .done{background:var(--blaze)}
+.strip .repaired{background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.strip .gap{border-style:dashed}
+.strip .future{border-color:var(--border)}
+.strip-labels{display:flex;gap:8px;font-size:12px;line-height:16px;color:var(--muted-fg);margin-top:4px}
+.strip-labels span{width:28px;text-align:center}
+.votes{font-size:16px;margin:16px 0 0}
+.votes em{font-style:normal;font-weight:600}
+.stretch{font-size:14px;line-height:20px;color:var(--muted-fg);margin:8px 0 0}
+
+/* capture */
+.capture{display:flex;gap:8px}
+.capture input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.capture input::placeholder{color:var(--muted-fg)}
+
+/* graph: transit map */
+.metro{display:block;width:100%;min-width:760px;height:auto}
+.metro-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.metro .ln{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.metro .ln.dot{stroke-dasharray:0 11}
+.metro .casing{stroke:var(--surface);stroke-width:16;stroke-linecap:butt}
+.metro .ret-body{fill:url(#hatchA);stroke:var(--node-retired);stroke-width:1.5;stroke-linejoin:round}
+.metro .ret-cap{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.metro .s-done{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2.5}
+.metro .s-check{fill:none;stroke:var(--blaze-fg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.metro .s-active{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2}
+.metro .s-ring{fill:none;stroke:var(--foreground);stroke-width:1.5;opacity:.55}
+.metro .s-open{fill:var(--surface);stroke-width:3}
+.metro .s-locked{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.metro .s-mile{fill:var(--surface);stroke:var(--foreground);stroke-width:3.5}
+.metro .s-inter{fill:none;stroke:var(--foreground);stroke-width:1.5;stroke-dasharray:3 3}
+.metro .s-term{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5;stroke-linejoin:round}
+.metro .s-pole{stroke:var(--foreground);stroke-width:2}
+.metro .tick{stroke-width:5;stroke-linecap:butt}
+.metro text{font-family:"Overpass",system-ui,sans-serif;font-size:12.5px;fill:var(--foreground)}
+.metro .lb-strong{font-weight:700;font-size:13px}
+.metro .lb-muted{fill:var(--muted-fg)}
+.metro .lb-mile{font-weight:700;font-size:13px}
+.metro .lb-ret{fill:var(--muted-fg);font-weight:600}
+.metro .lb-note{fill:var(--muted-fg);font-style:italic;font-size:12px}
+.metro .term{font-family:"Zilla Slab",Georgia,serif;font-weight:600;font-size:19px}
+.metro .term-sm{font-size:16px}
+.metro-legend{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:16px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.metro-legend span{display:inline-flex;align-items:center;gap:8px}
+.metro-legend svg{flex:none;color:var(--node-retired)}
+.metro-views{display:grid;gap:24px}
+.metro-views h3{margin:0 0 4px}
+.metro-views .caption{margin:0 0 12px}
+
+/* dialog */
+.dialog{background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 16px 48px hsl(var(--shadow-color)/.20);border:1px solid var(--border)}
+.dialog h3{font:700 20px/28px "Overpass";margin:0 0 16px}
+label.f{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+textarea{width:100%;min-height:88px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass";resize:vertical}
+fieldset{border:0;padding:0;margin:16px 0}
+legend{font:600 14px/20px "Overpass";margin-bottom:8px;padding:0}
+.radio{display:flex;align-items:center;gap:12px;min-height:44px}
+.radio input{width:20px;height:20px;accent-color:var(--primary)}
+.foot{font-size:14px;line-height:20px;color:var(--muted-fg);margin:16px 0}
+.hint{font-size:14px;color:var(--muted-fg);margin-left:12px}
+
+/* AI panel */
+.ai{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:24px}
+.ai-status{display:flex;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;margin-bottom:16px}
+.ai-status span{padding:4px 10px;border-radius:6px;background:var(--sunken);color:var(--muted-fg)}
+.ai-status span.on{background:var(--attention-bg);color:var(--attention);font-weight:600}
+.tree{list-style:none;margin:0;padding:0}
+.tree li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tree li.child{padding-left:24px}
+.tree .add{color:var(--primary);font-weight:600}
+.tree .del{color:var(--muted-fg);text-decoration:line-through}
+.tree .ops{display:flex;gap:4px}
+.tree .ops button{font:600 14px/20px "Overpass";min-height:36px;padding:6px 10px;border-radius:6px;border:1px solid var(--input);background:transparent;color:var(--foreground);cursor:pointer}
+
+/* summit demo */
+.summit{text-align:center;padding:40px 16px;position:relative;overflow:hidden}
+.summit .ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid var(--blaze-ink);border-radius:50%;opacity:0}
+.summit.play .ring{animation:contour 900ms var(--ease-out-soft) 1}
+@keyframes contour{from{transform:scale(.4);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.summit .name{font:600 38px/44px "Zilla Slab";margin:8px 0}
+.summit p{color:var(--muted-fg);margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  .blaze::before,.blaze svg{transition:none}
+  .summit.play .ring{animation:none;opacity:1;transform:none}
+  .btn{transition:none}
+}
+@media (max-width:560px){
+  .type-row{grid-template-columns:1fr;gap:4px}
+  .now{padding:28px 16px 16px}
+  .now h3.task{font-size:24px;line-height:32px}
+  .d-lg{font-size:38px;line-height:44px}
+  .actions .btn{flex:1}
+}
+
+/* ---------- app shell (shared by every web screen) ---------- */
+body{padding-top:44px}
+.mock-strip{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;padding:0 24px;font-size:13px;line-height:16px;color:var(--muted-fg);background:var(--sunken);border-bottom:1px solid var(--border)}
+.mock-strip b{font-weight:600;color:var(--foreground);margin-right:8px}
+.mock-bar{position:fixed;top:6px;right:12px;z-index:50;display:flex;gap:4px;align-items:center;padding:3px;border-radius:10px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);box-shadow:0 8px 24px hsl(var(--shadow-color)/.14);backdrop-filter:blur(6px)}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass",sans-serif;color:var(--foreground);background:transparent;border:0;border-radius:6px;padding:6px 10px;min-height:30px;cursor:pointer;text-decoration:none}
+.mock-bar a:hover,.mock-bar button:hover{background:var(--sunken)}
+.mock-bar svg{width:16px;height:16px}
+
+.appbar{position:relative;display:flex;align-items:center;gap:24px;height:64px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font:700 17px/20px "Overpass";color:var(--foreground);text-decoration:none;white-space:nowrap}
+.brand i{display:block;width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.nav a{font:600 15px/20px "Overpass";color:var(--muted-fg);text-decoration:none;padding:10px 12px;border-radius:6px;white-space:nowrap}
+.nav a:hover{background:var(--sunken);color:var(--foreground)}
+.nav a[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+.appbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-sm{font:600 14px/20px "Overpass";min-height:40px;padding:8px 14px;border-radius:6px;border:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-sm.btn-outline{border-color:var(--input)}
+kbd{font:600 12px/16px "Overpass";color:var(--muted-fg);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:1px 6px;background:var(--background)}
+.btn-primary kbd{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--primary-fg) 50%,transparent)}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+svg.i.s16{width:16px;height:16px}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin:0 0 12px}
+.crumbs a{color:var(--muted-fg);text-decoration:none}
+.crumbs a:hover{color:var(--foreground);text-decoration:underline}
+.crumbs svg{width:14px;height:14px}
+.obj-title{font:600 38px/44px "Zilla Slab",Georgia,serif;letter-spacing:-.005em;margin:0}
+.obj-title.sm{font-size:30px;line-height:36px}
+.muted{color:var(--muted-fg)}
+.small{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.tnum{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sec-h{font:700 20px/28px "Overpass";margin:0 0 4px;letter-spacing:0}
+.sec-sub{margin:0 0 16px;font-size:14px;line-height:20px;color:var(--muted-fg);max-width:68ch}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--primary);font:600 14px/20px "Overpass";cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn.quiet{color:var(--muted-fg)}
+
+/* state tags: shape + text, never color alone */
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass";color:var(--muted-fg);white-space:nowrap}
+.st .g{flex:none}
+.st.done{color:var(--foreground)}
+.st.active{color:var(--foreground)}
+.st.avail{color:var(--primary)}
+
+/* inputs */
+.fld{display:block;margin:0 0 20px}
+.fld>span.l{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+.fld .ex{display:block;font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:6px;max-width:68ch}
+.in{width:100%;min-height:44px;padding:9px 12px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.in::placeholder{color:var(--muted-fg)}
+.in:focus{outline:2px solid var(--ring);outline-offset:2px}
+.in.need{border-style:dashed;border-color:var(--attention)}
+.msg-attn{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14px;line-height:20px;color:var(--attention)}
+.msg-attn svg{margin-top:2px}
+
+/* other states of the screen */
+.states{border-top:1px solid var(--border);background:var(--sunken);padding:40px 32px 56px}
+.states-in{max-width:1200px;margin:0 auto}
+.states h2{font:700 20px/28px "Overpass";margin:0 0 4px}
+.states>.states-in>p{margin:0 0 24px;font-size:14px;color:var(--muted-fg)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;align-items:start}
+.spanel>h3{font:600 14px/20px "Overpass";margin:0 0 8px;color:var(--muted-fg)}
+.spanel>h3 b{color:var(--foreground)}
+.frame{background:var(--background);border:1px solid var(--border);border-radius:10px;padding:24px;overflow:hidden}
+
+/* design note */
+.nota{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
+.nota details{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0 20px}
+.nota summary{cursor:pointer;font:600 16px/24px "Overpass";padding:14px 0;list-style-position:inside}
+.nota ul{margin:0 0 18px;padding-left:20px;max-width:80ch}
+.nota li{margin:0 0 8px;font-size:15px;line-height:22px}
+
+@media (max-width:900px){
+  .appbar{gap:12px;padding:0 16px}
+  .appbar .right .hide-md{display:none}
+  .page{padding:28px 16px 48px}
+  .states{padding:32px 16px 40px}
+  .nota{padding:24px 16px 48px}
+  .obj-title{font-size:30px;line-height:36px}
+}
+@media (max-width:560px){
+  .brand span{display:none}
+  .sgrid{grid-template-columns:1fr}
+}
+
+/* ---------- screen-specific ---------- */
+
+.gpage{display:grid;grid-template-columns:minmax(0,1fr) 360px;min-height:clamp(640px,calc(100vh - 108px),792px)}
+.gmain{display:flex;flex-direction:column;min-width:0;padding:24px 32px 20px}
+.ghead{display:flex;justify-content:space-between;align-items:flex-end;gap:16px 24px;flex-wrap:wrap;margin:0 0 16px}
+.ghead .t{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.key{font:600 12px/16px "Overpass";color:var(--muted-fg);border:1px solid var(--border);border-radius:2px;padding:1px 6px}
+.seg{display:inline-flex;background:var(--sunken);border-radius:6px;padding:3px;gap:3px}
+.seg a,.seg button{font:600 14px/20px "Overpass";border:0;background:transparent;color:var(--muted-fg);padding:8px 14px;border-radius:4px;min-height:36px;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center}
+.seg [aria-current="page"],.seg [aria-pressed="true"]{background:var(--surface);color:var(--foreground);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+.metricline{font-size:15px;line-height:22px;color:var(--muted-fg)}
+.metricline b{color:var(--foreground);font-weight:700}
+.gtools{display:flex;justify-content:space-between;align-items:center;gap:12px 24px;flex-wrap:wrap;margin:0 0 12px}
+.gtools .grp{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.gtools .lab{font:600 14px/20px "Overpass";color:var(--muted-fg)}
+.switch{display:inline-flex;align-items:center;gap:10px;font:600 14px/20px "Overpass";background:none;border:0;color:var(--foreground);cursor:pointer;padding:6px 4px;min-height:40px}
+.switch i{position:relative;width:36px;height:20px;border-radius:10px;background:var(--sunken);border:2px solid var(--input);flex:none}
+.switch i::after{content:"";position:absolute;top:2px;left:2px;width:12px;height:12px;border-radius:50%;background:var(--input);transition:transform 100ms ease-out}
+.switch[aria-pressed="true"] i{background:var(--primary);border-color:var(--primary)}
+.switch[aria-pressed="true"] i::after{transform:translateX(16px);background:var(--primary-fg)}
+.near{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.near b{color:var(--foreground)}
+.canvas{position:relative;flex:1;min-height:460px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.scroller{position:absolute;inset:0;overflow:auto}
+.scroller svg{display:block;width:100%;min-width:900px;height:auto;transform-origin:0 0}
+.metro .band{fill:var(--background);stroke:var(--border);stroke-width:1;stroke-dasharray:4 4}
+.metro .band-l{font:600 13px "Overpass";fill:var(--muted-fg)}
+.metro .veil{fill:var(--surface);opacity:0;transition:opacity 200ms var(--ease-out-soft);pointer-events:none}
+.metro .veil.on{opacity:.78}
+.metro .hit{fill:transparent;cursor:pointer}
+.metro .hit:focus{outline:none}
+.metro .hit:focus-visible{stroke:var(--ring);stroke-width:2}
+.metro .sel{fill:none;stroke:var(--ring);stroke-width:2.5}
+.metro .stub{fill:var(--surface);stroke:var(--line-3);stroke-width:3;stroke-dasharray:3 3}
+.metro .ret-g.off{display:none}
+.zoom{position:absolute;right:12px;top:12px;display:flex;gap:2px;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:3px;box-shadow:0 8px 24px hsl(var(--shadow-color)/.14)}
+.zoom button{width:36px;height:36px;display:grid;place-items:center;background:none;border:0;border-radius:4px;color:var(--foreground);cursor:pointer}
+.zoom button:hover{background:var(--sunken)}
+.zoom .pct{font:600 13px/16px "Overpass";min-width:48px;text-align:center;font-variant-numeric:tabular-nums;color:var(--muted-fg)}
+.zoom .fit{width:auto;padding:0 10px;font:600 13px/16px "Overpass"}
+.zoom .sepv{width:1px;height:24px;background:var(--border);margin:0 2px}
+.helpbtn{position:absolute;left:12px;bottom:12px;display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass";background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:8px 10px;color:var(--foreground);cursor:pointer}
+.metro-legend{margin-top:12px;font-size:13px;gap:8px 20px}
+/* side panel */
+.gside{border-left:1px solid var(--border);background:var(--surface);padding:24px;display:flex;flex-direction:column;gap:16px}
+.gside .kicker{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.gside h2{font:700 24px/32px "Overpass";letter-spacing:-.01em;margin:0}
+.gside .plan{margin:-8px 0 0;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.gside .chip2{min-height:48px}
+.gside h3{font:600 13px/20px "Overpass";color:var(--muted-fg);margin:0 0 4px}
+.gside ul{list-style:none;margin:0;padding:0}
+.gside li{display:flex;gap:10px;align-items:center;padding:6px 0;font-size:15px;line-height:22px}
+.gside li .g{flex:none}
+.gside .note{background:var(--sunken);border-radius:6px;padding:10px 12px;font-size:14px;line-height:20px}
+.gside .acts{display:flex;flex-direction:column;gap:8px;margin-top:auto}
+.gside .acts .btn{width:100%}
+.gside .ret{background:var(--sunken);border-left:3px solid var(--node-retired);border-radius:6px;padding:10px 12px;font-size:14px;line-height:20px}
+.gside [hidden]{display:none}
+.frame svg.metro{min-width:0}
+@media (max-width:1100px){
+  .gpage{grid-template-columns:1fr}
+  .gside{border-left:0;border-top:1px solid var(--border)}
+  .gmain{padding:20px 16px}
+  .canvas{min-height:420px}
+}
+@media (prefers-reduced-motion:reduce){.metro .veil{transition:none}.switch i::after{transition:none}}
+
+
+/* unlock graph v3: minimal vertical track */
+.tr{--tr-hue:var(--blaze-ink);--tr-fill:var(--blaze);--tr-ck:var(--blaze-fg);--tr-w:7px;overflow:visible}
+.tr .e{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tr .e-done{stroke:var(--tr-hue);stroke-width:var(--tr-w)}
+.tr .e-open{stroke:var(--tr-hue);stroke-width:calc(var(--tr-w) * .45)}
+.tr .e-lock{stroke:var(--node-locked);stroke-width:2.5;opacity:.85}
+.tr .n-done{fill:var(--tr-fill);stroke:var(--tr-hue);stroke-width:2}
+.tr .n-ck{fill:none;stroke:var(--tr-ck);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tr .n-act{fill:var(--surface);stroke:var(--tr-hue);stroke-width:4.5}
+.tr .n-mark{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:1.5}
+.tr .n-open{fill:var(--surface);stroke:var(--tr-hue);stroke-width:2.5}
+.tr .n-lock{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.tr .n-goal{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5}
+.tr .n-goal.done{fill:var(--tr-fill);stroke:var(--tr-hue)}
+.tr .n-goal-t{fill:var(--tr-hue)}
+.tr .n-goal.done+.n-goal-t{fill:var(--tr-ck)}
+.tr text{font-family:"Overpass",system-ui,sans-serif;fill:var(--foreground)}
+.tr .lb-act{font-size:15px;font-weight:700}
+.tr .lb-sub{font-size:12.5px;font-weight:400;fill:var(--muted-fg)}
+.tr .lb-goal{font-family:"Zilla Slab",Georgia,serif;font-size:19px;font-weight:600}
+.tr .lb-row{font-size:14px;font-weight:600}
+.tr .lb-row.mute{font-weight:400;fill:var(--muted-fg)}
+.tr .hit{fill:transparent}
+.tr .nd{cursor:pointer}
+.tr .nd:focus{outline:none}
+.tr .selr{fill:none;stroke:var(--ring);stroke-width:2.5;display:none}
+.tr .nd.sel .selr,.tr .nd:focus-visible .selr{display:block}
+.tr .tip{opacity:0;pointer-events:none;transition:opacity 120ms ease-out}
+.tr .tip rect{fill:var(--foreground)}
+.tr .tip text{fill:var(--background);font-size:13px;font-weight:600}
+.tr .nd:hover .tip,.tr .nd:focus-visible .tip,.tr .nd.sel .tip{opacity:1}
+.tr .e-ret{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.tr.no-ret .ret{display:none}
+.tr .dim{opacity:.22;transition:opacity 200ms ease-out}
+.tr .col{display:none}
+.tr .collapsed>.full{display:none}
+.tr .collapsed>.col{display:inline}
+@media (prefers-reduced-motion:reduce){.tr .tip,.tr .dim{transition:none}}
+
+.tr-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.tr-legend span{display:inline-flex;align-items:center;gap:6px}
+
+.gpage:not(.has-sel){grid-template-columns:minmax(0,1fr)}
+.gpage:not(.has-sel) .gside{display:none}
+.gside .kk{display:inline-flex;align-items:center;gap:8px}
+.gside .x{width:36px;height:36px;border:0;background:none;border-radius:6px;color:var(--muted-fg);font:400 22px/1 "Overpass";cursor:pointer}
+.gside .x:hover{background:var(--sunken);color:var(--foreground)}
+.gside li svg.g{flex:none}
+.gside .note{background:var(--sunken);border-radius:6px;padding:10px 12px;font-size:14px;line-height:20px;margin:0}
+.canvas .scroller{display:flex;justify-content:center}
+.canvas .scroller svg.tr{display:block;height:100%;width:auto;min-height:520px;min-width:0;max-width:none;margin:0 auto;flex:none}
+.tr-legend{margin-top:12px}
+.canvas{min-height:880px}
+</style>
+</head>
+<body>
+<div class="mock-strip"><b>Pantalla 8: Mapa del objetivo</b>Maqueta estática de Marcos OS web, 1440 × 900</div>
+<div class="mock-bar" role="toolbar" aria-label="Herramientas de la maqueta">
+  <a href="index.html"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Índice</a>
+  <button type="button" id="themeBtn"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Oscuro</span></button>
+</div>
+<header class="appbar">
+  <a class="brand" href="02-now.html" aria-label="Marcos OS, ir a Ahora"><i aria-hidden="true"></i><span>Marcos OS</span></a>
+  <nav class="nav" aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html" aria-current="page">Mapa</a><a href="#">Hábitos</a><a href="#">Revisiones</a><a href="#">Retirados</a></nav>
+  <div class="right">
+    <button class="btn-sm btn-outline" type="button"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Capturar <kbd>C</kbd></button>
+    <button class="btn-sm btn-ghost hide-md" type="button" aria-label="Paleta de comandos"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>Ctrl K</kbd></button>
+  </div>
+</header>
+<div class="gpage">
+  <main class="gmain">
+    <div class="ghead">
+      <div>
+        <nav class="crumbs" aria-label="Ruta" style="margin-bottom:6px"><a href="03-objectives-index.html">Objetivos</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><a href="04-objective-detail.html">Marcos OS en uso diario</a><svg class="i" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Mapa</span></nav>
+        <div class="t"><h1 class="obj-title sm">Marcos OS en uso diario</h1><span class="key">DIARIO</span></div>
+        <p class="metricline" style="margin:4px 0 0">Métrica: <b class="tnum">1 de 14</b> días con el ciclo diario completo</p>
+      </div>
+      <div class="seg" role="navigation" aria-label="Vista del mapa"><a href="08-objective-graph.html" aria-current="page">Esta línea</a><a href="09-global-graph.html">Global</a></div>
+    </div>
+
+    <div class="gtools">
+      <div class="grp" role="group" aria-label="Filtrar por plan">
+        <span class="lab">Plan</span>
+        <div class="seg" id="planFilter">
+          <button type="button" data-p="all" aria-pressed="true">Todos</button>
+          <button type="button" data-p="1" aria-pressed="false">Semana 1</button>
+          <button type="button" data-p="2" aria-pressed="false">Semana 2</button>
+          <button type="button" data-p="3" aria-pressed="false">Cierre</button>
+        </div>
+        <button class="switch" type="button" id="retToggle" aria-pressed="true"><i aria-hidden="true"></i>Mostrar retirados</button>
+      </div>
+      <p class="near" style="margin:0">Faltan <b>5 estaciones</b> para el mojón Semana 1.</p>
+    </div>
+    <div class="canvas">
+      <div class="scroller" id="scroller">
+        <svg class="tr" id="map" viewBox="0 0 600 848.75" role="group" aria-labelledby="map-t"><title id="map-t">Línea del objetivo Marcos OS en uso diario</title><desc>Programa de 14 días en una vía vertical. Hecho: Mesa lista. Activa: Captura 10 min. Bloqueadas: Clasificar y elegir prioridad; en paralelo Revisar video Física, Revisar fórmula cuadrática y Poster desde el teléfono; hito Semana 1; Elegir acción del lunes, Hora prevista vs real, Dos minutos a veinte, Usar Estoy trabado, Tres fricciones; hito Especificar Ahora; Backlog y primera tarea; objetivo Revisión 11-oct. Un elemento retirado a un costado: Diseñar segundo cerebro completo.</desc><g class="nd ret" data-id="ret" data-plan="1" tabindex="0" role="button" aria-label="Retirado: Diseñar segundo cerebro completo. Motivo: planificar sin práctica"><title>Retirado: Diseñar segundo cerebro completo (planificar sin práctica)</title><circle cx="193" cy="72" r="12" class="selr"/><path d="M187 72 H199" class="e-ret"/><g class="tip" aria-hidden="true"><rect x="-137.8" y="59" width="323.8" height="26" rx="6"/><text x="-128.8" y="76.5">Retirado: Diseñar segundo cerebro completo</text></g><circle cx="193" cy="72" r="14" class="hit"/></g><path d="M210 44 L210 100" class="e e-done" data-plan="1"/><path d="M210 100 L210 156" class="e e-lock" data-plan="1"/><path d="M210 156 L210 240" class="e e-lock" data-plan="1"/><path d="M210 240 L210 324" class="e e-lock" data-plan="1"/><path d="M210 156 L239.5 185.5 Q248 194 248.0 206.0 L248 240" class="e e-lock" data-plan="1"/><path d="M248 240 L248.0 274.0 Q248 286 239.5 294.5 L210 324" class="e e-lock" data-plan="1"/><path d="M210 156 L283.2 229.2 Q286 232 286.0 236.0 L286 240" class="e e-lock" data-plan="1"/><path d="M286 240 L286.0 244.0 Q286 248 283.2 250.8 L210 324" class="e e-lock" data-plan="1"/><path d="M210 324 L210 380" class="e e-lock" data-plan="2"/><path d="M210 380 L210 436" class="e e-lock" data-plan="2"/><path d="M210 436 L210 492" class="e e-lock" data-plan="2"/><path d="M210 492 L210 548" class="e e-lock" data-plan="2"/><path d="M210 548 L210 604" class="e e-lock" data-plan="2"/><path d="M210 604 L210 660" class="e e-lock" data-plan="2"/><path d="M210 660 L210 716" class="e e-lock" data-plan="3"/><path d="M210 716 L210 786" class="e e-lock" data-plan="3"/><g class="nd" data-id="d1" data-plan="1" tabindex="0" role="button" aria-label="Mesa lista, hecha"><title>Mesa lista, hecha</title><circle cx="210" cy="44" r="20.0" class="selr"/><circle cx="210" cy="44" r="13.0" class="n-done"/><path d="M204.0 44.3 l4.2 4.2 l8.1 -8.8" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="233.0" y="31.0" width="90.8" height="26" rx="6"/><text x="242.0" y="48.5">Mesa lista</text></g><circle cx="210" cy="44" r="21.0" class="hit"/></g><g class="nd" data-id="d2" data-plan="1" tabindex="0" role="button" aria-label="Captura 10 min, activa, ahora"><title>Captura 10 min, activa, ahora</title><circle cx="210" cy="100" r="21.5" class="selr"/><circle cx="210" cy="100" r="14.5" class="n-act"/><rect x="204.2" y="96.0" width="11.7" height="8.1" rx="1.5" class="n-mark"/><text x="238.5" y="98.0" class="lb-act">Captura 10 min</text><text x="238.5" y="115.0" class="lb-sub">ahora</text><circle cx="210" cy="100" r="22.5" class="hit"/></g><g class="nd" data-id="d3" data-plan="1" tabindex="0" role="button" aria-label="Clasificar y elegir prioridad, bloqueada"><title>Clasificar y elegir prioridad, bloqueada</title><circle cx="210" cy="156" r="13.5" class="selr"/><circle cx="210" cy="156" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="143.0" width="229.1" height="26" rx="6"/><text x="235.5" y="160.5">Clasificar y elegir prioridad</text></g><circle cx="210" cy="156" r="17.0" class="hit"/></g><g class="nd" data-id="d4" data-plan="1" tabindex="0" role="button" aria-label="Revisar video Física, bloqueada"><title>Revisar video Física, bloqueada</title><circle cx="210" cy="240" r="13.5" class="selr"/><circle cx="210" cy="240" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="308.0" y="227.0" width="163.6" height="26" rx="6"/><text x="317.0" y="244.5">Revisar video Física</text></g><circle cx="210" cy="240" r="17.0" class="hit"/></g><g class="nd" data-id="d5" data-plan="1" tabindex="0" role="button" aria-label="Revisar fórmula cuadrática, bloqueada"><title>Revisar fórmula cuadrática, bloqueada</title><circle cx="248" cy="240" r="13.5" class="selr"/><circle cx="248" cy="240" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="308.0" y="227.0" width="207.3" height="26" rx="6"/><text x="317.0" y="244.5">Revisar fórmula cuadrática</text></g><circle cx="248" cy="240" r="17.0" class="hit"/></g><g class="nd" data-id="d6" data-plan="1" tabindex="0" role="button" aria-label="Poster desde el teléfono, bloqueada"><title>Poster desde el teléfono, bloqueada</title><circle cx="286" cy="240" r="13.5" class="selr"/><circle cx="286" cy="240" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="308.0" y="227.0" width="192.7" height="26" rx="6"/><text x="317.0" y="244.5">Poster desde el teléfono</text></g><circle cx="286" cy="240" r="17.0" class="hit"/></g><g class="nd" data-id="d7" data-plan="1" tabindex="0" role="button" aria-label="Hito Semana 1: boceto de “Ahora”, bloqueada"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="210" cy="324" r="18.3" class="selr"/><circle cx="210" cy="324" r="11.3" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="231.3" y="311.0" width="214.6" height="26" rx="6"/><text x="240.3" y="328.5">Semana 1: boceto de “Ahora”</text></g><circle cx="210" cy="324" r="19.3" class="hit"/></g><g class="nd" data-id="d8" data-plan="2" tabindex="0" role="button" aria-label="Elegir acción del lunes, bloqueada"><title>Elegir acción del lunes, bloqueada</title><circle cx="210" cy="380" r="13.5" class="selr"/><circle cx="210" cy="380" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="367.0" width="185.4" height="26" rx="6"/><text x="235.5" y="384.5">Elegir acción del lunes</text></g><circle cx="210" cy="380" r="17.0" class="hit"/></g><g class="nd" data-id="d9" data-plan="2" tabindex="0" role="button" aria-label="Hora prevista vs real, bloqueada"><title>Hora prevista vs real, bloqueada</title><circle cx="210" cy="436" r="13.5" class="selr"/><circle cx="210" cy="436" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="423.0" width="170.9" height="26" rx="6"/><text x="235.5" y="440.5">Hora prevista vs real</text></g><circle cx="210" cy="436" r="17.0" class="hit"/></g><g class="nd" data-id="d10" data-plan="2" tabindex="0" role="button" aria-label="Dos minutos → veinte, bloqueada"><title>Dos minutos → veinte, bloqueada</title><circle cx="210" cy="492" r="13.5" class="selr"/><circle cx="210" cy="492" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="479.0" width="163.6" height="26" rx="6"/><text x="235.5" y="496.5">Dos minutos → veinte</text></g><circle cx="210" cy="492" r="17.0" class="hit"/></g><g class="nd" data-id="d11" data-plan="2" tabindex="0" role="button" aria-label="Usar “Estoy trabado”, bloqueada"><title>Usar “Estoy trabado”, bloqueada</title><circle cx="210" cy="548" r="13.5" class="selr"/><circle cx="210" cy="548" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="535.0" width="163.6" height="26" rx="6"/><text x="235.5" y="552.5">Usar “Estoy trabado”</text></g><circle cx="210" cy="548" r="17.0" class="hit"/></g><g class="nd" data-id="d12" data-plan="2" tabindex="0" role="button" aria-label="Tres fricciones, bloqueada"><title>Tres fricciones, bloqueada</title><circle cx="210" cy="604" r="13.5" class="selr"/><circle cx="210" cy="604" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="591.0" width="127.2" height="26" rx="6"/><text x="235.5" y="608.5">Tres fricciones</text></g><circle cx="210" cy="604" r="17.0" class="hit"/></g><g class="nd" data-id="d13" data-plan="2" tabindex="0" role="button" aria-label="Hito Especificar “Ahora”, bloqueada"><title>Hito Especificar “Ahora”, bloqueada</title><circle cx="210" cy="660" r="18.3" class="selr"/><circle cx="210" cy="660" r="11.3" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="231.3" y="647.0" width="156.3" height="26" rx="6"/><text x="240.3" y="664.5">Especificar “Ahora”</text></g><circle cx="210" cy="660" r="19.3" class="hit"/></g><g class="nd" data-id="d14" data-plan="3" tabindex="0" role="button" aria-label="Backlog y primera tarea, bloqueada"><title>Backlog y primera tarea, bloqueada</title><circle cx="210" cy="716" r="13.5" class="selr"/><circle cx="210" cy="716" r="6.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="226.5" y="703.0" width="185.4" height="26" rx="6"/><text x="235.5" y="720.5">Backlog y primera tarea</text></g><circle cx="210" cy="716" r="17.0" class="hit"/></g><g class="nd" data-id="gA" data-plan="3" tabindex="0" role="button" aria-label="Objetivo Revisión 11-oct"><title>Objetivo Revisión 11-oct</title><circle cx="210" cy="786" r="29.8" class="selr"/><circle cx="210" cy="786" r="22.8" class="n-goal"/><path d="M197.5 795.0 L210 774.1 L222.5 795.0 Z" class="n-goal-t"/><text x="246.8" y="784.0" class="lb-goal">Revisión 11-oct</text><text x="246.8" y="801.0" class="lb-sub">Marcos OS en uso diario</text><circle cx="210" cy="786" r="30.8" class="hit"/></g></svg>
+      </div>
+      <button class="helpbtn" type="button" aria-label="Qué significa cada símbolo"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.3M12 17h.01"/></svg>Cómo leer el mapa</button>
+      <div class="zoom" role="group" aria-label="Zoom">
+        <button type="button" id="zOut" aria-label="Alejar (tecla −)"><svg class="i s16" viewBox="0 0 24 24"><path d="M5 12h14"/></svg></button>
+        <span class="pct" id="zPct" aria-live="polite">100 %</span>
+        <button type="button" id="zIn" aria-label="Acercar (tecla +)"><svg class="i s16" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>
+        <span class="sepv" aria-hidden="true"></span>
+        <button type="button" class="fit" id="zFit">Ajustar</button>
+      </div>
+    </div>
+    <div class="tr-legend"><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8" class="n-done"/><path d="M7.3 11.2 l2.6 2.6 l5 -5.4" class="n-ck"/></svg>Hecha</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8" class="n-act"/><rect x="7.4" y="8.5" width="7.2" height="5" rx="1.5" class="n-mark"/></svg>Ahora</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="7" class="n-open"/></svg>Disponible</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="4.5" class="n-lock"/></svg>Por venir</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.5" class="n-goal"/><path d="M6.6 14.5 L11 5.4 L15.4 14.5 Z" class="n-goal-t"/></svg>Objetivo</span></div>
+  </main>
+
+  <aside class="gside" aria-label="Estación seleccionada" aria-live="polite" id="side"></aside>
+</div>
+
+<section class="states" aria-labelledby="st">
+  <div class="states-in">
+    <h2 id="st">Otros estados de esta pantalla</h2>
+    <p>Qué pasa en el mapa al marcar la tarea activa, y el panel cuando la estación elegida es la activa.</p>
+    <div class="sgrid">
+      <div class="spanel">
+        <h3><b>Recién marcada Captura 10 min.</b> El tramo se pinta de ocre en 400 ms y Clasificar pasa a disponible. Con movimiento reducido, cambia sin trazo.</h3>
+        <div class="frame" style="background:var(--surface)">
+          <svg class="tr" viewBox="0 0 360 150" role="group" aria-labelledby="tA-t"><title id="tA-t">Línea del objetivo Marcos OS en uso diario</title><desc>Programa de 14 días en una vía vertical. Hecho: Mesa lista. Activa: Captura 10 min. Bloqueadas: Clasificar y elegir prioridad; en paralelo Revisar video Física, Revisar fórmula cuadrática y Poster desde el teléfono; hito Semana 1; Elegir acción del lunes, Hora prevista vs real, Dos minutos a veinte, Usar Estoy trabado, Tres fricciones; hito Especificar Ahora; Backlog y primera tarea; objetivo Revisión 11-oct. Un elemento retirado a un costado: Diseñar segundo cerebro completo.</desc><path d="M60 26 L60 70" class="e e-done" data-plan="1"/><path d="M60 70 L60 114" class="e e-open" data-plan="1"/><path d="M60 114 L60 180" class="e e-lock" data-plan="1"/><path d="M60 180 L60 246" class="e e-lock" data-plan="1"/><path d="M60 114 L79.5 133.5 Q88 142 88.0 154.0 L88 180" class="e e-lock" data-plan="1"/><path d="M88 180 L88.0 206.0 Q88 218 79.5 226.5 L60 246" class="e e-lock" data-plan="1"/><path d="M60 114 L112.5 166.5 Q116 170 116.0 175.0 L116 180" class="e e-lock" data-plan="1"/><path d="M116 180 L116.0 185.0 Q116 190 112.5 193.5 L60 246" class="e e-lock" data-plan="1"/><path d="M60 246 L60 290" class="e e-lock" data-plan="2"/><path d="M60 290 L60 334" class="e e-lock" data-plan="2"/><path d="M60 334 L60 378" class="e e-lock" data-plan="2"/><path d="M60 378 L60 422" class="e e-lock" data-plan="2"/><path d="M60 422 L60 466" class="e e-lock" data-plan="2"/><path d="M60 466 L60 510" class="e e-lock" data-plan="2"/><path d="M60 510 L60 554" class="e e-lock" data-plan="3"/><path d="M60 554 L60 609" class="e e-lock" data-plan="3"/><g class="nd" data-id="d1" data-plan="1"><title>Mesa lista, hecha</title><circle cx="60" cy="26" r="17.0" class="selr"/><circle cx="60" cy="26" r="10.0" class="n-done"/><path d="M55.4 26.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="80.0" y="13.0" width="90.8" height="26" rx="6"/><text x="89.0" y="30.5">Mesa lista</text></g><circle cx="60" cy="26" r="18.0" class="hit"/></g><g class="nd" data-id="d2" data-plan="1"><title>Captura 10 min, hecha</title><circle cx="60" cy="70" r="17.0" class="selr"/><circle cx="60" cy="70" r="10.0" class="n-done"/><path d="M55.4 70.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="80.0" y="57.0" width="119.9" height="26" rx="6"/><text x="89.0" y="74.5">Captura 10 min</text></g><circle cx="60" cy="70" r="18.0" class="hit"/></g><g class="nd sel" data-id="d3" data-plan="1"><title>Clasificar y elegir prioridad, disponible</title><circle cx="60" cy="114" r="17.0" class="selr"/><circle cx="60" cy="114" r="9.0" class="n-open"/><text x="84.0" y="112.0" class="lb-act">Clasificar y elegir prioridad</text><text x="84.0" y="129.0" class="lb-sub">se abrió; aparece sugerida en Ahora</text><circle cx="60" cy="114" r="18.0" class="hit"/></g><g class="nd" data-id="d4" data-plan="1"><title>Revisar video Física, bloqueada</title><circle cx="60" cy="180" r="12.0" class="selr"/><circle cx="60" cy="180" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="138.0" y="167.0" width="163.6" height="26" rx="6"/><text x="147.0" y="184.5">Revisar video Física</text></g><circle cx="60" cy="180" r="17.0" class="hit"/></g><g class="nd" data-id="d5" data-plan="1"><title>Revisar fórmula cuadrática, bloqueada</title><circle cx="88" cy="180" r="12.0" class="selr"/><circle cx="88" cy="180" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="138.0" y="167.0" width="207.3" height="26" rx="6"/><text x="147.0" y="184.5">Revisar fórmula cuadrática</text></g><circle cx="88" cy="180" r="17.0" class="hit"/></g><g class="nd" data-id="d6" data-plan="1"><title>Poster desde el teléfono, bloqueada</title><circle cx="116" cy="180" r="12.0" class="selr"/><circle cx="116" cy="180" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="138.0" y="167.0" width="192.7" height="26" rx="6"/><text x="147.0" y="184.5">Poster desde el teléfono</text></g><circle cx="116" cy="180" r="17.0" class="hit"/></g><g class="nd" data-id="d7" data-plan="1"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="60" cy="246" r="15.7" class="selr"/><circle cx="60" cy="246" r="8.7" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="78.7" y="233.0" width="214.6" height="26" rx="6"/><text x="87.7" y="250.5">Semana 1: boceto de “Ahora”</text></g><circle cx="60" cy="246" r="17.0" class="hit"/></g><g class="nd" data-id="d8" data-plan="2"><title>Elegir acción del lunes, bloqueada</title><circle cx="60" cy="290" r="12.0" class="selr"/><circle cx="60" cy="290" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="277.0" width="185.4" height="26" rx="6"/><text x="84.0" y="294.5">Elegir acción del lunes</text></g><circle cx="60" cy="290" r="17.0" class="hit"/></g><g class="nd" data-id="d9" data-plan="2"><title>Hora prevista vs real, bloqueada</title><circle cx="60" cy="334" r="12.0" class="selr"/><circle cx="60" cy="334" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="321.0" width="170.9" height="26" rx="6"/><text x="84.0" y="338.5">Hora prevista vs real</text></g><circle cx="60" cy="334" r="17.0" class="hit"/></g><g class="nd" data-id="d10" data-plan="2"><title>Dos minutos → veinte, bloqueada</title><circle cx="60" cy="378" r="12.0" class="selr"/><circle cx="60" cy="378" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="365.0" width="163.6" height="26" rx="6"/><text x="84.0" y="382.5">Dos minutos → veinte</text></g><circle cx="60" cy="378" r="17.0" class="hit"/></g><g class="nd" data-id="d11" data-plan="2"><title>Usar “Estoy trabado”, bloqueada</title><circle cx="60" cy="422" r="12.0" class="selr"/><circle cx="60" cy="422" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="409.0" width="163.6" height="26" rx="6"/><text x="84.0" y="426.5">Usar “Estoy trabado”</text></g><circle cx="60" cy="422" r="17.0" class="hit"/></g><g class="nd" data-id="d12" data-plan="2"><title>Tres fricciones, bloqueada</title><circle cx="60" cy="466" r="12.0" class="selr"/><circle cx="60" cy="466" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="453.0" width="127.2" height="26" rx="6"/><text x="84.0" y="470.5">Tres fricciones</text></g><circle cx="60" cy="466" r="17.0" class="hit"/></g><g class="nd" data-id="d13" data-plan="2"><title>Hito Especificar “Ahora”, bloqueada</title><circle cx="60" cy="510" r="15.7" class="selr"/><circle cx="60" cy="510" r="8.7" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="78.7" y="497.0" width="156.3" height="26" rx="6"/><text x="87.7" y="514.5">Especificar “Ahora”</text></g><circle cx="60" cy="510" r="17.0" class="hit"/></g><g class="nd" data-id="d14" data-plan="3"><title>Backlog y primera tarea, bloqueada</title><circle cx="60" cy="554" r="12.0" class="selr"/><circle cx="60" cy="554" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="75.0" y="541.0" width="185.4" height="26" rx="6"/><text x="84.0" y="558.5">Backlog y primera tarea</text></g><circle cx="60" cy="554" r="17.0" class="hit"/></g><g class="nd" data-id="gA" data-plan="3"><title>Objetivo Revisión 11-oct</title><circle cx="60" cy="609" r="24.5" class="selr"/><circle cx="60" cy="609" r="17.5" class="n-goal"/><path d="M50.4 615.9 L60 599.9 L69.6 615.9 Z" class="n-goal-t"/><text x="91.5" y="607.0" class="lb-goal">Revisión 11-oct</text><text x="91.5" y="624.0" class="lb-sub">Marcos OS en uso diario</text><circle cx="60" cy="609" r="25.5" class="hit"/></g></svg>
+        </div>
+      </div>
+      <div class="spanel">
+        <h3><b>Estación activa seleccionada.</b> El panel ofrece volver a Ahora; empezar otra pausaría esta.</h3>
+        <div class="frame" style="background:var(--surface)">
+          <div class="gside" style="border:0;padding:0;background:none;display:flex">
+            <div class="kicker"><span class="st active"><svg class="tr g" width="20" height="20" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8" class="n-act"/><rect x="7.4" y="8.5" width="7.2" height="5" rx="1.5" class="n-mark"/></svg>Activa desde las 09:12</span><span class="key">DIARIO-2</span></div>
+            <h2>Captura 10 min</h2>
+            <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>2 min: abrir el inbox y escribir una línea</button>
+            <div class="acts" style="margin-top:0"><a class="btn btn-primary" href="02-now.html" style="text-decoration:none;text-align:center">Seguir en Ahora</a></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<script>
+(function(){
+  var svg=document.getElementById('map'), sc=document.getElementById('scroller'), pct=document.getElementById('zPct'), z=1;
+  function setZ(v){z=Math.max(.6,Math.min(2,v));svg.style.height=(z*100)+'%';svg.style.minHeight=(520*z)+'px';pct.textContent=Math.round(z*100)+' %'}
+  document.getElementById('zIn').onclick=function(){setZ(z+.2)};
+  document.getElementById('zOut').onclick=function(){setZ(z-.2)};
+  document.getElementById('zFit').onclick=function(){setZ(1);sc.scrollTo(0,0)};
+  document.addEventListener('keydown',function(e){if(e.target.tagName==='INPUT')return;if(e.key==='+')setZ(z+.2);if(e.key==='-')setZ(z-.2);if(e.key==='0')setZ(1)});
+  var pf=document.getElementById('planFilter');
+  pf.addEventListener('click',function(e){var b=e.target.closest('button');if(!b)return;
+    pf.querySelectorAll('button').forEach(function(x){x.setAttribute('aria-pressed',String(x===b))});
+    svg.querySelectorAll('[data-plan]').forEach(function(n){n.classList.toggle('dim',b.dataset.p!=='all'&&n.dataset.plan!==b.dataset.p)})});
+  var rt=document.getElementById('retToggle');
+  rt.onclick=function(){var on=rt.getAttribute('aria-pressed')!=='true';rt.setAttribute('aria-pressed',String(on));svg.classList.toggle('no-ret',!on)};
+})();
+
+(function(){
+  var D={"d1": {"name": "Mesa lista", "state": "done", "kind": "task", "key": "DIARIO-1", "prev": [], "next": [["Captura 10 min", "active"]], "note": "Hecha el sábado 26 a las 19:05. Abrió Captura 10 min.", "acts": "<button class=\"btn btn-outline\" type=\"button\">Desmarcar (sin penalidad)</button>", "plan": "Plan: Semana 1: primer ciclo"}, "d2": {"name": "Captura 10 min", "state": "active", "kind": "task", "key": "DIARIO-2", "prev": [["Mesa lista", "done"]], "next": [["Clasificar y elegir prioridad", "locked"]], "two": "2 min: abrir el inbox y escribir una línea", "note": "Activa desde las 09:12. Al terminarla se abre Clasificar y elegir prioridad.", "acts": "<a class=\"btn btn-primary\" href=\"02-now.html\" style=\"text-decoration:none;text-align:center\">Seguir en Ahora</a>", "plan": "Plan: Semana 1: primer ciclo"}, "d3": {"name": "Clasificar y elegir prioridad", "state": "locked", "kind": "task", "key": "DIARIO-3", "prev": [["Captura 10 min", "active"]], "next": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]], "two": "2 min: abrir el inbox y leer la primera línea", "note": "Cuando termines Captura 10 min, esta estación se abre y aparece sugerida en Ahora.", "plan": "Plan: Semana 1: primer ciclo"}, "d4": {"name": "Revisar video Física", "state": "locked", "kind": "task", "key": "DIARIO-4", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]], "plan": "Plan: Semana 1: primer ciclo"}, "d5": {"name": "Revisar fórmula cuadrática", "state": "locked", "kind": "task", "key": "DIARIO-5", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]], "plan": "Plan: Semana 1: primer ciclo"}, "d6": {"name": "Poster desde el teléfono", "state": "locked", "kind": "task", "key": "DIARIO-6", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]], "plan": "Plan: Semana 1: primer ciclo"}, "d7": {"name": "Semana 1: boceto de “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-7", "prev": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]], "next": [["Elegir acción del lunes", "locked"]], "note": "Se abre al terminar los días 4, 5 y 6. Al marcarlo se abre el momento cumbre y te pide una línea de evidencia.", "plan": "Plan: Semana 1: primer ciclo"}, "d8": {"name": "Elegir acción del lunes", "state": "locked", "kind": "task", "key": "DIARIO-8", "prev": [["Semana 1: boceto de “Ahora”", "locked"]], "next": [["Hora prevista vs real", "locked"]], "plan": "Plan: Semana 2: afinar Ahora"}, "d9": {"name": "Hora prevista vs real", "state": "locked", "kind": "task", "key": "DIARIO-9", "prev": [["Elegir acción del lunes", "locked"]], "next": [["Dos minutos → veinte", "locked"]], "plan": "Plan: Semana 2: afinar Ahora"}, "d10": {"name": "Dos minutos → veinte", "state": "locked", "kind": "task", "key": "DIARIO-10", "prev": [["Hora prevista vs real", "locked"]], "next": [["Usar “Estoy trabado”", "locked"]], "plan": "Plan: Semana 2: afinar Ahora"}, "d11": {"name": "Usar “Estoy trabado”", "state": "locked", "kind": "task", "key": "DIARIO-11", "prev": [["Dos minutos → veinte", "locked"]], "next": [["Tres fricciones", "locked"]], "plan": "Plan: Semana 2: afinar Ahora"}, "d12": {"name": "Tres fricciones", "state": "locked", "kind": "task", "key": "DIARIO-12", "prev": [["Usar “Estoy trabado”", "locked"]], "next": [["Especificar “Ahora”", "locked"]], "plan": "Plan: Semana 2: afinar Ahora"}, "d13": {"name": "Especificar “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-13", "prev": [["Tres fricciones", "locked"]], "next": [["Backlog y primera tarea", "locked"]], "note": "Al terminarlo se abre la línea Marcos OS web v1 (otro objetivo). Faltan 11 estaciones.", "acts": "<a class=\"btn btn-outline\" href=\"09-global-graph.html\" style=\"text-decoration:none;text-align:center\">Ver en el mapa global</a>", "plan": "Plan: Semana 2: afinar Ahora"}, "d14": {"name": "Backlog y primera tarea", "state": "locked", "kind": "task", "key": "DIARIO-14", "prev": [["Especificar “Ahora”", "locked"]], "next": [["Revisión 11-oct", "locked"]], "plan": "Plan: Cierre"}, "gA": {"name": "Revisión 11-oct", "state": "locked", "kind": "goal", "key": "DIARIO", "prev": [["Backlog y primera tarea", "locked"]], "next": [], "note": "La cumbre de este objetivo: la revisión de aprendizaje del 11 de octubre.", "acts": "<a class=\"btn btn-outline\" href=\"04-objective-detail.html\" style=\"text-decoration:none;text-align:center\">Ver objetivo</a>", "plan": "Plan: Cierre"}, "ret": {"name": "Diseñar segundo cerebro completo", "state": "retired", "kind": "task", "key": "DIARIO-15", "prev": [], "next": [], "plan": "Retirado del plan Semana 1: primer ciclo", "note": "Razón: planificar sin práctica. Decisión: archivar tal cual. Retirado el sábado 26.", "acts": "<button class=\"btn btn-outline\" type=\"button\">Devolver al mapa</button>"}}, G={"done": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\" class=\"n-done\"/><path d=\"M7.3 11.2 l2.6 2.6 l5 -5.4\" class=\"n-ck\"/></svg>", "active": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"8\" class=\"n-act\"/><rect x=\"7.4\" y=\"8.5\" width=\"7.2\" height=\"5\" rx=\"1.5\" class=\"n-mark\"/></svg>", "open": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"7\" class=\"n-open\"/></svg>", "locked": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"4.5\" class=\"n-lock\"/></svg>", "goal": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><circle cx=\"11\" cy=\"11\" r=\"9.5\" class=\"n-goal\"/><path d=\"M6.6 14.5 L11 5.4 L15.4 14.5 Z\" class=\"n-goal-t\"/></svg>", "retired": "<svg class=\"tr g\" width=\"20\" height=\"20\" viewBox=\"0 0 22 22\" aria-hidden=\"true\"><path d=\"M5 11 H17\" class=\"e-ret\"/></svg>"}, PLAN={"1": "Plan: Semana 1: primer ciclo", "2": "Plan: Semana 2: afinar Ahora", "3": "Plan: Cierre"};
+  var ST={done:'Hecha',active:'Activa, ahora',open:'Disponible',locked:'Bloqueada',retired:'Retirada'};
+  var MST={done:'Hito hecho',active:'Hito, ahora',open:'Hito disponible',locked:'Hito bloqueado'};
+  var page=document.querySelector('.gpage'), side=document.getElementById('side'), svg=document.getElementById('map');
+  function li(n){return '<li>'+(G[n[1]]||'')+n[0]+(n[1]==='active'?', activa ahora':'')+'</li>'}
+  function close(){page.classList.remove('has-sel');svg.querySelectorAll('.nd.sel').forEach(function(x){x.classList.remove('sel')});history.replaceState(null,'',location.pathname+location.search.replace(/[?&]sel=[^&]*/,''))}
+  function open(id){
+    var d=D[id]; if(!d)return;
+    svg.querySelectorAll('.nd.sel').forEach(function(x){x.classList.remove('sel')});
+    var g=svg.querySelector('.nd[data-id="'+id+'"]'); if(g)g.classList.add('sel');
+    var st=d.kind==='goal'?'Objetivo':(d.kind==='mile'?MST[d.state]:ST[d.state]);
+    var h='<div class="kicker"><span class="st">'+(G[d.kind==='goal'?'goal':d.state]||'')+st+'</span><span class="kk"><span class="key">'+(d.key||'')+'</span><button class="x" type="button" aria-label="Cerrar panel">×</button></span></div>';
+    h+='<h2>'+d.name+'</h2>';
+    if(d.plan)h+='<p class="plan">'+d.plan+'</p>';
+    if(d.two)h+='<button class="chip2" type="button"'+(d.state==='active'?'':' style="opacity:.75"')+'><span class="mini" aria-hidden="true"></span>'+d.two+'</button>';
+    if(d.prev&&d.prev.length)h+='<div><h3>'+(d.state==='locked'?'Se abre al terminar':'Viene de')+'</h3><ul>'+d.prev.map(li).join('')+'</ul></div>';
+    if(d.next&&d.next.length)h+='<div><h3>Esto abre</h3><ul>'+d.next.map(li).join('')+'</ul></div>';
+    if(d.note)h+='<p class="note">'+d.note+'</p>';
+    h+='<div class="acts">'+(d.acts||'<a class="btn btn-outline" href="07-item-detail.html" style="text-decoration:none;text-align:center">Ver detalle</a>')+'</div>';
+    side.innerHTML=h; page.classList.add('has-sel');
+    side.querySelector('.x').addEventListener('click',close);
+  }
+  svg.querySelectorAll('.nd').forEach(function(g){
+    g.addEventListener('click',function(){open(g.dataset.id)});
+    g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();open(g.dataset.id)}});
+  });
+  document.addEventListener('keydown',function(e){if(e.key==='Escape')close()});
+  var q=new URLSearchParams(location.search).get('sel'); if(q)open(q);
+  window.__trOpen=open;
+})();
+</script>
+<footer class="nota"><details><summary>Nota de diseño</summary><ul><li>Base: la vía vertical mínima de la guía de estilo, tomada de la referencia de Marco: un solo color ocre, líneas gruesas y redondeadas, círculos con check, ramas paralelas que se separan y se vuelven a juntar, y el objetivo abajo.</li><li>Solo puntos y lo que sucede: por defecto solo llevan texto la tarea activa y el objetivo. El resto se nombra al pasar el cursor, tabular o elegir; cada punto tiene aria-label y title, así que el lector de pantalla no pierde nada.</li><li>Estados por forma y grosor, no solo color: hecha = círculo lleno con check y tramo grueso; ahora = aro grueso con la marca adentro; disponible = aro fino; por venir = punto hueco chico y línea fina gris; hito = el mismo punto, más grande.</li><li>El panel lateral aparece solo al elegir un punto (Esc o × lo cierra); el filtro por plan atenúa lo demás en vez de esconderlo; el retirado no ocupa la vía, es una marca mínima al costado con su razón en el panel.</li><li>Goal-gradient honesto: arriba se cuenta la distancia al próximo mojón ("faltan 5 estaciones"), no un porcentaje.</li></ul></details></footer>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){var t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function label(){var d=cur()==='dark';btn.querySelector('span').textContent=d?'Claro':'Oscuro';btn.setAttribute('aria-label',d?'Cambiar a tema claro':'Cambiar a tema oscuro')}
+  var q=new URLSearchParams(location.search).get('theme');
+  var saved=null;try{saved=localStorage.getItem('mos-theme')}catch(e){}
+  var t=q||saved; if(t==='light'||t==='dark')root.setAttribute('data-theme',t);
+  label();
+  btn.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('mos-theme',n)}catch(e){}label()});
+})();
+</script>
+</body>
+</html>

@@ -2,13 +2,31 @@
 
 namespace App\Providers;
 
+use App\Actions\Retirement\CaptureRetirementHandler;
+use App\Actions\Retirement\RetirementHandlers;
+use App\Actions\Support\AuditWriter;
+use App\Actions\Support\DatabaseLastActivity;
+use App\Actions\Support\LastActivity;
+use App\Actions\Support\LogAuditWriter;
+use App\Actions\Support\NoWeeklyMainPriority;
+use App\Actions\Support\WeeklyMainPriority;
+use App\Actions\Support\WeeklyPriorityReader;
+use App\Models\Capture;
+use App\Models\Habit;
+use App\Models\Item;
+use App\Models\Objective;
+use App\Models\Plan;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
@@ -20,7 +38,23 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Phase 2 skeleton (design D3): AI-applied changes are recorded in the
+        // log until Phase 8 adds `ai_audit_entries` and binds its writer here.
+        $this->app->bind(AuditWriter::class, LogAuditWriter::class);
+
+        // --- phase 3: now ---
+        // The weekly main priority that drives the Now suggestion; rebound
+        // to its `weekly_priorities` reader below (phase 7).
+        $this->app->bind(WeeklyMainPriority::class, NoWeeklyMainPriority::class);
+        // Last showing-up moment for the restart offer; Phase 4 extends it
+        // with habit_days.two_minute_logged.
+        $this->app->bind(LastActivity::class, DatabaseLastActivity::class);
+        // --- end phase 3 ---
+        // Phase 6 (design D8): one registry of retirement handlers per model.
+        $this->app->singleton(RetirementHandlers::class);
+        // --- phase 7: capture inbox and reviews ---
+        $this->app->bind(WeeklyMainPriority::class, WeeklyPriorityReader::class);
+        // --- end phase 7 ---
     }
 
     /**
@@ -30,6 +64,33 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureRateLimiting();
+        $this->configureMorphMap();
+        $this->configureRouteBindings();
+
+        // --- phase 7: captures plug into the retirement protocol ---
+        $this->app->make(RetirementHandlers::class)->register(Capture::class, CaptureRetirementHandler::class);
+        // --- end phase 7 ---
+    }
+
+    /**
+     * `{objective}` is a KEY resolved among the authenticated owner's visible
+     * objectives (active and closed), on the web and on `/api/v1` alike.
+     * Unknown, foreign, draft and retired keys are one indistinguishable 404
+     * (projects and api-projects specs: never 403).
+     */
+    protected function configureRouteBindings(): void
+    {
+        Route::bind('objective', function (string $value): Objective {
+            $owner = request()->user();
+
+            $objective = $owner instanceof User ? Objective::visibleForOwner($owner, $value) : null;
+
+            if ($objective === null) {
+                throw (new ModelNotFoundException)->setModel(Objective::class, [$value]);
+            }
+
+            return $objective;
+        });
     }
 
     /**
@@ -52,6 +113,22 @@ class AppServiceProvider extends ServiceProvider
                 ->uncompromised()
             : null,
         );
+    }
+
+    /**
+     * Short, stable aliases for the polymorphic Marcos OS columns
+     * (`control_plans`, `control_map_entries`, `retirements`). Not enforced:
+     * Sanctum's `tokenable_type` keeps its existing class-name values.
+     */
+    protected function configureMorphMap(): void
+    {
+        Relation::morphMap([
+            'objective' => Objective::class,
+            'plan' => Plan::class,
+            'item' => Item::class,
+            'habit' => Habit::class, // phase 6
+            'capture' => Capture::class, // phase 7
+        ]);
     }
 
     /**

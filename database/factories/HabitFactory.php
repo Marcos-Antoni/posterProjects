@@ -26,6 +26,7 @@ class HabitFactory extends Factory
         return [
             'user_id' => User::factory(),
             'name' => fake()->words(3, true),
+            'two_minute_version' => 'Hacer lo más chico: '.fake()->sentence(3),
             'habit_type' => HabitType::YesNo,
             'unit' => null,
             'daily_target' => null,
@@ -33,7 +34,7 @@ class HabitFactory extends Factory
             'weekdays' => null,
             'times_per_week' => null,
             'planned_time' => null,
-            'archived_at' => null,
+            'retired_at' => null,
         ];
     }
 
@@ -90,8 +91,16 @@ class HabitFactory extends Factory
         return $this->state(fn (): array => ['planned_time' => $time]);
     }
 
+    public function retired(): static
+    {
+        return $this->state(fn (): array => ['retired_at' => now()]);
+    }
+
+    /**
+     * Legacy alias of `retired()` (Phase 6 renamed `archived_at`).
+     */
     public function archived(): static
     {
-        return $this->state(fn (): array => ['archived_at' => now()]);
+        return $this->retired();
     }
 }

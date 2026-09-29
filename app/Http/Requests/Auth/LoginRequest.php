@@ -65,7 +65,7 @@ class LoginRequest extends FormRequest
             RateLimiter::hit($this->throttleKey());
 
             throw ValidationException::withMessages([
-                'email' => 'Estas credenciales no coinciden con nuestros registros.',
+                'email' => 'El correo o la contraseña no coinciden.',
             ]);
         }
 

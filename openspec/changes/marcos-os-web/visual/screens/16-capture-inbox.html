@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inbox de capturas</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif}
+a{color:var(--primary)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn{font:600 16px/24px "Overpass",sans-serif;min-height:48px;padding:12px 20px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.theme-toggle{display:flex;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.theme-toggle button{font:600 14px/20px "Overpass",sans-serif;border:0;background:transparent;color:var(--foreground);padding:10px 14px;min-height:44px;border-radius:6px;cursor:pointer}
+.theme-toggle button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+
+
+
+
+/* grid of components */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+.caption{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:12px}
+
+/* check item: the blaze */
+.check{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 12px;background:transparent;border:0;border-radius:6px;color:var(--foreground);font:400 16px/24px "Overpass";text-align:left;cursor:pointer}
+.check:hover{background:var(--sunken)}
+.blaze{position:relative;flex:none;width:28px;height:20px;border:2px solid var(--blaze-ink);border-radius:2px;overflow:hidden}
+.blaze::before{content:"";position:absolute;inset:0;background:var(--blaze);transform:scaleX(0);transform-origin:left;transition:transform 180ms var(--ease-paint)}
+.blaze svg{position:absolute;inset:0;margin:auto;width:14px;height:14px;opacity:0;transition:opacity 60ms linear 120ms}
+.check[aria-checked="true"] .blaze::before{transform:scaleX(1)}
+.check[aria-checked="true"] .blaze svg{opacity:1}
+.blaze.gap{border-style:dashed}
+.check .sub{display:block;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.toast{margin-top:12px;display:inline-flex;gap:12px;align-items:center;background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:6px;font-size:14px;line-height:20px;visibility:hidden}
+.toast.show{visibility:visible}
+.toast button{background:none;border:0;color:inherit;font:600 14px/20px "Overpass";text-decoration:underline;cursor:pointer;min-height:24px}
+
+/* now card */
+.now{position:relative;background:var(--surface);border-radius:10px;padding:32px 24px 24px;box-shadow:0 1px 2px hsl(var(--shadow-color)/.10),0 4px 12px hsl(var(--shadow-color)/.06);overflow:hidden;max-width:640px}
+.cue{position:absolute;left:0;right:0;top:0;height:3px;background:var(--sunken)}
+.cue i{display:block;height:100%;width:52%;background:var(--blaze-ink)}
+.cue-note{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:16px}
+.cue-note .dot{width:8px;height:8px;border-radius:50%;background:var(--blaze)}
+.cue-note button{background:none;border:0;color:var(--foreground);font:600 14px/20px "Overpass";text-decoration:underline;padding:4px;cursor:pointer}
+.ctx{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.now h3.task{font:700 30px/36px "Overpass";letter-spacing:-.01em;margin:8px 0 24px;max-width:45ch}
+.chip2{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 16px;border-radius:6px;border:2px solid var(--blaze-ink);background:color-mix(in srgb,var(--blaze) 20%,var(--surface));color:var(--foreground);font:600 16px/24px "Overpass";text-align:left;cursor:pointer}
+.chip2 .mini{width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px;flex:none}
+.chip2 code{font:inherit}
+.reentry{margin:16px 0 0;font-size:16px}
+.reentry b{font-weight:600}
+.opens{display:flex;align-items:center;gap:8px;margin:12px 0 24px;font-size:14px;color:var(--muted-fg);flex-wrap:wrap}
+.opens .node-mini{border:2px dashed var(--node-locked);border-radius:6px;padding:2px 10px;color:var(--foreground)}
+.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stuck-result{margin-top:16px;background:var(--attention-bg);color:var(--foreground);border-left:3px solid var(--attention);border-radius:6px;padding:12px 16px;display:none}
+.stuck-result.show{display:block}
+.stuck-result p{margin:0 0 8px}
+
+/* progress */
+.strip{display:flex;gap:8px;align-items:center}
+.strip span{width:28px;height:20px;border-radius:2px;border:2px solid var(--blaze-ink)}
+.strip .done{background:var(--blaze)}
+.strip .repaired{background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.strip .gap{border-style:dashed}
+.strip .future{border-color:var(--border)}
+.strip-labels{display:flex;gap:8px;font-size:12px;line-height:16px;color:var(--muted-fg);margin-top:4px}
+.strip-labels span{width:28px;text-align:center}
+.votes{font-size:16px;margin:16px 0 0}
+.votes em{font-style:normal;font-weight:600}
+.stretch{font-size:14px;line-height:20px;color:var(--muted-fg);margin:8px 0 0}
+
+/* capture */
+.capture{display:flex;gap:8px}
+.capture input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.capture input::placeholder{color:var(--muted-fg)}
+
+/* graph: transit map */
+.metro{display:block;width:100%;min-width:760px;height:auto}
+.metro-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.metro .ln{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.metro .ln.dot{stroke-dasharray:0 11}
+.metro .casing{stroke:var(--surface);stroke-width:16;stroke-linecap:butt}
+.metro .ret-body{fill:url(#hatchA);stroke:var(--node-retired);stroke-width:1.5;stroke-linejoin:round}
+.metro .ret-cap{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.metro .s-done{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2.5}
+.metro .s-check{fill:none;stroke:var(--blaze-fg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.metro .s-active{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2}
+.metro .s-ring{fill:none;stroke:var(--foreground);stroke-width:1.5;opacity:.55}
+.metro .s-open{fill:var(--surface);stroke-width:3}
+.metro .s-locked{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.metro .s-mile{fill:var(--surface);stroke:var(--foreground);stroke-width:3.5}
+.metro .s-inter{fill:none;stroke:var(--foreground);stroke-width:1.5;stroke-dasharray:3 3}
+.metro .s-term{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5;stroke-linejoin:round}
+.metro .s-pole{stroke:var(--foreground);stroke-width:2}
+.metro .tick{stroke-width:5;stroke-linecap:butt}
+.metro text{font-family:"Overpass",system-ui,sans-serif;font-size:12.5px;fill:var(--foreground)}
+.metro .lb-strong{font-weight:700;font-size:13px}
+.metro .lb-muted{fill:var(--muted-fg)}
+.metro .lb-mile{font-weight:700;font-size:13px}
+.metro .lb-ret{fill:var(--muted-fg);font-weight:600}
+.metro .lb-note{fill:var(--muted-fg);font-style:italic;font-size:12px}
+.metro .term{font-family:"Zilla Slab",Georgia,serif;font-weight:600;font-size:19px}
+.metro .term-sm{font-size:16px}
+.metro-legend{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:16px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.metro-legend span{display:inline-flex;align-items:center;gap:8px}
+.metro-legend svg{flex:none;color:var(--node-retired)}
+.metro-views{display:grid;gap:24px}
+.metro-views h3{margin:0 0 4px}
+.metro-views .caption{margin:0 0 12px}
+
+/* dialog */
+.dialog{background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 16px 48px hsl(var(--shadow-color)/.20);border:1px solid var(--border)}
+.dialog h3{font:700 20px/28px "Overpass";margin:0 0 16px}
+label.f{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+textarea{width:100%;min-height:88px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass";resize:vertical}
+fieldset{border:0;padding:0;margin:16px 0}
+legend{font:600 14px/20px "Overpass";margin-bottom:8px;padding:0}
+.radio{display:flex;align-items:center;gap:12px;min-height:44px}
+.radio input{width:20px;height:20px;accent-color:var(--primary)}
+.foot{font-size:14px;line-height:20px;color:var(--muted-fg);margin:16px 0}
+.hint{font-size:14px;color:var(--muted-fg);margin-left:12px}
+
+/* AI panel */
+.ai{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:24px}
+.ai-status{display:flex;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;margin-bottom:16px}
+.ai-status span{padding:4px 10px;border-radius:6px;background:var(--sunken);color:var(--muted-fg)}
+.ai-status span.on{background:var(--attention-bg);color:var(--attention);font-weight:600}
+.tree{list-style:none;margin:0;padding:0}
+.tree li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tree li.child{padding-left:24px}
+.tree .add{color:var(--primary);font-weight:600}
+.tree .del{color:var(--muted-fg);text-decoration:line-through}
+.tree .ops{display:flex;gap:4px}
+.tree .ops button{font:600 14px/20px "Overpass";min-height:36px;padding:6px 10px;border-radius:6px;border:1px solid var(--input);background:transparent;color:var(--foreground);cursor:pointer}
+
+/* summit demo */
+.summit{text-align:center;padding:40px 16px;position:relative;overflow:hidden}
+.summit .ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid var(--blaze-ink);border-radius:50%;opacity:0}
+.summit.play .ring{animation:contour 900ms var(--ease-out-soft) 1}
+@keyframes contour{from{transform:scale(.4);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.summit .name{font:600 38px/44px "Zilla Slab";margin:8px 0}
+.summit p{color:var(--muted-fg);margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  .blaze::before,.blaze svg{transition:none}
+  .summit.play .ring{animation:none;opacity:1;transform:none}
+  .btn{transition:none}
+}
+@media (max-width:560px){
+  .type-row{grid-template-columns:1fr;gap:4px}
+  .now{padding:28px 16px 16px}
+  .now h3.task{font-size:24px;line-height:32px}
+  .d-lg{font-size:38px;line-height:44px}
+  .actions .btn{flex:1}
+}
+
+/* ---------- app shell (shared by every web screen) ---------- */
+body{padding-top:44px}
+.mock-strip{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;padding:0 24px;font-size:13px;line-height:16px;color:var(--muted-fg);background:var(--sunken);border-bottom:1px solid var(--border)}
+.mock-strip b{font-weight:600;color:var(--foreground);margin-right:8px}
+.mock-bar{position:fixed;top:6px;right:12px;z-index:50;display:flex;gap:4px;align-items:center;padding:3px;border-radius:10px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);box-shadow:0 8px 24px hsl(var(--shadow-color)/.14);backdrop-filter:blur(6px)}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass",sans-serif;color:var(--foreground);background:transparent;border:0;border-radius:6px;padding:6px 10px;min-height:30px;cursor:pointer;text-decoration:none}
+.mock-bar a:hover,.mock-bar button:hover{background:var(--sunken)}
+.mock-bar svg{width:16px;height:16px}
+
+.appbar{position:relative;display:flex;align-items:center;gap:24px;height:64px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font:700 17px/20px "Overpass";color:var(--foreground);text-decoration:none;white-space:nowrap}
+.brand i{display:block;width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.nav a{font:600 15px/20px "Overpass";color:var(--muted-fg);text-decoration:none;padding:10px 12px;border-radius:6px;white-space:nowrap}
+.nav a:hover{background:var(--sunken);color:var(--foreground)}
+.nav a[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+.appbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-sm{font:600 14px/20px "Overpass";min-height:40px;padding:8px 14px;border-radius:6px;border:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-sm.btn-outline{border-color:var(--input)}
+kbd{font:600 12px/16px "Overpass";color:var(--muted-fg);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:1px 6px;background:var(--background)}
+.btn-primary kbd{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--primary-fg) 50%,transparent)}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+svg.i.s16{width:16px;height:16px}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin:0 0 12px}
+.crumbs a{color:var(--muted-fg);text-decoration:none}
+.crumbs a:hover{color:var(--foreground);text-decoration:underline}
+.crumbs svg{width:14px;height:14px}
+.obj-title{font:600 38px/44px "Zilla Slab",Georgia,serif;letter-spacing:-.005em;margin:0}
+.obj-title.sm{font-size:30px;line-height:36px}
+.muted{color:var(--muted-fg)}
+.small{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.tnum{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sec-h{font:700 20px/28px "Overpass";margin:0 0 4px;letter-spacing:0}
+.sec-sub{margin:0 0 16px;font-size:14px;line-height:20px;color:var(--muted-fg);max-width:68ch}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--primary);font:600 14px/20px "Overpass";cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn.quiet{color:var(--muted-fg)}
+
+/* state tags: shape + text, never color alone */
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass";color:var(--muted-fg);white-space:nowrap}
+.st .g{flex:none}
+.st.done{color:var(--foreground)}
+.st.active{color:var(--foreground)}
+.st.avail{color:var(--primary)}
+
+/* inputs */
+.fld{display:block;margin:0 0 20px}
+.fld>span.l{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+.fld .ex{display:block;font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:6px;max-width:68ch}
+.in{width:100%;min-height:44px;padding:9px 12px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.in::placeholder{color:var(--muted-fg)}
+.in:focus{outline:2px solid var(--ring);outline-offset:2px}
+.in.need{border-style:dashed;border-color:var(--attention)}
+.msg-attn{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14px;line-height:20px;color:var(--attention)}
+.msg-attn svg{margin-top:2px}
+
+/* other states of the screen */
+.states{border-top:1px solid var(--border);background:var(--sunken);padding:40px 32px 56px}
+.states-in{max-width:1200px;margin:0 auto}
+.states h2{font:700 20px/28px "Overpass";margin:0 0 4px}
+.states>.states-in>p{margin:0 0 24px;font-size:14px;color:var(--muted-fg)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;align-items:start}
+.spanel>h3{font:600 14px/20px "Overpass";margin:0 0 8px;color:var(--muted-fg)}
+.spanel>h3 b{color:var(--foreground)}
+.frame{background:var(--background);border:1px solid var(--border);border-radius:10px;padding:24px;overflow:hidden}
+
+/* design note */
+.nota{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
+.nota details{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0 20px}
+.nota summary{cursor:pointer;font:600 16px/24px "Overpass";padding:14px 0;list-style-position:inside}
+.nota ul{margin:0 0 18px;padding-left:20px;max-width:80ch}
+.nota li{margin:0 0 8px;font-size:15px;line-height:22px}
+
+@media (max-width:900px){
+  .appbar{gap:12px;padding:0 16px}
+  .appbar .right .hide-md{display:none}
+  .page{padding:28px 16px 48px}
+  .states{padding:32px 16px 40px}
+  .nota{padding:24px 16px 48px}
+  .obj-title{font-size:30px;line-height:36px}
+}
+@media (max-width:560px){
+  .brand span{display:none}
+  .sgrid{grid-template-columns:1fr}
+}
+
+
+/* ---------- shared by screens 11-20 ---------- */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;text-decoration:none}
+.btn kbd{margin-left:4px}
+.btn-md{min-height:40px;padding:8px 16px;font-size:15px;line-height:20px}
+.btn-text{display:inline-flex;align-items:center;gap:6px;background:none;border:0;padding:6px 4px;color:var(--primary);font:600 14px/20px "Overpass";cursor:pointer;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.btn-text.quiet{color:var(--muted-fg)}
+.head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin:0 0 32px}
+.h1{font:700 30px/36px "Overpass";letter-spacing:-.01em;margin:0}
+.lede{margin:8px 0 0;color:var(--muted-fg);max-width:64ch}
+.slab{font-family:"Zilla Slab",Georgia,serif;font-weight:600;letter-spacing:-.005em}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;background:var(--sunken);color:var(--muted-fg);font:600 13px/18px "Overpass";white-space:nowrap}
+.pill.on{background:var(--attention-bg);color:var(--attention)}
+.pill.ok{background:transparent;padding-left:0}
+/* marks: the blaze, in every state (shape + fill, never color alone) */
+.mk{display:inline-block;flex:none;width:28px;height:20px;border:2px solid var(--blaze-ink);border-radius:2px;position:relative;background:transparent}
+.mk.d{background:var(--blaze)}
+.mk.g{border-style:dashed}
+.mk.r{border-style:dashed;background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.mk.t{background:linear-gradient(90deg,var(--blaze) 50%,transparent 50%)}
+.mk.p{border-style:solid;box-shadow:0 0 0 2px var(--surface),0 0 0 3.5px var(--muted-fg)}
+.mk.f{border-color:var(--border)}
+.mk.o{border-color:transparent}
+.mk.o::after{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px 0 0 -2px;border-radius:50%;background:var(--input)}
+.mk.x{border-color:transparent}
+.mk.x::after{content:"";position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:var(--muted-fg)}
+.mk.sm{width:18px;height:13px}
+.strp{display:inline-flex;gap:6px;align-items:flex-start}
+.strp .cell{display:flex;flex-direction:column;align-items:center;gap:4px}
+.strp small{font:600 11px/14px "Overpass";color:var(--muted-fg);font-variant-numeric:tabular-nums}
+.strp.tight{gap:4px}
+.legend{display:flex;flex-wrap:wrap;gap:8px 20px;font-size:13px;line-height:18px;color:var(--muted-fg);margin:0;padding:0;list-style:none}
+.legend li{display:inline-flex;align-items:center;gap:8px}
+.legend .mk{width:20px;height:14px}
+.chip-attn{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:8px 16px;border-radius:6px;border:2px solid var(--attention);background:var(--attention-bg);color:var(--attention);font:600 15px/20px "Overpass";cursor:pointer;text-align:left}
+.chip-attn:hover{background:color-mix(in srgb,var(--attention-bg) 80%,var(--attention))}
+.two{display:flex;align-items:center;gap:10px;font:600 15px/22px "Overpass"}
+.two .mini{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px;flex:none}
+.votes-row{display:flex;flex-wrap:wrap;gap:3px}
+.votes-row i{display:block;width:12px;height:9px;border:1.5px solid var(--blaze-ink);border-radius:1px}
+.votes-row i.v{background:var(--blaze)}
+.votes-row i.n{border-style:dashed}
+.in,select.in,textarea.in{width:100%;min-height:44px;padding:9px 12px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+textarea.in{min-height:88px;resize:vertical;display:block}
+select.in{appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--muted-fg) 50%),linear-gradient(135deg,var(--muted-fg) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px}
+.in::placeholder{color:var(--muted-fg)}
+.in.focus{outline:2px solid var(--ring);outline-offset:2px}
+.fld{display:block;margin:0 0 20px}
+.fld>.l{display:block;font:600 14px/20px "Overpass";margin:0 0 6px}
+.fld>.l em{font-style:normal;font-weight:400;color:var(--muted-fg)}
+.fld .ex{display:block;font-size:14px;line-height:20px;color:var(--muted-fg);margin:0 0 8px;max-width:68ch}
+.fld .after{display:block;font-size:13px;line-height:18px;color:var(--muted-fg);margin-top:6px}
+.seg{display:inline-flex;padding:3px;gap:2px;border-radius:8px;background:var(--sunken)}
+.seg button{font:600 14px/20px "Overpass";border:0;background:transparent;color:var(--muted-fg);padding:7px 14px;min-height:36px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"],.seg button[aria-selected="true"]{background:var(--surface);color:var(--foreground);box-shadow:0 1px 2px hsl(var(--shadow-color)/.14)}
+.subnav{display:flex;gap:4px;margin:0 0 20px;border-bottom:1px solid var(--border)}
+.subnav a{padding:8px 12px 10px;font:600 15px/20px "Overpass";color:var(--muted-fg);text-decoration:none;border-bottom:3px solid transparent;margin-bottom:-1px}
+.subnav a[aria-current="page"]{color:var(--foreground);border-bottom-color:var(--primary)}
+.meta{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.why{margin:0;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.hatch{background:repeating-linear-gradient(45deg,var(--node-retired) 0 2px,transparent 2px 7px)}
+.err{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:6px;border:1.5px solid var(--destructive);color:var(--foreground);background:var(--surface);font-size:14px;line-height:20px}
+.err svg{color:var(--destructive);margin-top:1px}
+.err b{color:var(--destructive)}
+.disabled-why{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg)}
+@media (prefers-reduced-motion:reduce){*{animation-duration:1ms!important;animation-iteration-count:1!important;transition-duration:1ms!important}}
+
+/* ---------- screen-specific ---------- */
+.page{max-width:1040px}
+.caps{list-style:none;margin:0;padding:0}
+.cap{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:16px;align-items:center;padding:16px 20px;border-bottom:1px solid var(--border)}
+.cap:last-child{border-bottom:0}
+.src{width:36px;height:36px;border-radius:8px;background:var(--sunken);display:grid;place-items:center;color:var(--muted-fg)}
+.src.src-ai{background:var(--attention-bg);color:var(--attention)}
+.cap .txt{font:600 17px/24px "Overpass";margin:0}
+.cap .meta{margin-top:2px}
+.acts{display:flex;gap:4px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.acts .btn-sm{min-height:36px;padding:6px 12px}
+.acts .sep{width:1px;height:20px;background:var(--border);margin:0 4px}
+.cap.open{grid-template-columns:36px minmax(0,1fr);background:var(--surface);border-radius:10px;border:2px solid var(--primary);margin-bottom:8px;padding:20px}
+.cap.open .tri{grid-column:2}
+.tri{margin-top:0;padding-top:16px;border-top:1px solid var(--border)}
+.tri-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 16px;margin-top:16px}
+.tri-grid .full{grid-column:1/-1}
+.sugg{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;font-size:14px;line-height:20px;color:var(--attention)}
+.sugg .btn-text{color:var(--attention)}
+.tri-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.list-card{overflow:hidden}
+.list-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 12px}
+.list-h h2{font:700 20px/28px "Overpass";margin:0}
+.kbhint{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.triaged{margin-top:32px}
+.triaged summary{cursor:pointer;font:600 15px/22px "Overpass";padding:8px 0}
+.triaged ul{list-style:none;margin:8px 0 0;padding:0}
+.triaged li{display:flex;gap:12px;padding:8px 0;font-size:15px;line-height:22px;color:var(--muted-fg)}
+.triaged li b{color:var(--foreground);font-weight:600}
+@media (max-width:820px){.cap{grid-template-columns:36px minmax(0,1fr)}.acts{grid-column:2;justify-content:flex-start}.tri-grid{grid-template-columns:1fr}}
+
+</style>
+</head>
+<body>
+<div class="mock-strip"><b>Pantalla 16: Inbox de capturas</b>Maqueta estática de Marcos OS web, 1440 × 900</div>
+<div class="mock-bar" role="toolbar" aria-label="Herramientas de la maqueta">
+  <a href="index.html"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>Índice</a>
+  <button type="button" id="themeBtn"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Oscuro</span></button>
+</div>
+<header class="appbar">
+  <a class="brand" href="02-now.html" aria-label="Marcos OS, ir a Ahora"><i aria-hidden="true"></i><span>Marcos OS</span></a>
+  <nav class="nav" aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="18-habits-today.html">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="#">Retirados</a></nav>
+  <div class="right">
+    <button class="btn-sm btn-outline" type="button"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Capturar <kbd>C</kbd></button>
+    <button class="btn-sm btn-ghost hide-md" type="button" aria-label="Paleta de comandos"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>Ctrl K</kbd></button>
+  </div>
+</header>
+<main class="page">
+<div class="head">
+  <div>
+    <p class="crumbs"><span>Captura</span><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><span>Inbox</span></p>
+    <h1 class="h1">Inbox</h1>
+    <p class="lede">Ideas capturadas sin fecha ni prioridad. Nada de acá aparece en Ahora hasta que decidas qué es. Empezá por la más antigua.</p>
+  </div>
+  <div class="kbhint"><span><kbd>J</kbd> <kbd>K</kbd> moverte</span><span><kbd>1</kbd>–<kbd>3</kbd> convertir</span><span><kbd>R</kbd> retirar</span></div>
+</div>
+
+<div class="list-h"><h2>Sin decidir</h2><span class="meta">6, la más antigua primero</span></div>
+<ol class="caps card list-card" style="padding:8px">
+  <li class="cap open">
+    <span class="src" title="Desde el teléfono"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
+    <div>
+      <p class="txt">Ver la clase grabada de Física II del jueves</p>
+      <p class="meta">Desde el teléfono, lunes 21 sep, 06:52</p>
+    </div>
+    <div class="tri">
+      <div class="seg" role="tablist" aria-label="Convertir en"><button role="tab" aria-selected="true">Tarea</button><button role="tab" aria-selected="false">Hábito</button><button role="tab" aria-selected="false">Objetivo nuevo</button><button role="tab" aria-selected="false">Retirar</button></div>
+      <div class="tri-grid">
+        <label class="fld full"><span class="l">Título de la tarea</span><input class="in" value="Ver la clase grabada de Física II del jueves 17"></label>
+        <label class="fld"><span class="l">Objetivo</span><select class="in"><option>Aprobar finales</option><option>Marcos OS en uso diario</option></select></label>
+        <label class="fld"><span class="l">Plan</span><select class="in"><option>Física II: examen</option><option>Micro: resumen y examen</option></select></label>
+        <label class="fld full"><span class="l">Versión de 2 minutos</span>
+          <input class="in focus" value="" placeholder="Un verbo físico. Ej.: abrir la grabación y poner play">
+          <span class="sugg"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg>La IA sugiere: “Abrir la grabación en el minuto 0 y poner play”.<button class="btn-text" type="button">Usar esta</button></span>
+        </label>
+      </div>
+      <div class="tri-actions">
+        <button class="btn btn-primary btn-md" type="button" disabled>Crear tarea</button>
+        <span class="disabled-why">Falta la versión de 2 minutos.</span>
+        <button class="btn-text quiet" type="button">Dejar para después</button>
+      </div>
+    </div>
+  </li>
+  <li class="cap">
+    <span class="src" title="Desde la web"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span>
+    <div><p class="txt">Atajo T para “Estoy trabado” también en el mapa</p><p class="meta">Desde la web, martes 22 sep, 21:14</p></div>
+    <div class="acts"><button class="btn-sm btn-ghost">Tarea</button><button class="btn-sm btn-ghost">Hábito</button><button class="btn-sm btn-ghost">Objetivo</button><span class="sep"></span><button class="btn-sm btn-ghost"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Retirar</button></div>
+  </li>
+  <li class="cap">
+    <span class="src src-ai" title="Anotada por la IA"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 17v4M17 19h4"/></svg></span>
+    <div><p class="txt">Leer completo el meta-análisis de Ovsiankina</p><p class="meta">Anotada por la IA al preparar la ronda 3 de Marcos OS web v1, miércoles 23 sep</p></div>
+    <div class="acts"><button class="btn-sm btn-ghost">Tarea</button><button class="btn-sm btn-ghost">Hábito</button><button class="btn-sm btn-ghost">Objetivo</button><span class="sep"></span><button class="btn-sm btn-ghost"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Retirar</button></div>
+  </li>
+  <li class="cap">
+    <span class="src" title="Desde el teléfono"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
+    <div><p class="txt">Estirar 5 minutos después del gym</p><p class="meta">Desde el teléfono, viernes 25 sep, 07:45</p></div>
+    <div class="acts"><button class="btn-sm btn-ghost">Tarea</button><button class="btn-sm btn-ghost">Hábito</button><button class="btn-sm btn-ghost">Objetivo</button><span class="sep"></span><button class="btn-sm btn-ghost"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Retirar</button></div>
+  </li>
+  <li class="cap">
+    <span class="src" title="Desde el teléfono"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/></svg></span>
+    <div><p class="txt">Llamar al dentista</p><p class="meta">Desde el teléfono, viernes 25 sep, 12:30</p></div>
+    <div class="acts"><button class="btn-sm btn-ghost">Tarea</button><button class="btn-sm btn-ghost">Hábito</button><button class="btn-sm btn-ghost">Objetivo</button><span class="sep"></span><button class="btn-sm btn-ghost"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Retirar</button></div>
+  </li>
+  <li class="cap">
+    <span class="src" title="Desde la web"><svg class="i s20" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8"/><path d="M12 17v4"/></svg></span>
+    <div><p class="txt">Preguntar en el gym si abren el lunes 12 de octubre</p><p class="meta">Desde la web, hoy, 09:31</p></div>
+    <div class="acts"><button class="btn-sm btn-ghost">Tarea</button><button class="btn-sm btn-ghost">Hábito</button><button class="btn-sm btn-ghost">Objetivo</button><span class="sep"></span><button class="btn-sm btn-ghost"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg>Retirar</button></div>
+  </li>
+</ol>
+
+<details class="triaged" open>
+  <summary>Decididas hoy (2)</summary>
+  <ul>
+    <li><span class="mk sm d" style="margin-top:4px"></span><span><b>“Revisar fórmula cuadrática”</b> ahora es una tarea en Marcos OS en uso diario. <a href="07-item-detail.html">Abrir tarea</a></span></li>
+    <li><span class="mk sm hatch" style="margin-top:4px;border-color:var(--node-retired)"></span><span><b>“Meditar 20 minutos”</b> se retiró: “ya lo intenté grande; vuelve más adelante como 2 minutos”. <a href="#">Ver en Retirados</a></span></li>
+  </ul>
+</details>
+
+</main>
+<section class="states" aria-labelledby="st">
+  <div class="states-in">
+    <h2 id="st">Otros estados de esta pantalla</h2>
+    <p>Convertir en hábito pide su versión de 2 minutos; el inbox vacío invita a capturar, no celebra ni reprocha.</p>
+    <div class="sgrid">
+<div class="spanel">
+  <h3><b>Convertir en hábito.</b> Mismo lugar, otros campos; la versión de 2 minutos es obligatoria.</h3>
+  <div class="frame">
+    <p class="txt" style="font:600 17px/24px Overpass;margin:0 0 12px">Estirar 5 minutos después del gym</p>
+    <div class="seg" role="tablist"><button role="tab" aria-selected="false">Tarea</button><button role="tab" aria-selected="true">Hábito</button><button role="tab" aria-selected="false">Objetivo nuevo</button><button role="tab" aria-selected="false">Retirar</button></div>
+    <div style="margin-top:16px">
+      <label class="fld"><span class="l">Cuándo</span><select class="in"><option>Martes a viernes, después de Gimnasio 06:30</option></select></label>
+      <label class="fld"><span class="l">Versión de 2 minutos</span><input class="in" value="Tocarme la punta de los pies una vez"></label>
+      <button class="btn btn-primary btn-md" type="button">Crear hábito</button>
+    </div>
+  </div>
+</div>
+<div class="spanel">
+  <h3><b>Inbox vacío.</b> Invitación a actuar, sin festejo ni reproche.</h3>
+  <div class="frame">
+    <div class="empty"><h3>No hay nada sin decidir.</h3><p>Lo que captures con <kbd>C</kbd> desde cualquier pantalla, o desde el teléfono, llega acá sin fecha ni prioridad.</p><div class="actions" style="margin:0"><button class="btn btn-outline btn-md" type="button"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg>Capturar algo</button></div></div>
+  </div>
+</div>
+    </div>
+  </div>
+</section>
+<footer class="nota"><details><summary>Nota de diseño</summary><ul><li>Captura no es prioridad: el inbox no muestra fechas límite, urgencias ni contadores rojos; solo el origen (teléfono, web, IA) y cuándo entró, en tono neutro.</li><li>La más antigua primero, ya abierta: una sola decisión a la vez (Hick) en vez de un tablero para reordenar; no hay arrastrar ni "grooming" de listas como falso progreso.</li><li>Regla de los 2 minutos: convertir en tarea o hábito exige la versión de 2 minutos; la IA sugiere una y Marco la usa o la escribe (la IA propone, Marco confirma). El botón deshabilitado dice qué falta (heurística 5).</li><li>Nada se borra: descartar es "Retirar" con razón; lo decidido hoy queda visible con un enlace a lo que se convirtió (heurística 3, deshacer y trazabilidad).</li><li>Eficiencia (heurística 7): atajos J/K, 1–3 y R visibles en la cabecera, para triar sin mouse.</li></ul></details></footer>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){var t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function label(){var d=cur()==='dark';btn.querySelector('span').textContent=d?'Claro':'Oscuro';btn.setAttribute('aria-label',d?'Cambiar a tema claro':'Cambiar a tema oscuro')}
+  var q=new URLSearchParams(location.search).get('theme');
+  var saved=null;try{saved=localStorage.getItem('mos-theme')}catch(e){}
+  var t=q||saved; if(t==='light'||t==='dark')root.setAttribute('data-theme',t);
+  label();
+  btn.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('mos-theme',n)}catch(e){}label()});
+})();
+</script>
+</body>
+</html>

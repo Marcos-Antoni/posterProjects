@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ahora</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif}
+a{color:var(--primary)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.btn{font:600 16px/24px "Overpass",sans-serif;min-height:48px;padding:12px 20px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.theme-toggle{display:flex;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.theme-toggle button{font:600 14px/20px "Overpass",sans-serif;border:0;background:transparent;color:var(--foreground);padding:10px 14px;min-height:44px;border-radius:6px;cursor:pointer}
+.theme-toggle button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+
+
+
+
+/* grid of components */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+.caption{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:12px}
+
+/* check item: the blaze */
+.check{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 12px;background:transparent;border:0;border-radius:6px;color:var(--foreground);font:400 16px/24px "Overpass";text-align:left;cursor:pointer}
+.check:hover{background:var(--sunken)}
+.blaze{position:relative;flex:none;width:28px;height:20px;border:2px solid var(--blaze-ink);border-radius:2px;overflow:hidden}
+.blaze::before{content:"";position:absolute;inset:0;background:var(--blaze);transform:scaleX(0);transform-origin:left;transition:transform 180ms var(--ease-paint)}
+.blaze svg{position:absolute;inset:0;margin:auto;width:14px;height:14px;opacity:0;transition:opacity 60ms linear 120ms}
+.check[aria-checked="true"] .blaze::before{transform:scaleX(1)}
+.check[aria-checked="true"] .blaze svg{opacity:1}
+.blaze.gap{border-style:dashed}
+.check .sub{display:block;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.toast{margin-top:12px;display:inline-flex;gap:12px;align-items:center;background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:6px;font-size:14px;line-height:20px;visibility:hidden}
+.toast.show{visibility:visible}
+.toast button{background:none;border:0;color:inherit;font:600 14px/20px "Overpass";text-decoration:underline;cursor:pointer;min-height:24px}
+
+/* now card */
+.now{position:relative;background:var(--surface);border-radius:10px;padding:32px 24px 24px;box-shadow:0 1px 2px hsl(var(--shadow-color)/.10),0 4px 12px hsl(var(--shadow-color)/.06);overflow:hidden;max-width:640px}
+.cue{position:absolute;left:0;right:0;top:0;height:3px;background:var(--sunken)}
+.cue i{display:block;height:100%;width:52%;background:var(--blaze-ink)}
+.cue-note{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:16px}
+.cue-note .dot{width:8px;height:8px;border-radius:50%;background:var(--blaze)}
+.cue-note button{background:none;border:0;color:var(--foreground);font:600 14px/20px "Overpass";text-decoration:underline;padding:4px;cursor:pointer}
+.ctx{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.now h3.task{font:700 30px/36px "Overpass";letter-spacing:-.01em;margin:8px 0 24px;max-width:45ch}
+.chip2{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 16px;border-radius:6px;border:2px solid var(--blaze-ink);background:color-mix(in srgb,var(--blaze) 20%,var(--surface));color:var(--foreground);font:600 16px/24px "Overpass";text-align:left;cursor:pointer}
+.chip2 .mini{width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px;flex:none}
+.chip2 code{font:inherit}
+.reentry{margin:16px 0 0;font-size:16px}
+.reentry b{font-weight:600}
+.opens{display:flex;align-items:center;gap:8px;margin:12px 0 24px;font-size:14px;color:var(--muted-fg);flex-wrap:wrap}
+.opens .node-mini{border:2px dashed var(--node-locked);border-radius:6px;padding:2px 10px;color:var(--foreground)}
+.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stuck-result{margin-top:16px;background:var(--attention-bg);color:var(--foreground);border-left:3px solid var(--attention);border-radius:6px;padding:12px 16px;display:none}
+.stuck-result.show{display:block}
+.stuck-result p{margin:0 0 8px}
+
+/* progress */
+.strip{display:flex;gap:8px;align-items:center}
+.strip span{width:28px;height:20px;border-radius:2px;border:2px solid var(--blaze-ink)}
+.strip .done{background:var(--blaze)}
+.strip .repaired{background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.strip .gap{border-style:dashed}
+.strip .future{border-color:var(--border)}
+.strip-labels{display:flex;gap:8px;font-size:12px;line-height:16px;color:var(--muted-fg);margin-top:4px}
+.strip-labels span{width:28px;text-align:center}
+.votes{font-size:16px;margin:16px 0 0}
+.votes em{font-style:normal;font-weight:600}
+.stretch{font-size:14px;line-height:20px;color:var(--muted-fg);margin:8px 0 0}
+
+/* capture */
+.capture{display:flex;gap:8px}
+.capture input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.capture input::placeholder{color:var(--muted-fg)}
+
+/* graph: transit map */
+.metro{display:block;width:100%;min-width:760px;height:auto}
+.metro-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+.metro .ln{fill:none;stroke-width:6;stroke-linecap:round;stroke-linejoin:round}
+.metro .ln.dot{stroke-dasharray:0 11}
+.metro .casing{stroke:var(--surface);stroke-width:16;stroke-linecap:butt}
+.metro .ret-body{fill:url(#hatchA);stroke:var(--node-retired);stroke-width:1.5;stroke-linejoin:round}
+.metro .ret-cap{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.metro .s-done{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2.5}
+.metro .s-check{fill:none;stroke:var(--blaze-fg);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.metro .s-active{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:2}
+.metro .s-ring{fill:none;stroke:var(--foreground);stroke-width:1.5;opacity:.55}
+.metro .s-open{fill:var(--surface);stroke-width:3}
+.metro .s-locked{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.metro .s-mile{fill:var(--surface);stroke:var(--foreground);stroke-width:3.5}
+.metro .s-inter{fill:none;stroke:var(--foreground);stroke-width:1.5;stroke-dasharray:3 3}
+.metro .s-term{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5;stroke-linejoin:round}
+.metro .s-pole{stroke:var(--foreground);stroke-width:2}
+.metro .tick{stroke-width:5;stroke-linecap:butt}
+.metro text{font-family:"Overpass",system-ui,sans-serif;font-size:12.5px;fill:var(--foreground)}
+.metro .lb-strong{font-weight:700;font-size:13px}
+.metro .lb-muted{fill:var(--muted-fg)}
+.metro .lb-mile{font-weight:700;font-size:13px}
+.metro .lb-ret{fill:var(--muted-fg);font-weight:600}
+.metro .lb-note{fill:var(--muted-fg);font-style:italic;font-size:12px}
+.metro .term{font-family:"Zilla Slab",Georgia,serif;font-weight:600;font-size:19px}
+.metro .term-sm{font-size:16px}
+.metro-legend{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:16px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.metro-legend span{display:inline-flex;align-items:center;gap:8px}
+.metro-legend svg{flex:none;color:var(--node-retired)}
+.metro-views{display:grid;gap:24px}
+.metro-views h3{margin:0 0 4px}
+.metro-views .caption{margin:0 0 12px}
+
+/* dialog */
+.dialog{background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 16px 48px hsl(var(--shadow-color)/.20);border:1px solid var(--border)}
+.dialog h3{font:700 20px/28px "Overpass";margin:0 0 16px}
+label.f{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+textarea{width:100%;min-height:88px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass";resize:vertical}
+fieldset{border:0;padding:0;margin:16px 0}
+legend{font:600 14px/20px "Overpass";margin-bottom:8px;padding:0}
+.radio{display:flex;align-items:center;gap:12px;min-height:44px}
+.radio input{width:20px;height:20px;accent-color:var(--primary)}
+.foot{font-size:14px;line-height:20px;color:var(--muted-fg);margin:16px 0}
+.hint{font-size:14px;color:var(--muted-fg);margin-left:12px}
+
+/* AI panel */
+.ai{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:24px}
+.ai-status{display:flex;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;margin-bottom:16px}
+.ai-status span{padding:4px 10px;border-radius:6px;background:var(--sunken);color:var(--muted-fg)}
+.ai-status span.on{background:var(--attention-bg);color:var(--attention);font-weight:600}
+.tree{list-style:none;margin:0;padding:0}
+.tree li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tree li.child{padding-left:24px}
+.tree .add{color:var(--primary);font-weight:600}
+.tree .del{color:var(--muted-fg);text-decoration:line-through}
+.tree .ops{display:flex;gap:4px}
+.tree .ops button{font:600 14px/20px "Overpass";min-height:36px;padding:6px 10px;border-radius:6px;border:1px solid var(--input);background:transparent;color:var(--foreground);cursor:pointer}
+
+/* summit demo */
+.summit{text-align:center;padding:40px 16px;position:relative;overflow:hidden}
+.summit .ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid var(--blaze-ink);border-radius:50%;opacity:0}
+.summit.play .ring{animation:contour 900ms var(--ease-out-soft) 1}
+@keyframes contour{from{transform:scale(.4);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.summit .name{font:600 38px/44px "Zilla Slab";margin:8px 0}
+.summit p{color:var(--muted-fg);margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  .blaze::before,.blaze svg{transition:none}
+  .summit.play .ring{animation:none;opacity:1;transform:none}
+  .btn{transition:none}
+}
+@media (max-width:560px){
+  .type-row{grid-template-columns:1fr;gap:4px}
+  .now{padding:28px 16px 16px}
+  .now h3.task{font-size:24px;line-height:32px}
+  .d-lg{font-size:38px;line-height:44px}
+  .actions .btn{flex:1}
+}
+
+/* ---------- app shell (shared by every web screen) ---------- */
+body{padding-top:44px}
+.mock-strip{position:absolute;top:0;left:0;right:0;height:44px;display:flex;align-items:center;padding:0 24px;font-size:13px;line-height:16px;color:var(--muted-fg);background:var(--sunken);border-bottom:1px solid var(--border)}
+.mock-strip b{font-weight:600;color:var(--foreground);margin-right:8px}
+.mock-bar{position:fixed;top:6px;right:12px;z-index:50;display:flex;gap:4px;align-items:center;padding:3px;border-radius:10px;background:color-mix(in srgb,var(--surface) 88%,transparent);border:1px solid var(--border);box-shadow:0 8px 24px hsl(var(--shadow-color)/.14);backdrop-filter:blur(6px)}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass",sans-serif;color:var(--foreground);background:transparent;border:0;border-radius:6px;padding:6px 10px;min-height:30px;cursor:pointer;text-decoration:none}
+.mock-bar a:hover,.mock-bar button:hover{background:var(--sunken)}
+.mock-bar svg{width:16px;height:16px}
+
+.appbar{position:relative;display:flex;align-items:center;gap:24px;height:64px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:flex;align-items:center;gap:10px;font:700 17px/20px "Overpass";color:var(--foreground);text-decoration:none;white-space:nowrap}
+.brand i{display:block;width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.nav{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.nav a{font:600 15px/20px "Overpass";color:var(--muted-fg);text-decoration:none;padding:10px 12px;border-radius:6px;white-space:nowrap}
+.nav a:hover{background:var(--sunken);color:var(--foreground)}
+.nav a[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+.appbar .right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn-sm{font:600 14px/20px "Overpass";min-height:40px;padding:8px 14px;border-radius:6px;border:2px solid transparent;cursor:pointer;display:inline-flex;align-items:center;gap:8px;text-decoration:none}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-sm.btn-outline{border-color:var(--input)}
+kbd{font:600 12px/16px "Overpass";color:var(--muted-fg);border:1px solid var(--border);border-bottom-width:2px;border-radius:4px;padding:1px 6px;background:var(--background)}
+.btn-primary kbd{background:transparent;color:inherit;border-color:color-mix(in srgb,var(--primary-fg) 50%,transparent)}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.75;stroke-linecap:round;stroke-linejoin:round}
+svg.i.s16{width:16px;height:16px}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.crumbs{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin:0 0 12px}
+.crumbs a{color:var(--muted-fg);text-decoration:none}
+.crumbs a:hover{color:var(--foreground);text-decoration:underline}
+.crumbs svg{width:14px;height:14px}
+.obj-title{font:600 38px/44px "Zilla Slab",Georgia,serif;letter-spacing:-.005em;margin:0}
+.obj-title.sm{font-size:30px;line-height:36px}
+.muted{color:var(--muted-fg)}
+.small{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.tnum{font-variant-numeric:tabular-nums}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sec-h{font:700 20px/28px "Overpass";margin:0 0 4px;letter-spacing:0}
+.sec-sub{margin:0 0 16px;font-size:14px;line-height:20px;color:var(--muted-fg);max-width:68ch}
+.linkbtn{background:none;border:0;padding:4px 2px;color:var(--primary);font:600 14px/20px "Overpass";cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+.linkbtn.quiet{color:var(--muted-fg)}
+
+/* state tags: shape + text, never color alone */
+.st{display:inline-flex;align-items:center;gap:6px;font:600 13px/16px "Overpass";color:var(--muted-fg);white-space:nowrap}
+.st .g{flex:none}
+.st.done{color:var(--foreground)}
+.st.active{color:var(--foreground)}
+.st.avail{color:var(--primary)}
+
+/* inputs */
+.fld{display:block;margin:0 0 20px}
+.fld>span.l{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+.fld .ex{display:block;font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:6px;max-width:68ch}
+.in{width:100%;min-height:44px;padding:9px 12px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.in::placeholder{color:var(--muted-fg)}
+.in:focus{outline:2px solid var(--ring);outline-offset:2px}
+.in.need{border-style:dashed;border-color:var(--attention)}
+.msg-attn{display:flex;gap:8px;align-items:flex-start;margin-top:8px;font-size:14px;line-height:20px;color:var(--attention)}
+.msg-attn svg{margin-top:2px}
+
+/* other states of the screen */
+.states{border-top:1px solid var(--border);background:var(--sunken);padding:40px 32px 56px}
+.states-in{max-width:1200px;margin:0 auto}
+.states h2{font:700 20px/28px "Overpass";margin:0 0 4px}
+.states>.states-in>p{margin:0 0 24px;font-size:14px;color:var(--muted-fg)}
+.sgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:24px;align-items:start}
+.spanel>h3{font:600 14px/20px "Overpass";margin:0 0 8px;color:var(--muted-fg)}
+.spanel>h3 b{color:var(--foreground)}
+.frame{background:var(--background);border:1px solid var(--border);border-radius:10px;padding:24px;overflow:hidden}
+
+/* design note */
+.nota{max-width:1200px;margin:0 auto;padding:24px 32px 64px}
+.nota details{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:0 20px}
+.nota summary{cursor:pointer;font:600 16px/24px "Overpass";padding:14px 0;list-style-position:inside}
+.nota ul{margin:0 0 18px;padding-left:20px;max-width:80ch}
+.nota li{margin:0 0 8px;font-size:15px;line-height:22px}
+
+@media (max-width:900px){
+  .appbar{gap:12px;padding:0 16px}
+  .appbar .right .hide-md{display:none}
+  .page{padding:28px 16px 48px}
+  .states{padding:32px 16px 40px}
+  .nota{padding:24px 16px 48px}
+  .obj-title{font-size:30px;line-height:36px}
+}
+@media (max-width:560px){
+  .brand span{display:none}
+  .sgrid{grid-template-columns:1fr}
+}
+
+/* ---------- screen-specific ---------- */
+
+.now-wrap{max-width:640px;margin:0 auto}
+.today{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 16px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.today b{font-weight:600;color:var(--foreground)}
+.now{max-width:none}
+.ctxrow{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.now .desc{margin:-16px 0 20px;color:var(--muted-fg);max-width:60ch}
+.chip2 kbd{margin-left:auto}
+.btn kbd{margin-left:8px}
+.minimap{display:block;width:100%;height:auto;margin:4px 0 0}
+.minimap .ln{fill:none;stroke-width:5;stroke-linecap:round;stroke-linejoin:round}
+.minimap .dot{stroke-dasharray:0 10}
+.minimap text{font-family:"Overpass",system-ui,sans-serif;font-size:13px;fill:var(--foreground)}
+.minimap .mt{fill:var(--muted-fg)}
+.minimap .st2{font-weight:700}
+.opens-h{margin:20px 0 0;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.actions{margin-top:24px}
+.habits{margin-top:32px}
+.habits-h{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:0 0 8px}
+.habits-h h2{font:700 16px/24px "Overpass";margin:0}
+.hrow{display:grid;grid-template-columns:1fr 1fr;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px}
+.hrow .check{min-height:64px}
+.rest{display:flex;align-items:center;gap:16px;padding:8px 12px;min-height:56px;color:var(--muted-fg);font-size:14px;line-height:20px;grid-column:1/-1;border-top:1px solid var(--border)}
+.rest i{flex:none;width:28px;height:20px;border:2px dashed var(--border);border-radius:2px}
+.prio{margin:24px 0 0;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.prio a{font-weight:600}
+/* state panels: scaled-down cards */
+.frame .now{padding:28px 20px 20px;box-shadow:none;border:1px solid var(--border)}
+.frame .now h3.task{font-size:24px;line-height:32px;margin:6px 0 16px}
+.frame .actions .btn{min-height:44px;padding:8px 16px;font-size:15px}
+.cue-note{flex-wrap:wrap}
+.cue-note .sep{color:var(--border)}
+.cue-note .gone{flex-basis:100%;padding-left:16px;font-size:13px}
+.stuck-result.show p.src{font-size:13px;line-height:18px;color:var(--muted-fg);margin:8px 0 0}
+.stuck-result .btns{display:flex;gap:8px;flex-wrap:wrap}
+.stuck-result .btn{min-height:40px;padding:6px 14px;font-size:15px}
+.toast.show{margin:0 0 16px}
+.empty{background:var(--surface);border:1px dashed var(--input);border-radius:10px;padding:28px 20px}
+.empty h3{font:700 20px/28px "Overpass";margin:0 0 8px}
+.empty p{margin:0 0 20px;color:var(--muted-fg)}
+.empty .actions{margin-top:0;justify-content:flex-start}
+.unlocked-note{display:flex;align-items:center;gap:8px;margin:12px 0 0;font-size:14px;line-height:20px}
+.unlocked-note i{width:10px;height:10px;border-radius:50%;border:3px solid var(--line-1);flex:none}
+@media (max-width:560px){.hrow{grid-template-columns:1fr}.today{flex-direction:column;gap:2px}}
+
+</style>
+<style id="trail-v3">
+/* unlock graph v3: minimal vertical track */
+.tr{--tr-hue:var(--blaze-ink);--tr-fill:var(--blaze);--tr-ck:var(--blaze-fg);--tr-w:7px;overflow:visible}
+.tr .e{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tr .e-done{stroke:var(--tr-hue);stroke-width:var(--tr-w)}
+.tr .e-open{stroke:var(--tr-hue);stroke-width:calc(var(--tr-w) * .45)}
+.tr .e-lock{stroke:var(--node-locked);stroke-width:2.5;opacity:.85}
+.tr .n-done{fill:var(--tr-fill);stroke:var(--tr-hue);stroke-width:2}
+.tr .n-ck{fill:none;stroke:var(--tr-ck);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tr .n-act{fill:var(--surface);stroke:var(--tr-hue);stroke-width:4.5}
+.tr .n-mark{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:1.5}
+.tr .n-open{fill:var(--surface);stroke:var(--tr-hue);stroke-width:2.5}
+.tr .n-lock{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.tr .n-goal{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5}
+.tr .n-goal.done{fill:var(--tr-fill);stroke:var(--tr-hue)}
+.tr .n-goal-t{fill:var(--tr-hue)}
+.tr .n-goal.done+.n-goal-t{fill:var(--tr-ck)}
+.tr text{font-family:"Overpass",system-ui,sans-serif;fill:var(--foreground)}
+.tr .lb-act{font-size:15px;font-weight:700}
+.tr .lb-sub{font-size:12.5px;font-weight:400;fill:var(--muted-fg)}
+.tr .lb-goal{font-family:"Zilla Slab",Georgia,serif;font-size:19px;font-weight:600}
+.tr .lb-row{font-size:14px;font-weight:600}
+.tr .lb-row.mute{font-weight:400;fill:var(--muted-fg)}
+.tr .hit{fill:transparent}
+.tr .nd{cursor:pointer}
+.tr .nd:focus{outline:none}
+.tr .selr{fill:none;stroke:var(--ring);stroke-width:2.5;display:none}
+.tr .nd.sel .selr,.tr .nd:focus-visible .selr{display:block}
+.tr .tip{opacity:0;pointer-events:none;transition:opacity 120ms ease-out}
+.tr .tip rect{fill:var(--foreground)}
+.tr .tip text{fill:var(--background);font-size:13px;font-weight:600}
+.tr .nd:hover .tip,.tr .nd:focus-visible .tip,.tr .nd.sel .tip{opacity:1}
+.tr .e-ret{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.tr.no-ret .ret{display:none}
+.tr .dim{opacity:.22;transition:opacity 200ms ease-out}
+.tr .col{display:none}
+.tr .collapsed>.full{display:none}
+.tr .collapsed>.col{display:inline}
+@media (prefers-reduced-motion:reduce){.tr .tip,.tr .dim{transition:none}}
+
+.mapwrap svg.tr{display:block;width:100%;height:auto}
+</style>
+</head>
+<body>
+<div class="mock-strip"><b>Pantalla 2: Ahora</b>Maqueta estática de Marcos OS web, 1440 × 900</div>
+<div class="mock-bar" role="toolbar" aria-label="Herramientas de la maqueta">
+  <a href="index.html"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Índice</a>
+  <button type="button" id="themeBtn"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg><span>Oscuro</span></button>
+</div>
+<header class="appbar">
+  <a class="brand" href="02-now.html" aria-label="Marcos OS, ir a Ahora"><i aria-hidden="true"></i><span>Marcos OS</span></a>
+  <nav class="nav" aria-label="Principal"><a href="02-now.html" aria-current="page">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="#">Hábitos</a><a href="#">Revisiones</a><a href="#">Retirados</a></nav>
+  <div class="right">
+    <button class="btn-sm btn-outline" type="button"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>Capturar <kbd>C</kbd></button>
+    <button class="btn-sm btn-ghost hide-md" type="button" aria-label="Paleta de comandos"><svg class="i s16" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><kbd>Ctrl K</kbd></button>
+  </div>
+</header>
+<main class="page">
+  <div class="now-wrap">
+    <p class="today"><span><b>Domingo 27 de septiembre</b></span><span>Objetivo: Marcos OS en uso diario</span></p>
+
+    <article class="now" aria-labelledby="task">
+      <div class="cue" aria-hidden="true"><i></i></div>
+      <div class="ctxrow">
+        <span class="ctx">Hito: Semana 1: boceto de Ahora</span>
+        <span class="ctx tnum">En esto desde las 09:12</span>
+      </div>
+      <h3 class="task" id="task">Captura 10 min</h3>
+      <p class="desc">Volcar al inbox todo lo que tengo en la cabeza durante 10 minutos, sin ordenarlo.</p>
+      <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>2 min: abrir el inbox y escribir una línea<kbd>Enter</kbd></button>
+      <p class="reentry"><b>Ibas por:</b> la idea sobre el horario del gimnasio</p>
+
+      <p class="opens-h">Esto abre</p>
+      <svg class="minimap tr" viewBox="0 0 592 76" role="img" aria-label="Al terminar Captura 10 min se abre Clasificar y elegir prioridad; después siguen los días 4 a 6 y el hito Semana 1"><path d="M22 26 L96 26" class="e e-done"/><path d="M96 26 L250 26" class="e e-lock"/><path d="M250 26 L370 26" class="e e-lock"/><path d="M370 26 L450 26" class="e e-lock"/><path d="M450 26 L560 26" class="e e-lock"/><g class="nd" data-id="d1"><title>Mesa lista, hecha</title><circle cx="22" cy="26" r="17.0" class="selr"/><circle cx="22" cy="26" r="10.0" class="n-done"/><path d="M17.4 26.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><circle cx="22" cy="26" r="18.0" class="hit"/></g><g class="nd" data-id="d2"><title>Captura 10 min, activa, ahora</title><circle cx="96" cy="26" r="18.5" class="selr"/><circle cx="96" cy="26" r="11.5" class="n-act"/><rect x="91.5" y="22.9" width="9.0" height="6.2" rx="1.5" class="n-mark"/><circle cx="96" cy="26" r="19.5" class="hit"/></g><g class="nd" data-id="d3"><title>Clasificar y elegir prioridad, bloqueada</title><circle cx="250" cy="26" r="12.0" class="selr"/><circle cx="250" cy="26" r="5.0" class="n-lock"/><circle cx="250" cy="26" r="17.0" class="hit"/></g><g class="nd" data-id="d4"><title>Revisar video Física, bloqueada</title><circle cx="370" cy="26" r="12.0" class="selr"/><circle cx="370" cy="26" r="5.0" class="n-lock"/><circle cx="370" cy="26" r="17.0" class="hit"/></g><g class="nd" data-id="d5"><title>Revisar fórmula cuadrática, bloqueada</title><circle cx="450" cy="26" r="12.0" class="selr"/><circle cx="450" cy="26" r="5.0" class="n-lock"/><circle cx="450" cy="26" r="17.0" class="hit"/></g><g class="nd" data-id="d7"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="560" cy="26" r="15.7" class="selr"/><circle cx="560" cy="26" r="8.7" class="n-lock" style="stroke-width:2.5"/><circle cx="560" cy="26" r="17.0" class="hit"/></g><text x="96" y="64" class="lb-row" text-anchor="middle">Ahora</text><text x="250" y="64" class="lb-row mute" text-anchor="middle">Clasificar y elegir prioridad</text></svg>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="button">Marcar hecho<kbd>Espacio</kbd></button>
+        <button class="btn btn-outline" type="button">Estoy trabado<kbd>T</kbd></button>
+      </div>
+    </article>
+
+    <section class="habits" aria-labelledby="hh">
+      <div class="habits-h"><h2 id="hh">Hábitos de hoy</h2><a href="#" class="small">Ver hábitos</a></div>
+      <div class="hrow">
+        <button class="check" role="checkbox" aria-checked="true"><span class="blaze"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blaze-fg)"><path d="M3 8.5l3 3 7-7"/></svg></span><span>Leer 2 páginas de Control<span class="sub">Hecho a las 08:40</span></span></button>
+        <button class="check" role="checkbox" aria-checked="false"><span class="blaze"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blaze-fg)"><path d="M3 8.5l3 3 7-7"/></svg></span><span>Dormir 22:00<span class="sub">Cuando termine de cenar, entonces cierro la compu</span></span></button>
+        <div class="rest"><i aria-hidden="true"></i>Gimnasio 06:30 no toca hoy. Vuelve el martes con tu amigo.</div>
+      </div>
+    </section>
+
+    <p class="prio">Prioridad de la semana: <a href="04-objective-detail.html">Marcos OS en uso diario</a></p>
+  </div>
+</main>
+
+<section class="states" aria-labelledby="st">
+  <div class="states-in">
+    <h2 id="st">Otros estados de esta pantalla</h2>
+    <p>La tarjeta es siempre la misma; cambia solo lo que el momento necesita.</p>
+    <div class="sgrid">
+
+      <div class="spanel">
+        <h3><b>A los 25 minutos.</b> Aviso silencioso: sin modal, sin sonido, el foco no se mueve.</h3>
+        <div class="frame">
+          <article class="now">
+            <div class="cue" aria-hidden="true"><i style="width:100%"></i></div>
+            <div class="cue-note" role="group" aria-label="Aviso de 25 minutos" aria-live="off"><span class="dot" aria-hidden="true"></span>25 min. ¿Seguís en esto?
+              <button type="button">Sigo</button><button type="button">Terminé</button><button type="button">Estoy trabado</button>
+              <span class="gone">Se va solo en un minuto si no tocás nada.</span></div>
+            <div class="ctx">Hito: Semana 1: boceto de Ahora</div>
+            <h3 class="task">Captura 10 min</h3>
+            <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>2 min: abrir el inbox y escribir una línea</button>
+          </article>
+        </div>
+      </div>
+
+      <div class="spanel">
+        <h3><b>Estoy trabado.</b> Devuelve una sola acción más chica, en la misma tarjeta, no un chat.</h3>
+        <div class="frame">
+          <article class="now">
+            <div class="cue" aria-hidden="true"><i style="width:30%"></i></div>
+            <div class="ctx">Hito: Semana 1: boceto de Ahora</div>
+            <h3 class="task">Captura 10 min</h3>
+            <div class="stuck-result show" role="status">
+              <p><b>Más chico:</b> escribí solo el título de una idea, sin detalle.</p>
+              <div class="btns"><button class="btn btn-outline" type="button">Probar esta</button><button class="btn btn-outline" type="button">Otra más chica</button></div>
+              <p class="src">Propuesta de la IA (acción menor). Si la probás, reemplaza la versión de 2 minutos y la anterior queda en el historial.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <div class="spanel">
+        <h3><b>Recién marcada.</b> La marca se pinta, el tramo se traza y la siguiente estación se abre.</h3>
+        <div class="frame">
+          <div class="toast show" role="status">Hecho: Captura 10 min <button type="button">Deshacer</button></div>
+          <svg class="minimap tr" viewBox="0 0 380 76" role="img" aria-label="Captura 10 min hecha; Clasificar y elegir prioridad ahora disponible"><path d="M20 26 L80 26" class="e e-done"/><path d="M80 26 L200 26" class="e e-open"/><path d="M200 26 L356 26" class="e e-lock"/><g class="nd" data-id="d1"><title>Mesa lista, hecha</title><circle cx="20" cy="26" r="17.0" class="selr"/><circle cx="20" cy="26" r="10.0" class="n-done"/><path d="M15.4 26.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><circle cx="20" cy="26" r="18.0" class="hit"/></g><g class="nd" data-id="d2"><title>Captura 10 min, hecha</title><circle cx="80" cy="26" r="17.0" class="selr"/><circle cx="80" cy="26" r="10.0" class="n-done"/><path d="M75.4 26.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><circle cx="80" cy="26" r="18.0" class="hit"/></g><g class="nd" data-id="d3"><title>Clasificar y elegir prioridad, disponible</title><circle cx="200" cy="26" r="17.0" class="selr"/><circle cx="200" cy="26" r="9.0" class="n-open"/><circle cx="200" cy="26" r="18.0" class="hit"/></g><g class="nd" data-id="d7"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="356" cy="26" r="15.7" class="selr"/><circle cx="356" cy="26" r="8.7" class="n-lock" style="stroke-width:2.5"/><circle cx="356" cy="26" r="17.0" class="hit"/></g><text x="200" y="64" class="lb-row" text-anchor="middle">Clasificar y elegir prioridad</text></svg>
+          <p class="unlocked-note"><i aria-hidden="true"></i>Se abrió: Clasificar y elegir prioridad. Queda sugerida para después.</p>
+          <div class="actions" style="justify-content:flex-start;gap:8px"><button class="btn btn-outline" type="button">Seguir con la próxima</button><button class="btn btn-outline" type="button">Cerrar por hoy</button></div>
+        </div>
+      </div>
+
+      <div class="spanel">
+        <h3><b>Sin tarea activa.</b> Una sola sugerencia: la primera disponible de la prioridad de la semana.</h3>
+        <div class="frame">
+          <article class="now">
+            <div class="ctx">Sugerida para hoy. Hito: Semana 1: boceto de Ahora</div>
+            <h3 class="task">Clasificar y elegir prioridad</h3>
+            <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>Empezar los 2 minutos: abrir el inbox y leer la primera línea</button>
+            <p class="opens" style="margin-bottom:0">Esto abre: <span class="node-mini">Revisar video Física</span><span class="node-mini">+2 en paralelo</span></p>
+          </article>
+        </div>
+      </div>
+
+      <div class="spanel">
+        <h3><b>Volviendo después de unos días.</b> Retomar sin deuda: no se dice cuántos días pasaron.</h3>
+        <div class="frame">
+          <article class="now">
+            <div class="ctx">Hoy retomás.</div>
+            <h3 class="task">Captura 10 min</h3>
+            <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>Retomar con 2 minutos: abrir el inbox</button>
+            <p class="reentry"><b>Ibas por:</b> la idea sobre el horario del gimnasio</p>
+          </article>
+        </div>
+      </div>
+
+      <div class="spanel">
+        <h3><b>Nada disponible.</b> Invitación a actuar, sin culpa ni mensaje de error.</h3>
+        <div class="frame">
+          <div class="empty">
+            <h3>No hay una marca pintada para hoy.</h3>
+            <p>Capturá una idea o abrí un objetivo para elegir la próxima estación.</p>
+            <div class="actions" style="gap:8px"><button class="btn btn-primary" type="button">Capturar una idea</button><button class="btn btn-outline" type="button">Abrir Objetivos</button></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+<footer class="nota"><details><summary>Nota de diseño</summary><ul><li>Ley de Hick: una sola tarea en pantalla. No hay lista de pendientes, contador de atrasos ni feed; lo único con forma de lista es la fila de hábitos de hoy, como pide el spec.</li><li>Regla de los 2 minutos y modelo de Fogg: el chip ocre es lo más clicable de la tarjeta y siempre es un verbo físico. La tarea completa queda como título, no como exigencia.</li><li>Ovsiankina en lugar de Zeigarnik: "Ibas por…" devuelve el punto exacto de reentrada, sin lista de cosas sin terminar que generen tensión.</li><li>Tecnología calma: el aviso de 25 min es una línea de 3 px que se llena y, al cumplirse, un punto y tres enlaces de texto (Sigo, Terminé, Estoy trabado). Sin modal, sin sonido, sin mover el foco ni anunciarse al lector de pantalla (aria-live="off"), pero los tres se alcanzan con Tab; se va solo si no tocás nada.</li><li>Nielsen 1, 3 y 6: la hora de inicio se ve (estado del sistema), cada check tiene "Deshacer" (control) y el mini-mapa muestra qué se abre al terminar (reconocer antes que recordar). Volver tras días sin actividad nunca dice cuántos días fueron.</li></ul></details></footer>
+<script>
+(function(){
+  var root=document.documentElement, btn=document.getElementById('themeBtn');
+  function cur(){var t=root.getAttribute('data-theme');if(t)return t;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function label(){var d=cur()==='dark';btn.querySelector('span').textContent=d?'Claro':'Oscuro';btn.setAttribute('aria-label',d?'Cambiar a tema claro':'Cambiar a tema oscuro')}
+  var q=new URLSearchParams(location.search).get('theme');
+  var saved=null;try{saved=localStorage.getItem('mos-theme')}catch(e){}
+  var t=q||saved; if(t==='light'||t==='dark')root.setAttribute('data-theme',t);
+  label();
+  btn.addEventListener('click',function(){var n=cur()==='dark'?'light':'dark';root.setAttribute('data-theme',n);try{localStorage.setItem('mos-theme',n)}catch(e){}label()});
+})();
+</script>
+</body>
+</html>

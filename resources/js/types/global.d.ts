@@ -1,5 +1,4 @@
 import type { Auth } from '@/types/auth';
-import type { Project } from '@/types/models';
 
 declare module 'react' {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -8,8 +7,8 @@ declare module 'react' {
     }
 }
 
-/** The subset of `Project` fields the sidebar needs to list a user's projects. */
-export type SidebarProject = Pick<Project, 'id' | 'key' | 'name'>;
+/** An active objective as navigation lists it (shared prop). */
+export type NavigationObjective = { key: string; title: string };
 
 /** Theme preference: `system` follows the OS/browser `prefers-color-scheme`. */
 export type Appearance = 'light' | 'dark' | 'system';
@@ -19,7 +18,8 @@ declare module '@inertiajs/core' {
         sharedPageProps: {
             name: string;
             auth: Auth;
-            sidebarProjects: SidebarProject[];
+            /** Only the owner's ACTIVE objectives, in manual order. */
+            navigationObjectives: NavigationObjective[];
             appearance: Appearance;
             /**
              * One-shot session flashes. `plainMcpToken` is only present on
@@ -28,6 +28,8 @@ declare module '@inertiajs/core' {
              */
             flash: {
                 plainMcpToken: string | null;
+                /** Items that became available with the last check. */
+                unlocked: { key: string; title: string }[];
             };
             [key: string]: unknown;
         };

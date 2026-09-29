@@ -3,6 +3,7 @@
 use App\Enums\HabitType;
 use App\Enums\RecurrenceType;
 use App\Models\Habit;
+use App\Models\Retirement;
 use App\Models\User;
 
 test('guests are redirected to login when visiting the habits management page', function () {
@@ -35,36 +36,36 @@ test('a habit can be created for every type and recurrence combination', functio
 
     $response = $this->actingAs($user)->post('/habits', $payload);
 
-    $response->assertRedirect('/habits/manage');
-
     $habit = Habit::query()->where('user_id', $user->id)->firstOrFail();
+
+    $response->assertRedirect(route('habits.show', $habit));
 
     foreach ($expected as $attribute => $value) {
         expect($habit->getAttribute($attribute))->toEqual($value);
     }
 })->with([
     'yes/no daily' => [
-        ['name' => 'Meditate', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily'],
+        ['name' => 'Meditate', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'two_minute_version' => 'Sentarme'],
         ['habit_type' => HabitType::YesNo, 'recurrence_type' => RecurrenceType::Daily, 'unit' => null, 'daily_target' => null],
     ],
     'yes/no specific weekdays' => [
-        ['name' => 'Gym', 'habit_type' => 'yes_no', 'recurrence_type' => 'specific_weekdays', 'weekdays' => [1, 3, 5]],
+        ['name' => 'Gym', 'habit_type' => 'yes_no', 'recurrence_type' => 'specific_weekdays', 'weekdays' => [1, 3, 5], 'two_minute_version' => 'Empezar'],
         ['recurrence_type' => RecurrenceType::SpecificWeekdays, 'weekdays' => [1, 3, 5], 'times_per_week' => null],
     ],
     'yes/no times per week' => [
-        ['name' => 'Run', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 3],
+        ['name' => 'Run', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 3, 'two_minute_version' => 'Empezar'],
         ['recurrence_type' => RecurrenceType::TimesPerWeek, 'times_per_week' => 3, 'weekdays' => null],
     ],
     'quantitative daily' => [
-        ['name' => 'Read', 'habit_type' => 'quantitative', 'unit' => 'pages', 'daily_target' => 20, 'recurrence_type' => 'daily'],
+        ['name' => 'Read', 'habit_type' => 'quantitative', 'unit' => 'pages', 'daily_target' => 20, 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         ['habit_type' => HabitType::Quantitative, 'unit' => 'pages', 'daily_target' => 20],
     ],
     'quantitative specific weekdays' => [
-        ['name' => 'Swim', 'habit_type' => 'quantitative', 'unit' => 'laps', 'daily_target' => 10, 'recurrence_type' => 'specific_weekdays', 'weekdays' => [2, 4]],
+        ['name' => 'Swim', 'habit_type' => 'quantitative', 'unit' => 'laps', 'daily_target' => 10, 'recurrence_type' => 'specific_weekdays', 'weekdays' => [2, 4], 'two_minute_version' => 'Empezar'],
         ['unit' => 'laps', 'daily_target' => 10, 'weekdays' => [2, 4]],
     ],
     'quantitative times per week' => [
-        ['name' => 'Write', 'habit_type' => 'quantitative', 'unit' => 'words', 'daily_target' => 500, 'recurrence_type' => 'times_per_week', 'times_per_week' => 4],
+        ['name' => 'Write', 'habit_type' => 'quantitative', 'unit' => 'words', 'daily_target' => 500, 'recurrence_type' => 'times_per_week', 'times_per_week' => 4, 'two_minute_version' => 'Empezar'],
         ['unit' => 'words', 'daily_target' => 500, 'times_per_week' => 4],
     ],
 ]);
@@ -80,11 +81,12 @@ test('fields that do not apply to the chosen type or recurrence are dropped', fu
         'recurrence_type' => 'daily',
         'weekdays' => [1, 2],
         'times_per_week' => 3,
+        'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertRedirect('/habits/manage');
-
     $habit = Habit::query()->where('user_id', $user->id)->firstOrFail();
+
+    $response->assertRedirect(route('habits.show', $habit));
 
     expect($habit->unit)->toBeNull()
         ->and($habit->daily_target)->toBeNull()
@@ -100,11 +102,12 @@ test('a habit can be created with an optional planned time', function () {
         'habit_type' => 'yes_no',
         'recurrence_type' => 'daily',
         'planned_time' => '07:30',
+        'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertRedirect('/habits/manage');
-
     $habit = Habit::query()->where('user_id', $user->id)->firstOrFail();
+
+    $response->assertRedirect(route('habits.show', $habit));
 
     expect($habit->planned_time)->toBe('07:30:00');
 });
@@ -118,31 +121,31 @@ test('invalid payloads are rejected with a validation error', function (array $p
     expect(Habit::query()->count())->toBe(0);
 })->with([
     'missing name' => [
-        ['habit_type' => 'yes_no', 'recurrence_type' => 'daily'],
+        ['habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         'name',
     ],
     'invalid habit type' => [
-        ['name' => 'X', 'habit_type' => 'sometimes', 'recurrence_type' => 'daily'],
+        ['name' => 'X', 'habit_type' => 'sometimes', 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         'habit_type',
     ],
     'invalid recurrence type' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'monthly'],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'monthly', 'two_minute_version' => 'Empezar'],
         'recurrence_type',
     ],
     'quantitative without unit' => [
-        ['name' => 'X', 'habit_type' => 'quantitative', 'daily_target' => 20, 'recurrence_type' => 'daily'],
+        ['name' => 'X', 'habit_type' => 'quantitative', 'daily_target' => 20, 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         'unit',
     ],
     'quantitative without daily target' => [
-        ['name' => 'X', 'habit_type' => 'quantitative', 'unit' => 'pages', 'recurrence_type' => 'daily'],
+        ['name' => 'X', 'habit_type' => 'quantitative', 'unit' => 'pages', 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         'daily_target',
     ],
     'quantitative with zero daily target' => [
-        ['name' => 'X', 'habit_type' => 'quantitative', 'unit' => 'pages', 'daily_target' => 0, 'recurrence_type' => 'daily'],
+        ['name' => 'X', 'habit_type' => 'quantitative', 'unit' => 'pages', 'daily_target' => 0, 'recurrence_type' => 'daily', 'two_minute_version' => 'Empezar'],
         'daily_target',
     ],
     'specific weekdays without weekdays' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'specific_weekdays'],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'specific_weekdays', 'two_minute_version' => 'Empezar'],
         'weekdays',
     ],
     'specific weekdays with empty array' => [
@@ -162,19 +165,23 @@ test('invalid payloads are rejected with a validation error', function (array $p
         'weekdays.0',
     ],
     'times per week missing' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week'],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'two_minute_version' => 'Empezar'],
         'times_per_week',
     ],
     'times per week below one' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 0],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 0, 'two_minute_version' => 'Empezar'],
         'times_per_week',
     ],
     'times per week above seven' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 8],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'times_per_week', 'times_per_week' => 8, 'two_minute_version' => 'Empezar'],
         'times_per_week',
     ],
+    'missing 2-minute version' => [
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily'],
+        'two_minute_version',
+    ],
     'malformed planned time' => [
-        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'planned_time' => 'late'],
+        ['name' => 'X', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'planned_time' => 'late', 'two_minute_version' => 'Empezar'],
         'planned_time',
     ],
 ]);
@@ -188,9 +195,10 @@ test('the owner can update a habit and switching type clears stale fields', func
         'habit_type' => 'yes_no',
         'recurrence_type' => 'times_per_week',
         'times_per_week' => 5,
+        'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertRedirect('/habits/manage');
+    $response->assertRedirect(route('habits.show', $habit));
 
     $habit->refresh();
 
@@ -210,38 +218,42 @@ test('a user cannot update another user\'s habit', function () {
         'name' => 'Hijacked',
         'habit_type' => 'yes_no',
         'recurrence_type' => 'daily',
+        'two_minute_version' => 'Sentarme',
     ]);
 
     $response->assertForbidden();
     expect($habit->refresh()->name)->toBe('Private');
 });
 
-test('the owner can archive and reactivate a habit', function () {
+test('the owner can retire a habit with a reason and restore it from Retirados (Phase 6: archive became retire)', function () {
     $user = User::factory()->create();
     $habit = Habit::factory()->for($user)->create();
 
-    $this->actingAs($user)->post("/habits/{$habit->id}/archive")->assertRedirect('/habits/manage');
+    $this->actingAs($user)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito'])->assertRedirect('/habits/manage');
 
-    expect($habit->refresh()->archived_at)->not->toBeNull();
+    expect(Habit::withRetired()->findOrFail($habit->id)->retired_at)->not->toBeNull();
 
-    $this->actingAs($user)->post("/habits/{$habit->id}/unarchive")->assertRedirect('/habits/manage');
+    $retirement = Retirement::query()->sole();
+    $this->actingAs($user)->post("/retired/{$retirement->id}/restore")->assertRedirect('/retired');
 
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 });
 
-test('a user cannot archive or unarchive another user\'s habit', function () {
+test('a user cannot retire or restore another user\'s habit', function () {
     $stranger = User::factory()->create();
     $habit = Habit::factory()->create();
 
-    $this->actingAs($stranger)->post("/habits/{$habit->id}/archive")->assertForbidden();
+    $this->actingAs($stranger)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito'])->assertNotFound();
 
-    expect($habit->refresh()->archived_at)->toBeNull();
+    expect($habit->refresh()->retired_at)->toBeNull();
 
-    $archived = Habit::factory()->archived()->create();
+    $owner = $habit->user;
+    $this->actingAs($owner)->post("/habits/{$habit->id}/retire", ['reason' => 'ya no me sirve este hábito']);
+    $retirement = Retirement::query()->sole();
 
-    $this->actingAs($stranger)->post("/habits/{$archived->id}/unarchive")->assertForbidden();
+    $this->actingAs($stranger)->post("/retired/{$retirement->id}/restore")->assertNotFound();
 
-    expect($archived->refresh()->archived_at)->not->toBeNull();
+    expect(Habit::withRetired()->findOrFail($habit->id)->retired_at)->not->toBeNull();
 });
 
 test('there is no destroy route for habits', function () {

@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Marcos OS Estilos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif}
+a{color:var(--primary)}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+.wrap{max-width:1040px;margin:0 auto;padding:32px 16px 96px}
+header.top{display:flex;flex-wrap:wrap;gap:16px;align-items:end;justify-content:space-between;margin-bottom:48px}
+h1{font:600 38px/44px "Zilla Slab",Georgia,serif;margin:0;letter-spacing:-.005em}
+.lede{color:var(--muted-fg);max-width:60ch;margin:8px 0 0}
+h2{font:700 24px/32px "Overpass",sans-serif;letter-spacing:-.01em;margin:64px 0 8px}
+h2+p{color:var(--muted-fg);margin:0 0 24px;max-width:68ch}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0 0 8px}
+.btn{font:600 16px/24px "Overpass",sans-serif;min-height:48px;padding:12px 20px;border-radius:6px;border:2px solid transparent;cursor:pointer;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.theme-toggle{display:flex;gap:4px;background:var(--sunken);padding:4px;border-radius:10px}
+.theme-toggle button{font:600 14px/20px "Overpass",sans-serif;border:0;background:transparent;color:var(--foreground);padding:10px 14px;min-height:44px;border-radius:6px;cursor:pointer}
+.theme-toggle button[aria-pressed="true"]{background:var(--surface);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+
+/* palette */
+.swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.sw{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden}
+.sw i{display:block;height:64px;border-bottom:1px solid var(--border)}
+.sw div{padding:8px 12px 12px;font-size:14px;line-height:20px}
+.sw b{display:block;font-weight:600}
+.sw span{color:var(--muted-fg);font-variant-numeric:tabular-nums}
+
+/* type */
+.type-row{display:grid;grid-template-columns:120px 1fr;gap:16px;align-items:baseline;padding:16px 0;border-bottom:1px solid var(--border)}
+.type-row .meta{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.t-xs{font:600 12px/16px "Overpass"}.t-sm{font:400 14px/20px "Overpass"}.t-base{font:400 16px/24px "Overpass"}
+.t-lg{font:600 20px/28px "Overpass"}.t-xl{font:700 24px/32px "Overpass";letter-spacing:-.01em}.t-2xl{font:700 30px/36px "Overpass";letter-spacing:-.01em}
+.d-sm{font:600 30px/36px "Zilla Slab"}.d-md{font:600 38px/44px "Zilla Slab"}.d-lg{font:500 48px/52px "Zilla Slab"}
+
+/* spacing */
+.space{display:flex;flex-direction:column;gap:8px}
+.space div{display:flex;align-items:center;gap:16px;font-size:14px;color:var(--muted-fg);font-variant-numeric:tabular-nums}
+.space i{display:block;height:16px;background:var(--primary);border-radius:2px}
+.radii{display:flex;flex-wrap:wrap;gap:16px;margin-top:24px}
+.radii div{width:96px;height:72px;background:var(--surface);border:2px solid var(--input);display:flex;align-items:end;padding:8px;font-size:12px;line-height:16px;font-weight:600}
+
+/* grid of components */
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:24px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px}
+.caption{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:12px}
+
+/* check item: the blaze */
+.check{display:flex;align-items:center;gap:16px;width:100%;min-height:56px;padding:8px 12px;background:transparent;border:0;border-radius:6px;color:var(--foreground);font:400 16px/24px "Overpass";text-align:left;cursor:pointer}
+.check:hover{background:var(--sunken)}
+.blaze{position:relative;flex:none;width:28px;height:20px;border:2px solid var(--blaze-ink);border-radius:2px;overflow:hidden}
+.blaze::before{content:"";position:absolute;inset:0;background:var(--blaze);transform:scaleX(0);transform-origin:left;transition:transform 180ms var(--ease-paint)}
+.blaze svg{position:absolute;inset:0;margin:auto;width:14px;height:14px;opacity:0;transition:opacity 60ms linear 120ms}
+.check[aria-checked="true"] .blaze::before{transform:scaleX(1)}
+.check[aria-checked="true"] .blaze svg{opacity:1}
+.blaze.gap{border-style:dashed}
+.check .sub{display:block;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.toast{margin-top:12px;display:inline-flex;gap:12px;align-items:center;background:var(--foreground);color:var(--background);padding:10px 16px;border-radius:6px;font-size:14px;line-height:20px;visibility:hidden}
+.toast.show{visibility:visible}
+.toast button{background:none;border:0;color:inherit;font:600 14px/20px "Overpass";text-decoration:underline;cursor:pointer;min-height:24px}
+
+/* now card */
+.now{position:relative;background:var(--surface);border-radius:10px;padding:32px 24px 24px;box-shadow:0 1px 2px hsl(var(--shadow-color)/.10),0 4px 12px hsl(var(--shadow-color)/.06);overflow:hidden;max-width:640px}
+.cue{position:absolute;left:0;right:0;top:0;height:3px;background:var(--sunken)}
+.cue i{display:block;height:100%;width:52%;background:var(--blaze-ink)}
+.cue-note{display:flex;gap:8px;align-items:center;font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:16px}
+.cue-note .dot{width:8px;height:8px;border-radius:50%;background:var(--blaze)}
+.cue-note button{background:none;border:0;color:var(--foreground);font:600 14px/20px "Overpass";text-decoration:underline;padding:4px;cursor:pointer}
+.ctx{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.now h3.task{font:700 30px/36px "Overpass";letter-spacing:-.01em;margin:8px 0 24px;max-width:45ch}
+.chip2{display:flex;align-items:center;gap:12px;width:100%;min-height:48px;padding:10px 16px;border-radius:6px;border:2px solid var(--blaze-ink);background:color-mix(in srgb,var(--blaze) 20%,var(--surface));color:var(--foreground);font:600 16px/24px "Overpass";text-align:left;cursor:pointer}
+.chip2 .mini{width:20px;height:14px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px;flex:none}
+.chip2 code{font:inherit}
+.reentry{margin:16px 0 0;font-size:16px}
+.reentry b{font-weight:600}
+.opens{display:flex;align-items:center;gap:8px;margin:12px 0 24px;font-size:14px;color:var(--muted-fg);flex-wrap:wrap}
+.opens .node-mini{border:2px dashed var(--node-locked);border-radius:6px;padding:2px 10px;color:var(--foreground)}
+.actions{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.stuck-result{margin-top:16px;background:var(--attention-bg);color:var(--foreground);border-left:3px solid var(--attention);border-radius:6px;padding:12px 16px;display:none}
+.stuck-result.show{display:block}
+.stuck-result p{margin:0 0 8px}
+
+/* progress */
+.strip{display:flex;gap:8px;align-items:center}
+.strip span{width:28px;height:20px;border-radius:2px;border:2px solid var(--blaze-ink)}
+.strip .done{background:var(--blaze)}
+.strip .repaired{background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.strip .gap{border-style:dashed}
+.strip .future{border-color:var(--border)}
+.strip-labels{display:flex;gap:8px;font-size:12px;line-height:16px;color:var(--muted-fg);margin-top:4px}
+.strip-labels span{width:28px;text-align:center}
+.votes{font-size:16px;margin:16px 0 0}
+.votes em{font-style:normal;font-weight:600}
+.stretch{font-size:14px;line-height:20px;color:var(--muted-fg);margin:8px 0 0}
+
+/* capture */
+.capture{display:flex;gap:8px}
+.capture input{flex:1;min-width:0;min-height:48px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass"}
+.capture input::placeholder{color:var(--muted-fg)}
+
+/* graph v3: minimal vertical track */
+/* unlock graph v3: minimal vertical track */
+.tr{--tr-hue:var(--blaze-ink);--tr-fill:var(--blaze);--tr-ck:var(--blaze-fg);--tr-w:7px;overflow:visible}
+.tr .e{fill:none;stroke-linecap:round;stroke-linejoin:round}
+.tr .e-done{stroke:var(--tr-hue);stroke-width:var(--tr-w)}
+.tr .e-open{stroke:var(--tr-hue);stroke-width:calc(var(--tr-w) * .45)}
+.tr .e-lock{stroke:var(--node-locked);stroke-width:2.5;opacity:.85}
+.tr .n-done{fill:var(--tr-fill);stroke:var(--tr-hue);stroke-width:2}
+.tr .n-ck{fill:none;stroke:var(--tr-ck);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.tr .n-act{fill:var(--surface);stroke:var(--tr-hue);stroke-width:4.5}
+.tr .n-mark{fill:var(--blaze);stroke:var(--blaze-ink);stroke-width:1.5}
+.tr .n-open{fill:var(--surface);stroke:var(--tr-hue);stroke-width:2.5}
+.tr .n-lock{fill:var(--surface);stroke:var(--node-locked);stroke-width:2}
+.tr .n-goal{fill:var(--surface);stroke:var(--foreground);stroke-width:2.5}
+.tr .n-goal.done{fill:var(--tr-fill);stroke:var(--tr-hue)}
+.tr .n-goal-t{fill:var(--tr-hue)}
+.tr .n-goal.done+.n-goal-t{fill:var(--tr-ck)}
+.tr text{font-family:"Overpass",system-ui,sans-serif;fill:var(--foreground)}
+.tr .lb-act{font-size:15px;font-weight:700}
+.tr .lb-sub{font-size:12.5px;font-weight:400;fill:var(--muted-fg)}
+.tr .lb-goal{font-family:"Zilla Slab",Georgia,serif;font-size:19px;font-weight:600}
+.tr .lb-row{font-size:14px;font-weight:600}
+.tr .lb-row.mute{font-weight:400;fill:var(--muted-fg)}
+.tr .hit{fill:transparent}
+.tr .nd{cursor:pointer}
+.tr .nd:focus{outline:none}
+.tr .selr{fill:none;stroke:var(--ring);stroke-width:2.5;display:none}
+.tr .nd.sel .selr,.tr .nd:focus-visible .selr{display:block}
+.tr .tip{opacity:0;pointer-events:none;transition:opacity 120ms ease-out}
+.tr .tip rect{fill:var(--foreground)}
+.tr .tip text{fill:var(--background);font-size:13px;font-weight:600}
+.tr .nd:hover .tip,.tr .nd:focus-visible .tip,.tr .nd.sel .tip{opacity:1}
+.tr .e-ret{stroke:var(--node-retired);stroke-width:3;stroke-linecap:round}
+.tr.no-ret .ret{display:none}
+.tr .dim{opacity:.22;transition:opacity 200ms ease-out}
+.tr .col{display:none}
+.tr .collapsed>.full{display:none}
+.tr .collapsed>.col{display:inline}
+@media (prefers-reduced-motion:reduce){.tr .tip,.tr .dim{transition:none}}
+
+.tr-legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.tr-legend span{display:inline-flex;align-items:center;gap:6px}
+
+.tr-views{display:grid;grid-template-columns:minmax(0,440px) minmax(0,1fr);gap:24px 40px;align-items:start}
+.tr-views h3{margin:0 0 12px}
+.tr-stage svg{display:block;width:100%;height:auto;max-height:760px}
+.tr-views .tr-legend{grid-column:1/-1;border-top:1px solid var(--border);padding-top:14px}
+.tr-info{font-size:14px;line-height:20px;color:var(--muted-fg);margin:12px 0 0;min-height:40px;max-width:60ch}
+.tr-info b{color:var(--foreground);font-weight:600}
+@media (max-width:760px){.tr-views{grid-template-columns:1fr}}
+
+/* dialog */
+.dialog{background:var(--surface);border-radius:16px;padding:24px;box-shadow:0 16px 48px hsl(var(--shadow-color)/.20);border:1px solid var(--border)}
+.dialog h3{font:700 20px/28px "Overpass";margin:0 0 16px}
+label.f{display:block;font:600 14px/20px "Overpass";margin:0 0 8px}
+textarea{width:100%;min-height:88px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass";resize:vertical}
+fieldset{border:0;padding:0;margin:16px 0}
+legend{font:600 14px/20px "Overpass";margin-bottom:8px;padding:0}
+.radio{display:flex;align-items:center;gap:12px;min-height:44px}
+.radio input{width:20px;height:20px;accent-color:var(--primary)}
+.foot{font-size:14px;line-height:20px;color:var(--muted-fg);margin:16px 0}
+.hint{font-size:14px;color:var(--muted-fg);margin-left:12px}
+
+/* AI panel */
+.ai{background:var(--surface);border-radius:16px;border:1px solid var(--border);padding:24px}
+.ai-status{display:flex;gap:8px;flex-wrap:wrap;font-size:14px;line-height:20px;margin-bottom:16px}
+.ai-status span{padding:4px 10px;border-radius:6px;background:var(--sunken);color:var(--muted-fg)}
+.ai-status span.on{background:var(--attention-bg);color:var(--attention);font-weight:600}
+.tree{list-style:none;margin:0;padding:0}
+.tree li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.tree li.child{padding-left:24px}
+.tree .add{color:var(--primary);font-weight:600}
+.tree .del{color:var(--muted-fg);text-decoration:line-through}
+.tree .ops{display:flex;gap:4px}
+.tree .ops button{font:600 14px/20px "Overpass";min-height:36px;padding:6px 10px;border-radius:6px;border:1px solid var(--input);background:transparent;color:var(--foreground);cursor:pointer}
+
+/* summit demo */
+.summit{text-align:center;padding:40px 16px;position:relative;overflow:hidden}
+.summit .ring{position:absolute;left:50%;top:50%;width:120px;height:120px;margin:-60px 0 0 -60px;border:2px solid var(--blaze-ink);border-radius:50%;opacity:0}
+.summit.play .ring{animation:contour 900ms var(--ease-out-soft) 1}
+@keyframes contour{from{transform:scale(.4);opacity:.9}to{transform:scale(2.6);opacity:0}}
+.summit .name{font:600 38px/44px "Zilla Slab";margin:8px 0}
+.summit p{color:var(--muted-fg);margin:0}
+
+@media (prefers-reduced-motion:reduce){
+  .blaze::before,.blaze svg{transition:none}
+  .summit.play .ring{animation:none;opacity:1;transform:none}
+  .btn{transition:none}
+}
+@media (max-width:560px){
+  .type-row{grid-template-columns:1fr;gap:4px}
+  .now{padding:28px 16px 16px}
+  .now h3.task{font-size:24px;line-height:32px}
+  .d-lg{font-size:38px;line-height:44px}
+  .actions .btn{flex:1}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header class="top">
+  <div>
+    <h1>Marcos OS: marcas de senda</h1>
+    <p class="lede">El sistema pinta la próxima marca; vos solo caminás hasta ella. Guía de estilo estática para revisar paleta, tipografía, espaciado y los componentes clave.</p>
+  </div>
+  <div class="theme-toggle" role="group" aria-label="Tema">
+    <button type="button" data-t="auto" aria-pressed="true">Sistema</button>
+    <button type="button" data-t="light" aria-pressed="false">Claro</button>
+    <button type="button" data-t="dark" aria-pressed="false">Oscuro</button>
+  </div>
+</header>
+
+<h2>Paleta</h2>
+<p>Los valores cambian con el tema. Contraste calculado contra la superficie del tema activo.</p>
+<div class="swatches" id="swatches"></div>
+
+<h2>Tipografía</h2>
+<p>Overpass (señalización vial) para la interfaz. Zilla Slab (letrero tallado) solo para objetivos, hitos y revisiones.</p>
+<div>
+  <div class="type-row"><span class="meta">xs 12/16 · 600</span><span class="t-xs">Se abre al terminar: Escribir el endpoint</span></div>
+  <div class="type-row"><span class="meta">sm 14/20 · 400</span><span class="t-sm">Hito: Primera versión del API</span></div>
+  <div class="type-row"><span class="meta">base 16/24 · 400</span><span class="t-base">Ibas por: el test del caso de día faltado.</span></div>
+  <div class="type-row"><span class="meta">lg 20/28 · 600</span><span class="t-lg">Revisar el plan de la semana</span></div>
+  <div class="type-row"><span class="meta">xl 24/32 · 700</span><span class="t-xl">Escribir el endpoint de check</span></div>
+  <div class="type-row"><span class="meta">2xl 30/36 · 700</span><span class="t-2xl">Escribir el endpoint de check</span></div>
+  <div class="type-row"><span class="meta">display-sm 30/36</span><span class="d-sm">Marcos OS en uso diario</span></div>
+  <div class="type-row"><span class="meta">display-md 38/44</span><span class="d-md">Primera versión del API</span></div>
+  <div class="type-row"><span class="meta">display-lg 48/52</span><span class="d-lg">Qué aprendí en este camino</span></div>
+</div>
+
+<h2>Espaciado y radios</h2>
+<p>Base de 4px, compartida con Tailwind y con la grilla de 4dp de Flutter. El radio crece con la jerarquía.</p>
+<div class="space" id="space"></div>
+<div class="radii">
+  <div style="border-radius:2px">xs 2 · marca</div>
+  <div style="border-radius:6px">sm 6 · botón</div>
+  <div style="border-radius:10px">md 10 · tarjeta</div>
+  <div style="border-radius:16px">lg 16 · diálogo</div>
+  <div style="border-radius:24px 24px 0 0">xl 24 · sheet</div>
+</div>
+
+<h2>La marca (check)</h2>
+<p>El único elemento audaz del sistema. Tocá una fila: la marca se pinta de izquierda a derecha en 180ms. Un día faltado es un hueco punteado, nunca rojo.</p>
+<div class="grid2">
+  <div class="panel" id="checks">
+    <button class="check" role="checkbox" aria-checked="false"><span class="blaze"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blaze-fg)"><path d="M3 8.5l3 3 7-7"/></svg></span><span>Entrenar 10 minutos<span class="sub">Cuando termine el café, entonces me pongo los tenis</span></span></button>
+    <button class="check" role="checkbox" aria-checked="true"><span class="blaze"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blaze-fg)"><path d="M3 8.5l3 3 7-7"/></svg></span><span>Leer 2 páginas de Control<span class="sub">Hecho</span></span></button>
+    <button class="check" role="checkbox" aria-checked="false"><span class="blaze gap"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2.5" style="color:var(--blaze-fg)"><path d="M3 8.5l3 3 7-7"/></svg></span><span>Escribir en el diario<span class="sub">Ayer quedó en hueco. Retomar con 2 minutos repara el tramo.</span></span></button>
+    <div class="toast" id="toast" role="status">Hecho <button type="button" id="undo">Deshacer</button></div>
+  </div>
+  <div class="panel">
+    <h3>Resumen de progreso</h3>
+    <div class="strip" aria-label="Esta semana: 4 marcas, 1 hueco reparado, 2 días por venir">
+      <span class="done"></span><span class="done"></span><span class="repaired gap"></span><span class="done"></span><span class="done"></span><span class="future"></span><span class="future"></span>
+    </div>
+    <div class="strip-labels"><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span></div>
+    <p class="stretch">Entrenar: tramo de 12 días, 1 hueco reparado</p>
+    <p class="votes"><em>12 de 15 votos</em> por "soy alguien que construye cada día"</p>
+    <p class="caption">Sin número grande de racha, sin porcentaje global, sin puntaje. La racha solo cierra tras dos huecos seguidos, y se guarda como tramo, nunca vuelve a cero.</p>
+  </div>
+</div>
+
+<h2>Tarjeta de Ahora</h2>
+<p>Una sola tarea. La línea superior es el aviso silencioso de 25 minutos: se llena sola, sin sonido ni modal.</p>
+<div class="now">
+  <div class="cue" aria-hidden="true"><i></i></div>
+  <div class="cue-note" role="group" aria-label="Aviso de 25 minutos" aria-live="off"><span class="dot" aria-hidden="true"></span>25 min. ¿Seguís en esto? <button type="button">Sigo</button><button type="button">Terminé</button><button type="button">Estoy trabado</button></div>
+  <div class="ctx">Hito: Primera versión del API</div>
+  <h3 class="task">Escribir el endpoint de check de hábito</h3>
+  <button class="chip2" type="button"><span class="mini" aria-hidden="true"></span>2 min: abrir <code>routes/api.php</code></button>
+  <p class="reentry"><b>Ibas por:</b> el test del caso de día faltado</p>
+  <div class="opens">Esto abre: <span class="node-mini">Sincronizar con móvil</span></div>
+  <div class="actions">
+    <button class="btn btn-primary" type="button">Marcar hecho</button>
+    <button class="btn btn-outline" type="button" id="stuck">Estoy trabado</button>
+  </div>
+  <div class="stuck-result" id="stuckResult" role="status">
+    <p>Más chico: escribí solo el nombre del test, sin cuerpo.</p>
+    <button class="btn btn-outline" type="button">Probar esta</button>
+    <button class="btn btn-outline" type="button">Otra más chica</button>
+  </div>
+</div>
+
+<h2>Grafo de desbloqueo</h2>
+<p>Una vía vertical, un solo color, solo puntos y lo que sucede. Arriba lo hecho, la marca de hoy con su nombre y abajo el objetivo. El resto aparece al pasar el cursor, tabular o tocar. Datos reales del programa de 14 días.</p>
+<div class="panel tr-views" id="grafo">
+  <div class="tr-col">
+    <h3>Una línea: Marcos OS en uso diario</h3>
+    <div class="tr-stage tr-stage-a"><svg class="tr sg-a" id="sgA" viewBox="0 0 440 703" role="group" aria-labelledby="sgA-t"><title id="sgA-t">Línea del objetivo Marcos OS en uso diario</title><desc>Programa de 14 días en una vía vertical. Hecho: Mesa lista. Activa: Captura 10 min. Bloqueadas: Clasificar y elegir prioridad; en paralelo Revisar video Física, Revisar fórmula cuadrática y Poster desde el teléfono; hito Semana 1; Elegir acción del lunes, Hora prevista vs real, Dos minutos a veinte, Usar Estoy trabado, Tres fricciones; hito Especificar Ahora; Backlog y primera tarea; objetivo Revisión 11-oct. Un elemento retirado a un costado: Diseñar segundo cerebro completo.</desc><g class="nd ret" data-id="ret" data-plan="1" tabindex="0" role="button" aria-label="Retirado: Diseñar segundo cerebro completo. Motivo: planificar sin práctica"><title>Retirado: Diseñar segundo cerebro completo (planificar sin práctica)</title><circle cx="103" cy="59" r="12" class="selr"/><path d="M97 59 H109" class="e-ret"/><g class="tip" aria-hidden="true"><rect x="-227.8" y="46" width="323.8" height="26" rx="6"/><text x="-218.8" y="63.5">Retirado: Diseñar segundo cerebro completo</text></g><circle cx="103" cy="59" r="14" class="hit"/></g><path d="M120 36 L120 82" class="e e-done" data-plan="1"/><path d="M120 82 L120 128" class="e e-lock" data-plan="1"/><path d="M120 128 L120 197" class="e e-lock" data-plan="1"/><path d="M120 197 L120 266" class="e e-lock" data-plan="1"/><path d="M120 128 L141.5 149.5 Q150 158 150.0 170.0 L150 197" class="e e-lock" data-plan="1"/><path d="M150 197 L150.0 224.0 Q150 236 141.5 244.5 L120 266" class="e e-lock" data-plan="1"/><path d="M120 128 L176.8 184.8 Q180 188 180.0 192.5 L180 197" class="e e-lock" data-plan="1"/><path d="M180 197 L180.0 201.5 Q180 206 176.8 209.2 L120 266" class="e e-lock" data-plan="1"/><path d="M120 266 L120 312" class="e e-lock" data-plan="2"/><path d="M120 312 L120 358" class="e e-lock" data-plan="2"/><path d="M120 358 L120 404" class="e e-lock" data-plan="2"/><path d="M120 404 L120 450" class="e e-lock" data-plan="2"/><path d="M120 450 L120 496" class="e e-lock" data-plan="2"/><path d="M120 496 L120 542" class="e e-lock" data-plan="2"/><path d="M120 542 L120 588" class="e e-lock" data-plan="3"/><path d="M120 588 L120 645.5" class="e e-lock" data-plan="3"/><g class="nd" data-id="d1" data-plan="1" tabindex="0" role="button" aria-label="Mesa lista, hecha"><title>Mesa lista, hecha</title><circle cx="120" cy="36" r="17.0" class="selr"/><circle cx="120" cy="36" r="10.0" class="n-done"/><path d="M115.4 36.2 l3.2 3.2 l6.2 -6.8" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="140.0" y="23.0" width="90.8" height="26" rx="6"/><text x="149.0" y="40.5">Mesa lista</text></g><circle cx="120" cy="36" r="18.0" class="hit"/></g><g class="nd" data-id="d2" data-plan="1" tabindex="0" role="button" aria-label="Captura 10 min, activa, ahora"><title>Captura 10 min, activa, ahora</title><circle cx="120" cy="82" r="18.5" class="selr"/><circle cx="120" cy="82" r="11.5" class="n-act"/><rect x="115.5" y="78.9" width="9.0" height="6.2" rx="1.5" class="n-mark"/><text x="145.5" y="80.0" class="lb-act">Captura 10 min</text><text x="145.5" y="97.0" class="lb-sub">ahora</text><circle cx="120" cy="82" r="19.5" class="hit"/></g><g class="nd" data-id="d3" data-plan="1" tabindex="0" role="button" aria-label="Clasificar y elegir prioridad, bloqueada"><title>Clasificar y elegir prioridad, bloqueada</title><circle cx="120" cy="128" r="12.0" class="selr"/><circle cx="120" cy="128" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="115.0" width="229.1" height="26" rx="6"/><text x="144.0" y="132.5">Clasificar y elegir prioridad</text></g><circle cx="120" cy="128" r="17.0" class="hit"/></g><g class="nd" data-id="d4" data-plan="1" tabindex="0" role="button" aria-label="Revisar video Física, bloqueada"><title>Revisar video Física, bloqueada</title><circle cx="120" cy="197" r="12.0" class="selr"/><circle cx="120" cy="197" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="202.0" y="184.0" width="163.6" height="26" rx="6"/><text x="211.0" y="201.5">Revisar video Física</text></g><circle cx="120" cy="197" r="17.0" class="hit"/></g><g class="nd" data-id="d5" data-plan="1" tabindex="0" role="button" aria-label="Revisar fórmula cuadrática, bloqueada"><title>Revisar fórmula cuadrática, bloqueada</title><circle cx="150" cy="197" r="12.0" class="selr"/><circle cx="150" cy="197" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="202.0" y="184.0" width="207.3" height="26" rx="6"/><text x="211.0" y="201.5">Revisar fórmula cuadrática</text></g><circle cx="150" cy="197" r="17.0" class="hit"/></g><g class="nd" data-id="d6" data-plan="1" tabindex="0" role="button" aria-label="Poster desde el teléfono, bloqueada"><title>Poster desde el teléfono, bloqueada</title><circle cx="180" cy="197" r="12.0" class="selr"/><circle cx="180" cy="197" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="202.0" y="184.0" width="192.7" height="26" rx="6"/><text x="211.0" y="201.5">Poster desde el teléfono</text></g><circle cx="180" cy="197" r="17.0" class="hit"/></g><g class="nd" data-id="d7" data-plan="1" tabindex="0" role="button" aria-label="Hito Semana 1: boceto de “Ahora”, bloqueada"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="120" cy="266" r="15.7" class="selr"/><circle cx="120" cy="266" r="8.7" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="138.7" y="253.0" width="214.6" height="26" rx="6"/><text x="147.7" y="270.5">Semana 1: boceto de “Ahora”</text></g><circle cx="120" cy="266" r="17.0" class="hit"/></g><g class="nd" data-id="d8" data-plan="2" tabindex="0" role="button" aria-label="Elegir acción del lunes, bloqueada"><title>Elegir acción del lunes, bloqueada</title><circle cx="120" cy="312" r="12.0" class="selr"/><circle cx="120" cy="312" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="299.0" width="185.4" height="26" rx="6"/><text x="144.0" y="316.5">Elegir acción del lunes</text></g><circle cx="120" cy="312" r="17.0" class="hit"/></g><g class="nd" data-id="d9" data-plan="2" tabindex="0" role="button" aria-label="Hora prevista vs real, bloqueada"><title>Hora prevista vs real, bloqueada</title><circle cx="120" cy="358" r="12.0" class="selr"/><circle cx="120" cy="358" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="345.0" width="170.9" height="26" rx="6"/><text x="144.0" y="362.5">Hora prevista vs real</text></g><circle cx="120" cy="358" r="17.0" class="hit"/></g><g class="nd" data-id="d10" data-plan="2" tabindex="0" role="button" aria-label="Dos minutos → veinte, bloqueada"><title>Dos minutos → veinte, bloqueada</title><circle cx="120" cy="404" r="12.0" class="selr"/><circle cx="120" cy="404" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="391.0" width="163.6" height="26" rx="6"/><text x="144.0" y="408.5">Dos minutos → veinte</text></g><circle cx="120" cy="404" r="17.0" class="hit"/></g><g class="nd" data-id="d11" data-plan="2" tabindex="0" role="button" aria-label="Usar “Estoy trabado”, bloqueada"><title>Usar “Estoy trabado”, bloqueada</title><circle cx="120" cy="450" r="12.0" class="selr"/><circle cx="120" cy="450" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="437.0" width="163.6" height="26" rx="6"/><text x="144.0" y="454.5">Usar “Estoy trabado”</text></g><circle cx="120" cy="450" r="17.0" class="hit"/></g><g class="nd" data-id="d12" data-plan="2" tabindex="0" role="button" aria-label="Tres fricciones, bloqueada"><title>Tres fricciones, bloqueada</title><circle cx="120" cy="496" r="12.0" class="selr"/><circle cx="120" cy="496" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="483.0" width="127.2" height="26" rx="6"/><text x="144.0" y="500.5">Tres fricciones</text></g><circle cx="120" cy="496" r="17.0" class="hit"/></g><g class="nd" data-id="d13" data-plan="2" tabindex="0" role="button" aria-label="Hito Especificar “Ahora”, bloqueada"><title>Hito Especificar “Ahora”, bloqueada</title><circle cx="120" cy="542" r="15.7" class="selr"/><circle cx="120" cy="542" r="8.7" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="138.7" y="529.0" width="156.3" height="26" rx="6"/><text x="147.7" y="546.5">Especificar “Ahora”</text></g><circle cx="120" cy="542" r="17.0" class="hit"/></g><g class="nd" data-id="d14" data-plan="3" tabindex="0" role="button" aria-label="Backlog y primera tarea, bloqueada"><title>Backlog y primera tarea, bloqueada</title><circle cx="120" cy="588" r="12.0" class="selr"/><circle cx="120" cy="588" r="5.0" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="135.0" y="575.0" width="185.4" height="26" rx="6"/><text x="144.0" y="592.5">Backlog y primera tarea</text></g><circle cx="120" cy="588" r="17.0" class="hit"/></g><g class="nd" data-id="gA" data-plan="3" tabindex="0" role="button" aria-label="Objetivo Revisión 11-oct"><title>Objetivo Revisión 11-oct</title><circle cx="120" cy="645.5" r="24.5" class="selr"/><circle cx="120" cy="645.5" r="17.5" class="n-goal"/><path d="M110.4 652.4 L120 636.4 L129.6 652.4 Z" class="n-goal-t"/><text x="151.5" y="643.5" class="lb-goal">Revisión 11-oct</text><text x="151.5" y="660.5" class="lb-sub">Marcos OS en uso diario</text><circle cx="120" cy="645.5" r="25.5" class="hit"/></g></svg></div>
+  </div>
+  <div class="tr-col">
+    <h3>Vista global: tres objetivos</h3>
+    <div class="tr-stage"><svg class="tr sg-g" id="sgG" viewBox="0 0 600 677.75" role="group" aria-labelledby="sgG-t"><title id="sgG-t">Mapa global: tres objetivos</title><desc>Tres objetivos en vías verticales lado a lado. Aprobar finales: Física II guía resuelta hecha, Física II examen y Micro resumen disponibles, Micro examen bloqueado. Marcos OS en uso diario: Mesa lista hecha, Captura 10 min activa, el resto bloqueado. Del hito Especificar Ahora sale un conector a Marcos OS web v1, que se abre al terminar ese hito.</desc><g data-obj="finales" id="sgG-finales" style="--tr-hue:var(--line-2);--tr-fill:var(--line-2);--tr-ck:var(--surface)"><g class="full"><path d="M80 36 L80 114.2" class="e e-open"/><path d="M80 114.2 L80 192.4" class="e e-lock"/><path d="M80 36 L97.5 53.5 Q106 62 106.0 74.0 L106 91.2" class="e e-open"/><path d="M106 91.2 L106 137.2" class="e e-lock"/><path d="M106 137.2 L106.0 154.4 Q106 166.4 97.5 174.9 L80 192.4" class="e e-lock"/><g class="nd" data-id="b1" data-plan="finales" tabindex="0" role="button" aria-label="Física II: guía resuelta, hecha"><title>Física II: guía resuelta, hecha</title><circle cx="80" cy="36" r="16.0" class="selr"/><circle cx="80" cy="36" r="9.0" class="n-done"/><path d="M75.9 36.2 l2.9 2.9 l5.6 -6.1" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="99.0" y="23.0" width="192.7" height="26" rx="6"/><text x="108.0" y="40.5">Física II: guía resuelta</text></g><circle cx="80" cy="36" r="17.0" class="hit"/></g><g class="nd" data-id="b2" data-plan="finales" tabindex="0" role="button" aria-label="Física II: examen, disponible"><title>Física II: examen, disponible</title><circle cx="80" cy="114.2" r="16.0" class="selr"/><circle cx="80" cy="114.2" r="8.0" class="n-open"/><g class="tip" aria-hidden="true"><rect x="99.0" y="101.2" width="141.8" height="26" rx="6"/><text x="108.0" y="118.7">Física II: examen</text></g><circle cx="80" cy="114.2" r="17.0" class="hit"/></g><g class="nd" data-id="b3" data-plan="finales" tabindex="0" role="button" aria-label="Micro: resumen, disponible"><title>Micro: resumen, disponible</title><circle cx="106" cy="91.2" r="16.0" class="selr"/><circle cx="106" cy="91.2" r="8.0" class="n-open"/><g class="tip" aria-hidden="true"><rect x="125.0" y="78.2" width="119.9" height="26" rx="6"/><text x="134.0" y="95.7">Micro: resumen</text></g><circle cx="106" cy="91.2" r="17.0" class="hit"/></g><g class="nd" data-id="b4" data-plan="finales" tabindex="0" role="button" aria-label="Micro: examen, bloqueada"><title>Micro: examen, bloqueada</title><circle cx="106" cy="137.2" r="11.5" class="selr"/><circle cx="106" cy="137.2" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="120.5" y="124.2" width="112.6" height="26" rx="6"/><text x="129.5" y="141.7">Micro: examen</text></g><circle cx="106" cy="137.2" r="17.0" class="hit"/></g><g class="nd" data-id="gB" data-plan="finales" tabindex="0" role="button" aria-label="Objetivo Aprobar finales"><title>Objetivo Aprobar finales</title><circle cx="80" cy="192.4" r="22.8" class="selr"/><circle cx="80" cy="192.4" r="15.8" class="n-goal"/><path d="M71.3 198.6 L80 184.2 L88.7 198.6 Z" class="n-goal-t"/><text x="80" y="232.2" class="lb-goal" text-anchor="middle">Aprobar finales</text><circle cx="80" cy="192.4" r="23.8" class="hit"/></g></g></g><g data-obj="web" style="--tr-hue:var(--line-3);--tr-fill:var(--line-3);--tr-ck:var(--surface)"><path d="M290 476 L458.0 476.0 Q470 476 470.0 488.0 L470 516" class="e e-lock"/><path d="M470 516 L470 556" class="e e-lock"/><path d="M470 556 L470 606" class="e e-lock"/><g class="nd" data-id="c1" data-plan="web" tabindex="0" role="button" aria-label="Pantalla Ahora, bloqueada"><title>Pantalla Ahora, bloqueada</title><circle cx="470" cy="516" r="11.5" class="selr"/><circle cx="470" cy="516" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="484.5" y="503.0" width="119.9" height="26" rx="6"/><text x="493.5" y="520.5">Pantalla Ahora</text></g><circle cx="470" cy="516" r="17.0" class="hit"/></g><g class="nd" data-id="c2" data-plan="web" tabindex="0" role="button" aria-label="Captura rápida, bloqueada"><title>Captura rápida, bloqueada</title><circle cx="470" cy="556" r="11.5" class="selr"/><circle cx="470" cy="556" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="484.5" y="543.0" width="119.9" height="26" rx="6"/><text x="493.5" y="560.5">Captura rápida</text></g><circle cx="470" cy="556" r="17.0" class="hit"/></g><g class="nd" data-id="gC" data-plan="web" tabindex="0" role="button" aria-label="Objetivo Marcos OS web v1"><title>Objetivo Marcos OS web v1</title><circle cx="470" cy="606" r="22.8" class="selr"/><circle cx="470" cy="606" r="15.8" class="n-goal"/><path d="M461.3 612.2 L470 597.8 L478.7 612.2 Z" class="n-goal-t"/><text x="470" y="645.8" class="lb-goal" text-anchor="middle">Marcos OS web v1</text><circle cx="470" cy="606" r="23.8" class="hit"/></g></g><g data-obj="diario" style="--tr-hue:var(--line-1);--tr-fill:var(--line-1);--tr-ck:var(--surface)"><path d="M290 36 L290 76" class="e e-done" data-plan="1"/><path d="M290 76 L290 116" class="e e-lock" data-plan="1"/><path d="M290 116 L290 176" class="e e-lock" data-plan="1"/><path d="M290 176 L290 236" class="e e-lock" data-plan="1"/><path d="M290 116 L307.5 133.5 Q316 142 316.0 154.0 L316 176" class="e e-lock" data-plan="1"/><path d="M316 176 L316.0 198.0 Q316 210 307.5 218.5 L290 236" class="e e-lock" data-plan="1"/><path d="M290 116 L339.2 165.2 Q342 168 342.0 172.0 L342 176" class="e e-lock" data-plan="1"/><path d="M342 176 L342.0 180.0 Q342 184 339.2 186.8 L290 236" class="e e-lock" data-plan="1"/><path d="M290 236 L290 276" class="e e-lock" data-plan="2"/><path d="M290 276 L290 316" class="e e-lock" data-plan="2"/><path d="M290 316 L290 356" class="e e-lock" data-plan="2"/><path d="M290 356 L290 396" class="e e-lock" data-plan="2"/><path d="M290 396 L290 436" class="e e-lock" data-plan="2"/><path d="M290 436 L290 476" class="e e-lock" data-plan="2"/><path d="M290 476 L290 516" class="e e-lock" data-plan="3"/><path d="M290 516 L290 566" class="e e-lock" data-plan="3"/><g class="nd" data-id="d1" data-plan="1" tabindex="0" role="button" aria-label="Mesa lista, hecha"><title>Mesa lista, hecha</title><circle cx="290" cy="36" r="16.0" class="selr"/><circle cx="290" cy="36" r="9.0" class="n-done"/><path d="M285.9 36.2 l2.9 2.9 l5.6 -6.1" class="n-ck"/><g class="tip" aria-hidden="true"><rect x="309.0" y="23.0" width="90.8" height="26" rx="6"/><text x="318.0" y="40.5">Mesa lista</text></g><circle cx="290" cy="36" r="17.0" class="hit"/></g><g class="nd" data-id="d2" data-plan="1" tabindex="0" role="button" aria-label="Captura 10 min, activa, ahora"><title>Captura 10 min, activa, ahora</title><circle cx="290" cy="76" r="17.5" class="selr"/><circle cx="290" cy="76" r="10.5" class="n-act"/><rect x="285.9" y="73.2" width="8.1" height="5.6" rx="1.5" class="n-mark"/><text x="314.5" y="74.0" class="lb-act">Captura 10 min</text><text x="314.5" y="91.0" class="lb-sub">ahora</text><circle cx="290" cy="76" r="18.5" class="hit"/></g><g class="nd" data-id="d3" data-plan="1" tabindex="0" role="button" aria-label="Clasificar y elegir prioridad, bloqueada"><title>Clasificar y elegir prioridad, bloqueada</title><circle cx="290" cy="116" r="11.5" class="selr"/><circle cx="290" cy="116" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="103.0" width="229.1" height="26" rx="6"/><text x="313.5" y="120.5">Clasificar y elegir prioridad</text></g><circle cx="290" cy="116" r="17.0" class="hit"/></g><g class="nd" data-id="d4" data-plan="1" tabindex="0" role="button" aria-label="Revisar video Física, bloqueada"><title>Revisar video Física, bloqueada</title><circle cx="290" cy="176" r="11.5" class="selr"/><circle cx="290" cy="176" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="364.0" y="163.0" width="163.6" height="26" rx="6"/><text x="373.0" y="180.5">Revisar video Física</text></g><circle cx="290" cy="176" r="17.0" class="hit"/></g><g class="nd" data-id="d5" data-plan="1" tabindex="0" role="button" aria-label="Revisar fórmula cuadrática, bloqueada"><title>Revisar fórmula cuadrática, bloqueada</title><circle cx="316" cy="176" r="11.5" class="selr"/><circle cx="316" cy="176" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="364.0" y="163.0" width="207.3" height="26" rx="6"/><text x="373.0" y="180.5">Revisar fórmula cuadrática</text></g><circle cx="316" cy="176" r="17.0" class="hit"/></g><g class="nd" data-id="d6" data-plan="1" tabindex="0" role="button" aria-label="Poster desde el teléfono, bloqueada"><title>Poster desde el teléfono, bloqueada</title><circle cx="342" cy="176" r="11.5" class="selr"/><circle cx="342" cy="176" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="364.0" y="163.0" width="192.7" height="26" rx="6"/><text x="373.0" y="180.5">Poster desde el teléfono</text></g><circle cx="342" cy="176" r="17.0" class="hit"/></g><g class="nd" data-id="d7" data-plan="1" tabindex="0" role="button" aria-label="Hito Semana 1: boceto de “Ahora”, bloqueada"><title>Hito Semana 1: boceto de “Ahora”, bloqueada</title><circle cx="290" cy="236" r="14.8" class="selr"/><circle cx="290" cy="236" r="7.8" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="307.8" y="223.0" width="214.6" height="26" rx="6"/><text x="316.8" y="240.5">Semana 1: boceto de “Ahora”</text></g><circle cx="290" cy="236" r="17.0" class="hit"/></g><g class="nd" data-id="d8" data-plan="2" tabindex="0" role="button" aria-label="Elegir acción del lunes, bloqueada"><title>Elegir acción del lunes, bloqueada</title><circle cx="290" cy="276" r="11.5" class="selr"/><circle cx="290" cy="276" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="263.0" width="185.4" height="26" rx="6"/><text x="313.5" y="280.5">Elegir acción del lunes</text></g><circle cx="290" cy="276" r="17.0" class="hit"/></g><g class="nd" data-id="d9" data-plan="2" tabindex="0" role="button" aria-label="Hora prevista vs real, bloqueada"><title>Hora prevista vs real, bloqueada</title><circle cx="290" cy="316" r="11.5" class="selr"/><circle cx="290" cy="316" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="303.0" width="170.9" height="26" rx="6"/><text x="313.5" y="320.5">Hora prevista vs real</text></g><circle cx="290" cy="316" r="17.0" class="hit"/></g><g class="nd" data-id="d10" data-plan="2" tabindex="0" role="button" aria-label="Dos minutos → veinte, bloqueada"><title>Dos minutos → veinte, bloqueada</title><circle cx="290" cy="356" r="11.5" class="selr"/><circle cx="290" cy="356" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="343.0" width="163.6" height="26" rx="6"/><text x="313.5" y="360.5">Dos minutos → veinte</text></g><circle cx="290" cy="356" r="17.0" class="hit"/></g><g class="nd" data-id="d11" data-plan="2" tabindex="0" role="button" aria-label="Usar “Estoy trabado”, bloqueada"><title>Usar “Estoy trabado”, bloqueada</title><circle cx="290" cy="396" r="11.5" class="selr"/><circle cx="290" cy="396" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="383.0" width="163.6" height="26" rx="6"/><text x="313.5" y="400.5">Usar “Estoy trabado”</text></g><circle cx="290" cy="396" r="17.0" class="hit"/></g><g class="nd" data-id="d12" data-plan="2" tabindex="0" role="button" aria-label="Tres fricciones, bloqueada"><title>Tres fricciones, bloqueada</title><circle cx="290" cy="436" r="11.5" class="selr"/><circle cx="290" cy="436" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="423.0" width="127.2" height="26" rx="6"/><text x="313.5" y="440.5">Tres fricciones</text></g><circle cx="290" cy="436" r="17.0" class="hit"/></g><g class="nd" data-id="d13" data-plan="2" tabindex="0" role="button" aria-label="Hito Especificar “Ahora”, bloqueada"><title>Hito Especificar “Ahora”, bloqueada</title><circle cx="290" cy="476" r="14.8" class="selr"/><circle cx="290" cy="476" r="7.8" class="n-lock" style="stroke-width:2.5"/><g class="tip" aria-hidden="true"><rect x="307.8" y="463.0" width="156.3" height="26" rx="6"/><text x="316.8" y="480.5">Especificar “Ahora”</text></g><circle cx="290" cy="476" r="17.0" class="hit"/></g><g class="nd" data-id="d14" data-plan="3" tabindex="0" role="button" aria-label="Backlog y primera tarea, bloqueada"><title>Backlog y primera tarea, bloqueada</title><circle cx="290" cy="516" r="11.5" class="selr"/><circle cx="290" cy="516" r="4.5" class="n-lock"/><g class="tip" aria-hidden="true"><rect x="304.5" y="503.0" width="185.4" height="26" rx="6"/><text x="313.5" y="520.5">Backlog y primera tarea</text></g><circle cx="290" cy="516" r="17.0" class="hit"/></g><g class="nd" data-id="gA" data-plan="3" tabindex="0" role="button" aria-label="Objetivo Marcos OS en uso diario"><title>Objetivo Marcos OS en uso diario</title><circle cx="290" cy="566" r="22.8" class="selr"/><circle cx="290" cy="566" r="15.8" class="n-goal"/><path d="M281.3 572.2 L290 557.8 L298.7 572.2 Z" class="n-goal-t"/><text x="290" y="605.8" class="lb-goal" text-anchor="middle">Marcos OS en uso diario</text><circle cx="290" cy="566" r="23.8" class="hit"/></g></g></svg></div>
+    <p class="tr-info" id="trInfo" aria-live="polite">Elegí un punto para ver su nombre, su estado y qué abre.</p>
+  </div>
+  <div class="tr-legend"><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8" class="n-done"/><path d="M7.3 11.2 l2.6 2.6 l5 -5.4" class="n-ck"/></svg>Hecha</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="8" class="n-act"/><rect x="7.4" y="8.5" width="7.2" height="5" rx="1.5" class="n-mark"/></svg>Ahora</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="7" class="n-open"/></svg>Disponible</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="4.5" class="n-lock"/></svg>Por venir</span><span><svg class="tr" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><circle cx="11" cy="11" r="9.5" class="n-goal"/><path d="M6.6 14.5 L11 5.4 L15.4 14.5 Z" class="n-goal-t"/></svg>Objetivo</span></div>
+</div>
+<script>
+(function(){
+  var DA={"d1": {"name": "Mesa lista", "state": "done", "kind": "task", "key": "DIARIO-1", "prev": [], "next": [["Captura 10 min", "active"]]}, "d2": {"name": "Captura 10 min", "state": "active", "kind": "task", "key": "DIARIO-2", "prev": [["Mesa lista", "done"]], "next": [["Clasificar y elegir prioridad", "locked"]]}, "d3": {"name": "Clasificar y elegir prioridad", "state": "locked", "kind": "task", "key": "DIARIO-3", "prev": [["Captura 10 min", "active"]], "next": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]]}, "d4": {"name": "Revisar video Física", "state": "locked", "kind": "task", "key": "DIARIO-4", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d5": {"name": "Revisar fórmula cuadrática", "state": "locked", "kind": "task", "key": "DIARIO-5", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d6": {"name": "Poster desde el teléfono", "state": "locked", "kind": "task", "key": "DIARIO-6", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d7": {"name": "Semana 1: boceto de “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-7", "prev": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]], "next": [["Elegir acción del lunes", "locked"]]}, "d8": {"name": "Elegir acción del lunes", "state": "locked", "kind": "task", "key": "DIARIO-8", "prev": [["Semana 1: boceto de “Ahora”", "locked"]], "next": [["Hora prevista vs real", "locked"]]}, "d9": {"name": "Hora prevista vs real", "state": "locked", "kind": "task", "key": "DIARIO-9", "prev": [["Elegir acción del lunes", "locked"]], "next": [["Dos minutos → veinte", "locked"]]}, "d10": {"name": "Dos minutos → veinte", "state": "locked", "kind": "task", "key": "DIARIO-10", "prev": [["Hora prevista vs real", "locked"]], "next": [["Usar “Estoy trabado”", "locked"]]}, "d11": {"name": "Usar “Estoy trabado”", "state": "locked", "kind": "task", "key": "DIARIO-11", "prev": [["Dos minutos → veinte", "locked"]], "next": [["Tres fricciones", "locked"]]}, "d12": {"name": "Tres fricciones", "state": "locked", "kind": "task", "key": "DIARIO-12", "prev": [["Usar “Estoy trabado”", "locked"]], "next": [["Especificar “Ahora”", "locked"]]}, "d13": {"name": "Especificar “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-13", "prev": [["Tres fricciones", "locked"]], "next": [["Backlog y primera tarea", "locked"]]}, "d14": {"name": "Backlog y primera tarea", "state": "locked", "kind": "task", "key": "DIARIO-14", "prev": [["Especificar “Ahora”", "locked"]], "next": [["Revisión 11-oct", "locked"]]}, "gA": {"name": "Revisión 11-oct", "state": "locked", "kind": "goal", "key": "DIARIO", "prev": [["Backlog y primera tarea", "locked"]], "next": []}, "ret": {"name": "Diseñar segundo cerebro completo", "state": "retired", "kind": "task", "key": "", "prev": [], "next": [], "reason": "planificar sin práctica"}}, DG={"d1": {"name": "Mesa lista", "state": "done", "kind": "task", "key": "DIARIO-1", "prev": [], "next": [["Captura 10 min", "active"]]}, "d2": {"name": "Captura 10 min", "state": "active", "kind": "task", "key": "DIARIO-2", "prev": [["Mesa lista", "done"]], "next": [["Clasificar y elegir prioridad", "locked"]]}, "d3": {"name": "Clasificar y elegir prioridad", "state": "locked", "kind": "task", "key": "DIARIO-3", "prev": [["Captura 10 min", "active"]], "next": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]]}, "d4": {"name": "Revisar video Física", "state": "locked", "kind": "task", "key": "DIARIO-4", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d5": {"name": "Revisar fórmula cuadrática", "state": "locked", "kind": "task", "key": "DIARIO-5", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d6": {"name": "Poster desde el teléfono", "state": "locked", "kind": "task", "key": "DIARIO-6", "prev": [["Clasificar y elegir prioridad", "locked"]], "next": [["Semana 1: boceto de “Ahora”", "locked"]]}, "d7": {"name": "Semana 1: boceto de “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-7", "prev": [["Revisar video Física", "locked"], ["Revisar fórmula cuadrática", "locked"], ["Poster desde el teléfono", "locked"]], "next": [["Elegir acción del lunes", "locked"]]}, "d8": {"name": "Elegir acción del lunes", "state": "locked", "kind": "task", "key": "DIARIO-8", "prev": [["Semana 1: boceto de “Ahora”", "locked"]], "next": [["Hora prevista vs real", "locked"]]}, "d9": {"name": "Hora prevista vs real", "state": "locked", "kind": "task", "key": "DIARIO-9", "prev": [["Elegir acción del lunes", "locked"]], "next": [["Dos minutos → veinte", "locked"]]}, "d10": {"name": "Dos minutos → veinte", "state": "locked", "kind": "task", "key": "DIARIO-10", "prev": [["Hora prevista vs real", "locked"]], "next": [["Usar “Estoy trabado”", "locked"]]}, "d11": {"name": "Usar “Estoy trabado”", "state": "locked", "kind": "task", "key": "DIARIO-11", "prev": [["Dos minutos → veinte", "locked"]], "next": [["Tres fricciones", "locked"]]}, "d12": {"name": "Tres fricciones", "state": "locked", "kind": "task", "key": "DIARIO-12", "prev": [["Usar “Estoy trabado”", "locked"]], "next": [["Especificar “Ahora”", "locked"]]}, "d13": {"name": "Especificar “Ahora”", "state": "locked", "kind": "mile", "key": "DIARIO-13", "prev": [["Tres fricciones", "locked"]], "next": [["Backlog y primera tarea", "locked"], ["Pantalla Ahora", "locked"]]}, "d14": {"name": "Backlog y primera tarea", "state": "locked", "kind": "task", "key": "DIARIO-14", "prev": [["Especificar “Ahora”", "locked"]], "next": [["Marcos OS en uso diario", "locked"]]}, "gA": {"name": "Marcos OS en uso diario", "state": "locked", "kind": "goal", "key": "DIARIO", "prev": [["Backlog y primera tarea", "locked"]], "next": []}, "b1": {"name": "Física II: guía resuelta", "state": "done", "kind": "task", "key": "FINALES", "prev": [], "next": [["Física II: examen", "open"], ["Micro: resumen", "open"]]}, "b2": {"name": "Física II: examen", "state": "open", "kind": "task", "key": "FINALES", "prev": [["Física II: guía resuelta", "done"]], "next": [["Aprobar finales", "locked"]]}, "b3": {"name": "Micro: resumen", "state": "open", "kind": "task", "key": "FINALES", "prev": [["Física II: guía resuelta", "done"]], "next": [["Micro: examen", "locked"]]}, "b4": {"name": "Micro: examen", "state": "locked", "kind": "task", "key": "FINALES", "prev": [["Micro: resumen", "open"]], "next": [["Aprobar finales", "locked"]]}, "gB": {"name": "Aprobar finales", "state": "locked", "kind": "goal", "key": "FINALES", "prev": [["Física II: examen", "open"], ["Micro: examen", "locked"]], "next": []}, "c1": {"name": "Pantalla Ahora", "state": "locked", "kind": "task", "key": "WEB", "prev": [["Especificar “Ahora”", "locked"]], "next": [["Captura rápida", "locked"]]}, "c2": {"name": "Captura rápida", "state": "locked", "kind": "task", "key": "WEB", "prev": [["Pantalla Ahora", "locked"]], "next": [["Marcos OS web v1", "locked"]]}, "gC": {"name": "Marcos OS web v1", "state": "locked", "kind": "goal", "key": "WEB", "prev": [["Captura rápida", "locked"]], "next": []}};
+  var ST={done:'hecha',active:'activa, ahora',open:'disponible',locked:'bloqueada',retired:'retirada'};
+  var info=document.getElementById('trInfo');
+  document.querySelectorAll('#grafo .nd').forEach(function(g){
+    function pick(){
+      document.querySelectorAll('#grafo .nd.sel').forEach(function(x){x.classList.remove('sel')});
+      g.classList.add('sel');
+      var D=g.closest('#sgA')?DA:DG, d=D[g.dataset.id]; if(!d)return;
+      var t='<b>'+d.name+'</b>, '+(d.kind==='goal'?'objetivo':ST[d.state]);
+      if(d.reason)t+='. Motivo: '+d.reason+'. Sigue en Retirados.';
+      if(d.next&&d.next.length)t+='. Abre: '+d.next.map(function(n){return n[0]}).join(', ');
+      info.innerHTML=t+'.';
+    }
+    g.addEventListener('click',pick);
+    g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick()}});
+  });
+})();
+</script>
+
+<h2>Momento cumbre (hito)</h2>
+<p>Un anillo de curva de nivel, una sola vez, 900ms. Con movimiento reducido, un borde fijo.</p>
+<div class="panel summit" id="summit">
+  <span class="ring" aria-hidden="true"></span>
+  <p>Llegaste al hito</p>
+  <div class="name">Primera versión del API</div>
+  <p>Anotá una línea de evidencia antes de seguir.</p>
+  <div style="margin-top:24px"><button class="btn btn-outline" type="button" id="replay">Ver de nuevo</button></div>
+</div>
+
+<h2>Captura, retiro e IA</h2>
+<p>Captura sin prioridad. Retiro sereno que no borra nada. La IA propone un árbol editable, no un chat.</p>
+<div class="grid2">
+  <div>
+    <div class="panel">
+      <h3>Captura rápida</h3>
+      <form class="capture" onsubmit="event.preventDefault();this.querySelector('input').value='';document.getElementById('capOk').textContent='Capturado.'">
+        <label for="cap" class="f" style="position:absolute;left:-9999px">Idea para el inbox</label>
+        <input id="cap" placeholder="Una idea, una línea. Enter guarda.">
+        <button class="btn btn-primary" type="submit">Capturar</button>
+      </form>
+      <p class="caption" id="capOk" role="status">No pide fecha, prioridad ni proyecto.</p>
+    </div>
+    <div class="dialog" style="margin-top:24px" role="group" aria-labelledby="retTitle">
+      <h3 id="retTitle">Retirar "Migrar calendario"</h3>
+      <label class="f" for="why">¿Por qué lo retirás?</label>
+      <textarea id="why" placeholder="Ej.: el calendario sale del producto, no lo uso."></textarea>
+      <fieldset>
+        <legend>¿Qué hacés con lo que contiene?</legend>
+        <label class="radio"><input type="radio" name="r" value="m">Mover a otro plan</label>
+        <label class="radio"><input type="radio" name="r" value="d">Dividir</label>
+        <label class="radio"><input type="radio" name="r" value="a">Archivar tal cual</label>
+      </fieldset>
+      <p class="foot">Nada se borra. Lo vas a ver en Retirados.</p>
+      <button class="btn btn-primary" type="button" id="retBtn" disabled>Retirar</button><span class="hint" id="retHint">Escribí una razón y elegí qué hacer con el contenido.</span>
+    </div>
+  </div>
+  <div class="ai">
+    <h3>Propuesta de la IA</h3>
+    <div class="ai-status" aria-label="Estado de la orden"><span>En cola</span><span>Ejecutando en el VPS</span><span class="on">Lista para revisar</span></div>
+    <ul class="tree">
+      <li><span>Plan: Ciclo diario estable</span><span class="ops"><button>Editar</button></span></li>
+      <li class="child"><span class="add">+ Hito: 14 días con despertar usado</span><span class="ops"><button>Aceptar</button><button>Editar</button><button>Quitar</button></span></li>
+      <li class="child"><span class="add">+ Tarea: definir 2 min de cada hábito</span><span class="ops"><button>Aceptar</button><button>Editar</button><button>Quitar</button></span></li>
+      <li class="child"><span class="del">Tarea: revisar backlog semanal</span><span class="ops"><button>Mantener</button></span></li>
+    </ul>
+    <label class="radio" style="margin-top:16px"><input type="checkbox">Estamos de acuerdo</label>
+    <div class="actions" style="margin-top:8px"><button class="btn btn-primary" type="button">Guardar este mapa</button><button class="btn btn-outline" type="button">Pedir otra versión</button></div>
+    <p class="caption">Lo quitado se muestra en gris tachado, nunca en rojo. Los cambios mayores solo se aplican con tu aceptación.</p>
+  </div>
+</div>
+</div>
+
+<script>
+const PAL=[
+ ['background','Fondo'],['surface','Superficie'],['sunken','Hundida'],['foreground','Texto basalto'],['muted-fg','Texto secundario'],
+ ['border','Borde'],['input','Borde de control'],['primary','Pino, acción'],['blaze','Marca, check'],['blaze-ink','Tinta de marca'],
+ ['attention','Atención'],['attention-bg','Fondo atención'],['destructive','Error del sistema'],['ring','Foco']
+];
+function hexOf(n){return getComputedStyle(document.documentElement).getPropertyValue('--'+n).trim()}
+function lum(h){h=h.replace('#','');const c=[0,2,4].map(i=>parseInt(h.substr(i,2),16)/255).map(v=>v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*c[0]+.7152*c[1]+.0722*c[2]}
+function cr(a,b){const x=lum(a),y=lum(b);return ((Math.max(x,y)+.05)/(Math.min(x,y)+.05)).toFixed(2)}
+function renderPal(){
+  const s=hexOf('surface');
+  document.getElementById('swatches').innerHTML=PAL.map(([k,l])=>{const h=hexOf(k);return `<div class="sw"><i style="background:var(--${k})"></i><div><b>${l}</b><span>${h.toUpperCase()} · ${cr(h,s)}:1</span></div></div>`}).join('');
+}
+document.getElementById('space').innerHTML=[4,8,12,16,24,32,48,64,96].map(v=>`<div><span style="width:40px">${v}px</span><i style="width:${v*2}px"></i></div>`).join('');
+function setTheme(t){
+  try{ if(t==='auto'){document.documentElement.removeAttribute('data-theme');localStorage.removeItem('mos-theme')} else {document.documentElement.setAttribute('data-theme',t);localStorage.setItem('mos-theme',t)} }catch(e){ if(t==='auto')document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme',t)}
+  document.querySelectorAll('.theme-toggle button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===t)));
+  renderPal();
+}
+document.querySelectorAll('.theme-toggle button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.t)));
+let saved='auto';try{saved=localStorage.getItem('mos-theme')||'auto'}catch(e){}
+setTheme(saved);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',renderPal);
+
+let last=null;const toast=document.getElementById('toast');let tt;
+document.querySelectorAll('#checks .check').forEach(c=>c.addEventListener('click',()=>{
+  const on=c.getAttribute('aria-checked')!=='true';c.setAttribute('aria-checked',String(on));
+  if(on){c.querySelector('.blaze').classList.remove('gap');last=c;toast.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>toast.classList.remove('show'),8000)}
+}));
+document.getElementById('undo').addEventListener('click',()=>{if(last){last.setAttribute('aria-checked','false')}toast.classList.remove('show')});
+document.getElementById('stuck').addEventListener('click',()=>document.getElementById('stuckResult').classList.add('show'));
+const summit=document.getElementById('summit');
+document.getElementById('replay').addEventListener('click',()=>{summit.classList.remove('play');void summit.offsetWidth;summit.classList.add('play')});
+const why=document.getElementById('why'),ret=document.getElementById('retBtn'),hint=document.getElementById('retHint');
+function chk(){const ok=why.value.trim().length>0&&document.querySelector('input[name=r]:checked');ret.disabled=!ok;hint.style.display=ok?'none':''}
+why.addEventListener('input',chk);document.querySelectorAll('input[name=r]').forEach(r=>r.addEventListener('change',chk));
+</script>
+</body>
+</html>

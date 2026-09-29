@@ -15,7 +15,7 @@ test('appearance shared prop defaults to system for guests without a cookie', fu
 test('appearance shared prop defaults to system for authenticated users without a cookie', function () {
     $user = User::factory()->create();
 
-    $response = $this->actingAs($user)->get('/projects', [
+    $response = $this->actingAs($user)->get('/objectives', [
         'X-Inertia' => 'true',
         'X-Inertia-Version' => hash_file('xxh128', public_path('build/manifest.json')),
     ]);
@@ -38,14 +38,14 @@ test('the html root element gets the dark class when the appearance cookie is da
     $response = $this->withUnencryptedCookie('appearance', 'dark')->get('/login');
 
     $response->assertOk();
-    $response->assertSee('<html lang="en" class="dark">', false);
+    expect($response->getContent())->toMatch('/<html lang="en" class="dark" data-appearance="dark">/');
 });
 
 test('the html root element has no dark class when the appearance cookie is light', function () {
     $response = $this->withUnencryptedCookie('appearance', 'light')->get('/login');
 
     $response->assertOk();
-    $response->assertSee('<html lang="en" class="">', false);
+    expect($response->getContent())->toMatch('/<html lang="en" class="" data-appearance="light">/');
 });
 
 test('appearance shared prop falls back to system for an invalid cookie value', function () {

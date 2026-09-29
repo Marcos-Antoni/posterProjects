@@ -2,13 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Enums\IssuePriority;
-use App\Enums\IssueType;
-use App\Models\Comment;
-use App\Models\Issue;
-use App\Models\Label;
-use App\Models\Project;
-use App\Models\Sprint;
+use App\Actions\Items\AddDependency;
+use App\Actions\Items\AddItem;
+use App\Actions\Items\CheckItem;
+use App\Actions\Objectives\CreateObjective;
+use App\Actions\Plans\CreatePlan;
+use App\Actions\Support\Actor;
+use App\Models\Item;
+use App\Models\Objective;
+use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -27,100 +29,122 @@ class DatabaseSeeder extends Seeder
             'email' => 'test@example.com',
         ]);
 
-        $this->seedDemoProject($owner);
+        $this->seedDailyObjective(Actor::ownerWeb($owner));
+        $this->seedExamsObjective(Actor::ownerWeb($owner));
     }
 
     /**
-     * Seed a fully populated demo project owned by the given user:
-     * default board columns, a sprint, varied issues (types, priorities,
-     * backlog vs. sprint, a parent/child pair, spread across columns),
-     * labels attached to issues, and comments.
+     * "Marcos OS en uso diario" (the realistic data of the screens brief):
+     * a complete 5-point plan and control map, an active level-1 plan whose
+     * items unlock each other (with a parallel branch and a milestone), a
+     * draft level-2 plan and a closing plan. Everything goes through the
+     * domain actions, so the seed obeys the same rules as the app.
      */
-    private function seedDemoProject(User $owner): void
+    private function seedDailyObjective(Actor $actor): void
     {
-        $teammates = User::factory()->count(2)->create();
-        $reporter = $teammates[0];
-        $assignee = $teammates[1];
-
-        $project = Project::createWithDefaultColumns([
-            'owner_id' => $owner->id,
-            'key' => 'DEMO',
-            'name' => 'Demo Project',
-            'description' => 'A fully populated demo project for local development.',
+        $objective = app(CreateObjective::class)($actor, [
+            'key' => 'DIARIO',
+            'title' => 'Marcos OS en uso diario',
+            'identity_statement' => 'Soy alguien que construye cada día.',
+            'outcome' => 'Uso Marcos OS a mano cada día y sé qué necesita la pantalla Ahora.',
+            'deadline' => '2026-10-11',
+            'metric' => ['name' => 'Días con el ciclo diario completo', 'target' => 14, 'current' => 1],
+            'risks' => ['Me engancho con YouTube después de cenar.', 'Pierdo un día y quiero rehacer todo el sistema.'],
+            'contingency' => 'Cuando pierda un día, entonces al siguiente retomo con 2 minutos y no rehago el plan.',
+            'control_map' => [
+                ['zone' => 'mine', 'text' => 'Abrir la libreta a las 06:45'],
+                ['zone' => 'mine', 'text' => 'Capturar 10 min antes de desayunar'],
+                ['zone' => 'influence', 'text' => 'Horario del gimnasio con mi amigo'],
+                ['zone' => 'outside', 'text' => 'Cortes de luz'],
+                ['zone' => 'outside', 'text' => 'Carga de la facultad en octubre'],
+            ],
         ]);
 
-        $project->members()->attach([$reporter->id, $assignee->id]);
-
-        [$toDo, $inProgress, $done] = $project->boardColumns;
-
-        $sprint = Sprint::factory()->for($project)->create([
-            'name' => 'Sprint 1',
+        $week1 = app(CreatePlan::class)($actor, $objective, [
+            'title' => 'Semana 1: primer ciclo',
+            'level' => 1,
+            'activate' => true,
+            'outcome' => 'Cumplí el ciclo diario (despertar, captura, clasificar) 5 de 7 días.',
+            'deadline' => '2026-10-03',
+            'metric' => ['name' => 'Días con el ciclo completo', 'target' => 5, 'current' => 1],
+            'risks' => ['El domingo no hay rutina y lo salteo.'],
+            'contingency' => 'Cuando sea domingo, entonces hago solo la versión de 2 minutos.',
         ]);
 
-        $bugLabel = Label::factory()->for($project)->create(['name' => 'bug']);
-        $urgentLabel = Label::factory()->for($project)->create(['name' => 'urgent']);
-        Label::factory()->for($project)->create(['name' => 'frontend']);
-
-        $epic = Issue::factory()->for($project)->epic()->create([
-            'board_column_id' => $toDo->id,
-            'sprint_id' => null,
-            'reporter_id' => $owner->id,
-            'assignee_id' => null,
-            'priority' => IssuePriority::Medium,
-            'title' => 'Launch the new marketing site',
+        $items = $this->addItems($actor, $week1, [
+            ['Mesa lista', 'despejar la mesa y dejar solo la libreta'],
+            ['Captura 10 min', 'abrir el inbox y escribir una línea'],
+            ['Clasificar y elegir prioridad', 'abrir el inbox y leer la primera línea'],
+            ['Revisar video Física', 'abrir el video en 1.5x y anotar el minuto'],
+            ['Revisar fórmula cuadrática', 'escribir la fórmula de memoria en una hoja'],
+            ['Poster desde el teléfono', 'abrir Poster en el teléfono y marcar un hábito'],
+            ['Semana 1: boceto de Ahora', 'abrir una hoja y dibujar un rectángulo', 'milestone'],
         ]);
 
-        $story = Issue::factory()->for($project)->story()->create([
-            'board_column_id' => $inProgress->id,
-            'sprint_id' => $sprint->id,
-            'parent_id' => $epic->id,
-            'reporter_id' => $reporter->id,
-            'assignee_id' => $assignee->id,
-            'priority' => IssuePriority::High,
-            'title' => 'Build the pricing page',
+        $link = app(AddDependency::class);
+        $link($actor, $items[0], $items[1]);
+        $link($actor, $items[1], $items[2]);
+
+        foreach ([3, 4, 5] as $parallel) {
+            $link($actor, $items[2], $items[$parallel]);
+            $link($actor, $items[$parallel], $items[6]);
+        }
+
+        app(CheckItem::class)($actor, $items[0]);
+
+        app(CreatePlan::class)($actor, $objective, [
+            'title' => 'Semana 2: afinar Ahora',
+            'level' => 2,
+            'outcome' => 'Sé qué pide la pantalla Ahora para escribir su spec.',
         ]);
 
-        Issue::factory()->for($project)->task()->create([
-            'board_column_id' => $done->id,
-            'sprint_id' => null,
-            'reporter_id' => $owner->id,
-            'assignee_id' => $assignee->id,
-            'priority' => IssuePriority::Low,
-            'title' => 'Write onboarding documentation',
+        app(CreatePlan::class)($actor, $objective, ['title' => 'Cierre']);
+    }
+
+    /**
+     * "Aprobar finales": a second active objective with one plan.
+     */
+    private function seedExamsObjective(Actor $actor): void
+    {
+        $objective = app(CreateObjective::class)($actor, [
+            'key' => 'FINALES',
+            'title' => 'Aprobar finales',
+            'identity_statement' => 'Física II y Microeconomía.',
+            'outcome' => 'Apruebo Física II y Microeconomía en diciembre.',
+            'deadline' => '2026-12-11',
+            'metric' => ['name' => 'Materias aprobadas', 'target' => 2, 'current' => 0],
+            'risks' => ['Estudio todo la última semana.'],
+            'contingency' => 'Cuando falten dos semanas, entonces hago un examen de práctica por día.',
         ]);
 
-        $bug = Issue::factory()->for($project)->bug()->create([
-            'board_column_id' => $toDo->id,
-            'sprint_id' => $sprint->id,
-            'reporter_id' => $reporter->id,
-            'assignee_id' => $owner->id,
-            'priority' => IssuePriority::Highest,
-            'title' => 'Checkout button unresponsive on mobile',
+        $plan = app(CreatePlan::class)($actor, $objective, [
+            'title' => 'Física II',
+            'activate' => true,
+            'outcome' => 'Resuelvo la guía y el examen de práctica.',
+            'deadline' => '2026-11-20',
+            'metric' => ['name' => 'Guías resueltas', 'target' => 1, 'current' => 0],
+            'risks' => ['Me trabo en electromagnetismo.'],
+            'contingency' => 'Cuando me trabe, entonces pido la clase de consulta.',
         ]);
 
-        Issue::factory()->for($project)->create([
-            'type' => IssueType::Task,
-            'board_column_id' => $inProgress->id,
-            'sprint_id' => null,
-            'reporter_id' => $owner->id,
-            'assignee_id' => null,
-            'priority' => IssuePriority::Lowest,
-            'title' => 'Upgrade CI runner images',
+        $items = $this->addItems($actor, $plan, [
+            ['Física II: guía resuelta', 'abrir la guía en el primer ejercicio'],
+            ['Física II: examen', 'abrir el PDF del examen de práctica', 'milestone'],
         ]);
 
-        $story->labels()->attach([$urgentLabel->id]);
-        $bug->labels()->attach([$bugLabel->id, $urgentLabel->id]);
+        app(AddDependency::class)($actor, $items[0], $items[1]);
+    }
 
-        Comment::factory()->for($epic, 'issue')->for($owner, 'author')->create([
-            'body' => 'Kicking this off — let\'s scope the sub-tasks.',
-        ]);
-
-        Comment::factory()->for($story, 'issue')->for($reporter, 'author')->create([
-            'body' => 'Pricing tiers are still pending finance sign-off.',
-        ]);
-
-        Comment::factory()->for($bug, 'issue')->for($assignee, 'author')->create([
-            'body' => 'Reproduced on iOS Safari, investigating now.',
-        ]);
+    /**
+     * @param  list<array{0: string, 1: string, 2?: string}>  $rows  [title, 2-minute version, kind]
+     * @return list<Item>
+     */
+    private function addItems(Actor $actor, Plan $plan, array $rows): array
+    {
+        return array_map(fn (array $row): Item => app(AddItem::class)($actor, $plan, [
+            'title' => $row[0],
+            'two_minute_version' => $row[1],
+            'kind' => $row[2] ?? 'task',
+        ]), $rows);
     }
 }

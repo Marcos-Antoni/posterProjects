@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { KeyRound, ShieldOff } from 'lucide-react';
+import { ShieldOff, Smartphone } from 'lucide-react';
 import type { ReactElement } from 'react';
 import { useState } from 'react';
 
@@ -8,6 +8,7 @@ import QrLoginCard from '@/components/settings/qr-login-card';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
     DialogDescription,
     DialogFooter,
@@ -16,6 +17,8 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
+import SettingsLayout from '@/layouts/settings-layout';
+import { formatMoment } from '@/lib/dates';
 
 type MobileTokenProps = {
     token: {
@@ -25,103 +28,124 @@ type MobileTokenProps = {
 };
 
 /**
- * Settings page for the mobile app's personal access token. Unlike
- * `settings/mcp-token`, this page never mints or displays a plain-text
- * *token*: the token itself is minted on the phone — either via
+ * Settings → App móvil y QR (mockup 28). This page never mints or displays
+ * a plain-text *token*: the token is minted on the phone — via
  * `POST /api/v1/login` or by redeeming a short-lived QR *pass* at
  * `POST /api/v1/qr-login` — and its plaintext never reaches a browser
- * (design.md decision D-1). The QR card above (`qr-login-card.tsx`) does
- * mint and briefly display that pass, gated behind an explicit click so a
- * drive-by visit never mints one; the token itself still has no flash, no
- * plaintext input, and no copy button on this page. Below the card: token
- * status and a destructive revoke action behind an explicit confirm step.
+ * (design.md decision D-1). The QR card mints and briefly shows that pass,
+ * gated behind an explicit click so a drive-by visit never mints one.
+ * Below it: token status and the revoke action behind a confirmation
+ * dialog — the only red on the screen, because revoking is a destructive
+ * system action, not Marco's conduct.
  */
 export default function MobileToken({ token }: MobileTokenProps) {
     const [confirmOpen, setConfirmOpen] = useState(false);
 
-    const formatDate = (value: string | null) =>
-        value
-            ? new Date(value).toLocaleString('es', {
-                  dateStyle: 'medium',
-                  timeStyle: 'short',
-              })
-            : null;
-
     return (
         <>
-            <Head title="Token móvil" />
+            <Head title="App móvil y QR" />
 
-            <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
-                <div>
-                    <h1 className="font-heading text-2xl font-medium">
-                        Token móvil
-                    </h1>
-                    <p className="text-sm text-muted-foreground">
-                        Este token lo genera la app móvil al iniciar sesión con
-                        tu email y contraseña — nunca se muestra acá. Desde esta
-                        página solo podés ver su estado y revocarlo.
-                    </p>
-                </div>
+            <h1 className="mb-2 text-2xl font-bold tracking-[-0.01em]">
+                App móvil y QR
+            </h1>
+            <p className="mb-7 max-w-[68ch] text-muted-foreground">
+                La app Poster del teléfono inicia sesión con tu email y
+                contraseña, o escaneando este código. El token del teléfono
+                nunca se muestra acá: solo ves su estado y lo podés revocar.
+            </p>
 
-                <QrLoginCard />
+            <QrLoginCard />
 
-                <div className="flex flex-col gap-4 rounded-lg border p-4">
-                    <div className="flex items-center gap-3">
-                        <KeyRound className="size-5 text-muted-foreground" />
-                        {token ? (
-                            <div className="text-sm">
-                                <p className="font-medium">Token activo</p>
-                                <p className="text-muted-foreground">
-                                    Generado el {formatDate(token.created_at)}
+            <section
+                aria-labelledby="mobile-status-heading"
+                className="mt-5 rounded-md border border-border bg-surface p-6"
+            >
+                <h2 id="mobile-status-heading" className="sr-only">
+                    Token del teléfono
+                </h2>
+                <div className="flex items-start gap-3.5">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-md bg-sunken text-foreground">
+                        <Smartphone
+                            className="size-5"
+                            strokeWidth={1.75}
+                            aria-hidden="true"
+                        />
+                    </span>
+                    {token ? (
+                        <div>
+                            <b className="block font-semibold">Token activo</b>
+                            <dl className="mt-1 grid grid-cols-[auto_1fr] gap-x-3 gap-y-0.5 text-sm">
+                                <dt className="text-muted-foreground">
+                                    Generado
+                                </dt>
+                                <dd>
+                                    {token.created_at
+                                        ? formatMoment(token.created_at)
+                                        : '—'}
+                                </dd>
+                                <dt className="text-muted-foreground">
+                                    Último uso
+                                </dt>
+                                <dd>
                                     {token.last_used_at
-                                        ? ` · último uso el ${formatDate(token.last_used_at)}`
-                                        : ' · sin usos todavía'}
-                                </p>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">
+                                        ? formatMoment(token.last_used_at)
+                                        : 'sin usos todavía'}
+                                </dd>
+                            </dl>
+                        </div>
+                    ) : (
+                        <div>
+                            <b className="block font-semibold">
+                                Sin teléfono conectado
+                            </b>
+                            <p className="mt-1 text-sm text-muted-foreground">
                                 Todavía no hay un token móvil activo.
                             </p>
-                        )}
-                    </div>
+                        </div>
+                    )}
+                </div>
 
-                    {token && (
+                {token && (
+                    <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3">
                         <Dialog
                             open={confirmOpen}
                             onOpenChange={setConfirmOpen}
                         >
                             <DialogTrigger asChild>
-                                <Button
-                                    type="button"
-                                    variant="destructive"
-                                    className="self-start"
-                                >
+                                <Button type="button" variant="outline">
                                     <ShieldOff />
                                     Revocar token
                                 </Button>
                             </DialogTrigger>
 
-                            <DialogContent>
+                            <DialogContent showCloseButton={false}>
                                 <DialogHeader>
                                     <DialogTitle>
                                         ¿Revocar el token móvil?
                                     </DialogTitle>
                                     <DialogDescription>
-                                        La app deja de autenticar de inmediato.
-                                        Los tokens no expiran solos, así que
-                                        esta acción no se puede deshacer — vas a
-                                        necesitar iniciar sesión de nuevo desde
-                                        el teléfono.
+                                        La app deja de funcionar al instante.
+                                        Esto no se deshace: para volver a
+                                        usarla, iniciás sesión otra vez desde el
+                                        teléfono. Tus hábitos y tareas no se
+                                        tocan.
                                     </DialogDescription>
                                 </DialogHeader>
 
                                 <Form
                                     {...destroy.form()}
                                     onSuccess={() => setConfirmOpen(false)}
-                                    className="mt-4"
                                 >
                                     {({ processing }) => (
                                         <DialogFooter>
+                                            <DialogClose asChild>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                >
+                                                    Cancelar
+                                                </Button>
+                                            </DialogClose>
                                             <Button
                                                 type="submit"
                                                 variant="destructive"
@@ -136,11 +160,19 @@ export default function MobileToken({ token }: MobileTokenProps) {
                                 </Form>
                             </DialogContent>
                         </Dialog>
-                    )}
-                </div>
-            </div>
+                        <p className="max-w-[44ch] text-sm text-muted-foreground">
+                            El teléfono deja de estar conectado y tenés que
+                            volver a iniciar sesión ahí.
+                        </p>
+                    </div>
+                )}
+            </section>
         </>
     );
 }
 
-MobileToken.layout = (page: ReactElement) => <AppLayout>{page}</AppLayout>;
+MobileToken.layout = (page: ReactElement) => (
+    <AppLayout>
+        <SettingsLayout>{page}</SettingsLayout>
+    </AppLayout>
+);

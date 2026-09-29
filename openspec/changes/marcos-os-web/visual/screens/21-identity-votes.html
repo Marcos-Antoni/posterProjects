@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Votos de identidad</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('theme');
+  var t=q||(function(){try{return localStorage.getItem('mos-theme')}catch(e){return null}})();
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  function cur(){var a=document.documentElement.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function paint(){var b=document.getElementById('themeBtn');if(!b)return;var d=cur()==='dark';b.setAttribute('aria-pressed',String(d));b.querySelector('span').textContent=d?'Pasar a claro':'Pasar a oscuro'}
+  document.addEventListener('DOMContentLoaded',function(){
+    paint();
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
+      try{localStorage.setItem('mos-theme',n)}catch(e){}paint();
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif;padding-top:44px}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+p{margin:0}
+.ic{flex:none;vertical-align:-3px}
+kbd{font:600 12px/16px "Overpass",sans-serif;padding:1px 6px;border-radius:4px;border:1px solid var(--border);background:var(--sunken);color:var(--muted-fg)}
+code{font:inherit;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.sm{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mock chrome (not part of the product) */
+.mock-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px;background:var(--sunken);border-bottom:1px dashed var(--border);font-size:13px;line-height:16px;color:var(--muted-fg)}
+.mock-bar .mock-name{margin-right:auto;font-weight:600}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--foreground);font:600 13px/16px "Overpass",sans-serif;text-decoration:none;cursor:pointer}
+
+/* app shell */
+.app-nav{display:flex;align-items:center;gap:24px;min-height:60px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:700 17px/24px "Overpass",sans-serif;color:var(--foreground);text-decoration:none;flex:none}
+.brand-mark{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.app-nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.app-nav nav a{position:relative;padding:18px 10px;font:600 14px/20px "Overpass",sans-serif;color:var(--muted-fg);text-decoration:none;white-space:nowrap}
+.app-nav nav a:hover{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:10px;height:4px;background:var(--blaze);border:1px solid var(--blaze-ink);border-radius:2px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted-fg);text-decoration:none;cursor:pointer;font:600 13px/16px "Overpass"}
+.icon-btn:hover{background:var(--sunken);color:var(--foreground)}
+.icon-btn[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:32px}
+h1{font:700 30px/36px "Overpass",sans-serif;letter-spacing:-.01em;margin:0}
+.lede{color:var(--muted-fg);max-width:68ch;margin-top:8px}
+h2{font:700 20px/28px "Overpass",sans-serif;margin:0}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:6px;border:2px solid transparent;font:600 15px/20px "Overpass",sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-danger{background:var(--destructive);color:var(--primary-fg)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font:600 14px/20px "Overpass",sans-serif}
+.help{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.input,textarea.input,select.input{width:100%;min-height:44px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass",sans-serif}
+textarea.input{resize:vertical;min-height:88px}
+.input::placeholder{color:var(--muted-fg)}
+
+/* alternate-state label */
+.state-tag{display:inline-flex;align-items:center;gap:8px;font:600 13px/16px "Overpass",sans-serif;color:var(--muted-fg);padding:6px 10px;border:1px dashed var(--input);border-radius:6px;margin:48px 0 16px;background:var(--background)}
+.state-block{border-top:1px dashed var(--border);margin-top:56px}
+.state-block>.state-tag{margin-top:24px}
+
+/* tiers (AI) */
+.tier{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:6px;font:600 13px/20px "Overpass",sans-serif;white-space:nowrap}
+.tier-minor{background:var(--sunken);color:var(--muted-fg)}
+.tier-major{background:var(--attention-bg);color:var(--attention)}
+.tier-grant{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+
+/* design note */
+.design-note{max-width:1200px;margin:0 auto 64px;padding:0 32px}
+.design-note details{border:1px dashed var(--input);border-radius:10px;background:var(--surface);padding:0 20px}
+.design-note summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font:600 15px/20px "Overpass";color:var(--muted-fg)}
+.design-note ul{margin:0 0 20px;padding-left:20px;max-width:88ch;font-size:15px;line-height:24px}
+.design-note li+li{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:900px){
+  .app-nav{padding:0 16px;gap:12px}
+  .page{padding:28px 16px 48px}
+  .design-note{padding:0 16px}
+  .hide-md{display:none!important}
+}
+
+
+.legend{display:flex;flex-wrap:wrap;gap:8px 24px;font-size:14px;line-height:20px;color:var(--muted-fg);margin:0 0 24px}
+.legend span{display:inline-flex;align-items:center;gap:8px}
+.ledger{padding:8px 32px}
+.idn{display:grid;grid-template-columns:minmax(240px,1.1fr) minmax(220px,.9fr) minmax(260px,1fr);gap:32px;padding:32px 0;align-items:start}
+.idn+.idn{border-top:1px solid var(--border)}
+.stmt{font:700 24px/32px "Overpass",sans-serif;letter-spacing:-.01em;max-width:22ch;margin-bottom:8px}
+.feeds{list-style:none;margin:16px 0 0;padding:0;display:flex;flex-direction:column;gap:6px;font-size:14px;line-height:20px}
+.feeds li{display:flex;gap:8px;align-items:center;color:var(--muted-fg)}
+.feeds a{color:var(--foreground)}
+.win{font:600 14px/20px "Overpass";color:var(--muted-fg)}
+.prop{font-size:16px;line-height:24px;margin:2px 0 14px}
+.prop b{font:700 24px/32px "Overpass";letter-spacing:-.01em}
+.two-note{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:12px;max-width:34ch}
+/* marks */
+.mk{display:inline-block;width:26px;height:18px;border-radius:2px;border:2px solid var(--blaze-ink);background:transparent;position:relative}
+.mk.v{background:var(--blaze)}
+.mk.v2{background:color-mix(in srgb,var(--blaze) 45%,var(--surface))}
+.mk.v2::after{content:"2";position:absolute;inset:0;display:grid;place-items:center;font:700 10px/1 "Overpass";color:var(--foreground)}
+.mk.m{border-style:dashed;border-color:var(--input)}
+.mk.n{border-color:transparent}
+.mk.n::before{content:"";position:absolute;left:50%;top:50%;width:4px;height:4px;margin:-2px;border-radius:50%;background:var(--input)}
+.mk.o{border-color:transparent;visibility:hidden}
+.mk.sm{width:18px;height:13px;border-width:1.5px}
+.mk.sm.v2::after{font-size:8px}
+.wk{display:flex;gap:6px}
+.wk-l{display:flex;gap:6px;margin-top:4px}
+.wk-l span{width:26px;text-align:center;font-size:12px;line-height:14px;color:var(--muted-fg)}
+.wk-l b{font-weight:600}
+.mgrid{display:flex;flex-direction:column;gap:5px}
+.mrow{display:flex;gap:5px;align-items:center}
+.mh{width:18px;text-align:center;font-size:11px;line-height:12px;color:var(--muted-fg)}
+.mrow-l{width:48px;font-size:12px;line-height:14px;color:var(--muted-fg)}
+.aside-note{display:flex;gap:12px;align-items:flex-start;margin-top:24px;font-size:14px;line-height:20px;color:var(--muted-fg);max-width:80ch}
+.empty{padding:40px 32px;display:grid;grid-template-columns:auto 1fr;gap:20px;align-items:start;max-width:760px}
+.empty .ghost{display:flex;gap:6px;margin-top:4px}
+.empty p{max-width:56ch}
+.empty .btn{margin-top:16px}
+@media (max-width:1100px){.idn{grid-template-columns:1fr 1fr}.idn-who{grid-column:1/-1}.stmt{max-width:none}}
+@media (max-width:640px){.idn{grid-template-columns:1fr}.ledger{padding:0 16px}.empty{grid-template-columns:1fr;padding:24px 16px}}
+
+</style>
+</head>
+<body>
+<div class="mock-bar" role="region" aria-label="Controles del mockup"><span class="mock-name">Pantalla 21 de 30 (web): Votos de identidad</span><button type="button" id="themeBtn" aria-pressed="false"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Tema</span></button><a href="index.html"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Índice</a></div>
+<header class="app-nav"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>Marcos OS</a><nav aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="18-habits-today.html" aria-current="page">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="22-retired-view.html">Retirados</a><a href="24-ai-proposals.html">IA</a></nav><div class="nav-right"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="hide-md">Capturar</span> <kbd>C</kbd></button><button class="icon-btn hide-md" type="button" aria-label="Buscar o ir a (Ctrl+K)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><kbd>Ctrl K</kbd></button><a class="icon-btn" href="27-settings-mcp-token.html" aria-label="Ajustes"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></a></div></header>
+
+<main class="page">
+  <div class="page-head">
+    <div>
+      <h1>Votos de identidad</h1>
+      <p class="lede">Cada vez que aparecés, aunque sea con la versión de 2 minutos, votás por la persona que querés ser. Cada frase se mira sola: no se suman ni se comparan.</p>
+    </div>
+    <p class="sm muted num">Domingo 27 sep, hora de Guatemala</p>
+  </div>
+  <div class="legend" aria-label="Leyenda">
+<span><i class="mk v" aria-hidden="true"></i>Voto: apareciste</span>
+<span><i class="mk v2" aria-hidden="true"></i>Voto con la versión de 2 minutos</span>
+<span><i class="mk m" aria-hidden="true"></i>Oportunidad sin voto</span>
+<span><i class="mk n" aria-hidden="true"></i>Ese día no tocaba</span></div>
+  <div class="panel ledger">
+    
+<section class="idn" aria-labelledby="idn0">
+  <div class="idn-who">
+    <h2 id="idn0" class="stmt">“Soy alguien que construye cada día”</h2>
+    <p class="sm muted">Heredada del objetivo <a href="#">Marcos OS en uso diario</a></p>
+    <ul class="feeds" aria-label="Hábitos que votan por esta identidad"><li><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><a href="#">Leer 2 páginas de Control</a></li></ul>
+  </div>
+  <div class="idn-7" role="group" aria-label="Últimos 7 días: 6 de 7 votos">
+    <p class="win">Últimos 7 días</p>
+    <p class="prop num"><b>6</b> de 7 votos</p>
+    <div class="wk" aria-hidden="true"><span class="mk v" title="L 21: voto"></span><span class="mk v" title="M 22: voto"></span><span class="mk v" title="M 23: voto"></span><span class="mk m" title="J 24: oportunidad sin voto"></span><span class="mk v2" title="V 25: voto con la versión de 2 minutos"></span><span class="mk v" title="S 26: voto"></span><span class="mk v" title="D 27: voto"></span></div><div class="wk-l" aria-hidden="true"><span>L<br><b class="num">21</b></span><span>M<br><b class="num">22</b></span><span>M<br><b class="num">23</b></span><span>J<br><b class="num">24</b></span><span>V<br><b class="num">25</b></span><span>S<br><b class="num">26</b></span><span>D<br><b class="num">27</b></span></div>
+    <p class="two-note">1 de esos votos fue con la versión de 2 minutos. Cuenta igual.</p>
+  </div>
+  <div class="idn-30" role="group" aria-label="Últimos 30 días: 24 de 30 votos">
+    <p class="win">Últimos 30 días</p>
+    <p class="prop num"><b>24</b> de 30 votos</p>
+    <div class="mgrid" aria-hidden="true"><div class="mrow mhead"><span class="mrow-l"></span><span class="mh">L</span><span class="mh">M</span><span class="mh">M</span><span class="mh">J</span><span class="mh">V</span><span class="mh">S</span><span class="mh">D</span></div><div class="mrow"><span class="mrow-l num">24 ago</span><span class="mk sm o" title="24 ago: "></span><span class="mk sm o" title="25 ago: "></span><span class="mk sm o" title="26 ago: "></span><span class="mk sm o" title="27 ago: "></span><span class="mk sm o" title="28 ago: "></span><span class="mk sm v" title="29 ago: voto"></span><span class="mk sm v" title="30 ago: voto"></span></div><div class="mrow"><span class="mrow-l num">31 ago</span><span class="mk sm v" title="31 ago: voto"></span><span class="mk sm v" title="1 sep: voto"></span><span class="mk sm m" title="2 sep: oportunidad sin voto"></span><span class="mk sm v" title="3 sep: voto"></span><span class="mk sm v" title="4 sep: voto"></span><span class="mk sm v" title="5 sep: voto"></span><span class="mk sm v" title="6 sep: voto"></span></div><div class="mrow"><span class="mrow-l num">7 sep</span><span class="mk sm v" title="7 sep: voto"></span><span class="mk sm v" title="8 sep: voto"></span><span class="mk sm m" title="9 sep: oportunidad sin voto"></span><span class="mk sm m" title="10 sep: oportunidad sin voto"></span><span class="mk sm v2" title="11 sep: voto con la versión de 2 minutos"></span><span class="mk sm v" title="12 sep: voto"></span><span class="mk sm v" title="13 sep: voto"></span></div><div class="mrow"><span class="mrow-l num">14 sep</span><span class="mk sm v" title="14 sep: voto"></span><span class="mk sm m" title="15 sep: oportunidad sin voto"></span><span class="mk sm v" title="16 sep: voto"></span><span class="mk sm v" title="17 sep: voto"></span><span class="mk sm v" title="18 sep: voto"></span><span class="mk sm m" title="19 sep: oportunidad sin voto"></span><span class="mk sm v2" title="20 sep: voto con la versión de 2 minutos"></span></div><div class="mrow"><span class="mrow-l num">21 sep</span><span class="mk sm v" title="21 sep: voto"></span><span class="mk sm v" title="22 sep: voto"></span><span class="mk sm v" title="23 sep: voto"></span><span class="mk sm m" title="24 sep: oportunidad sin voto"></span><span class="mk sm v2" title="25 sep: voto con la versión de 2 minutos"></span><span class="mk sm v" title="26 sep: voto"></span><span class="mk sm v" title="27 sep: voto"></span></div></div>
+  </div>
+</section>
+<section class="idn" aria-labelledby="idn1">
+  <div class="idn-who">
+    <h2 id="idn1" class="stmt">“Soy alguien que se mueve”</h2>
+    <p class="sm muted">Escrita en el hábito</p>
+    <ul class="feeds" aria-label="Hábitos que votan por esta identidad"><li><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><a href="#">Gimnasio 06:30 (mar a vie, con un amigo)</a></li></ul>
+  </div>
+  <div class="idn-7" role="group" aria-label="Últimos 7 días: 3 de 4 votos">
+    <p class="win">Últimos 7 días</p>
+    <p class="prop num"><b>3</b> de 4 votos</p>
+    <div class="wk" aria-hidden="true"><span class="mk n" title="L 21: sin oportunidad"></span><span class="mk v" title="M 22: voto"></span><span class="mk v" title="M 23: voto"></span><span class="mk m" title="J 24: oportunidad sin voto"></span><span class="mk v" title="V 25: voto"></span><span class="mk n" title="S 26: sin oportunidad"></span><span class="mk n" title="D 27: sin oportunidad"></span></div><div class="wk-l" aria-hidden="true"><span>L<br><b class="num">21</b></span><span>M<br><b class="num">22</b></span><span>M<br><b class="num">23</b></span><span>J<br><b class="num">24</b></span><span>V<br><b class="num">25</b></span><span>S<br><b class="num">26</b></span><span>D<br><b class="num">27</b></span></div>
+    
+  </div>
+  <div class="idn-30" role="group" aria-label="Últimos 30 días: 13 de 16 votos">
+    <p class="win">Últimos 30 días</p>
+    <p class="prop num"><b>13</b> de 16 votos</p>
+    <div class="mgrid" aria-hidden="true"><div class="mrow mhead"><span class="mrow-l"></span><span class="mh">L</span><span class="mh">M</span><span class="mh">M</span><span class="mh">J</span><span class="mh">V</span><span class="mh">S</span><span class="mh">D</span></div><div class="mrow"><span class="mrow-l num">24 ago</span><span class="mk sm o" title="24 ago: "></span><span class="mk sm o" title="25 ago: "></span><span class="mk sm o" title="26 ago: "></span><span class="mk sm o" title="27 ago: "></span><span class="mk sm o" title="28 ago: "></span><span class="mk sm n" title="29 ago: sin oportunidad"></span><span class="mk sm n" title="30 ago: sin oportunidad"></span></div><div class="mrow"><span class="mrow-l num">31 ago</span><span class="mk sm n" title="31 ago: sin oportunidad"></span><span class="mk sm v" title="1 sep: voto"></span><span class="mk sm v" title="2 sep: voto"></span><span class="mk sm m" title="3 sep: oportunidad sin voto"></span><span class="mk sm v" title="4 sep: voto"></span><span class="mk sm n" title="5 sep: sin oportunidad"></span><span class="mk sm n" title="6 sep: sin oportunidad"></span></div><div class="mrow"><span class="mrow-l num">7 sep</span><span class="mk sm n" title="7 sep: sin oportunidad"></span><span class="mk sm v" title="8 sep: voto"></span><span class="mk sm v" title="9 sep: voto"></span><span class="mk sm v" title="10 sep: voto"></span><span class="mk sm v" title="11 sep: voto"></span><span class="mk sm n" title="12 sep: sin oportunidad"></span><span class="mk sm n" title="13 sep: sin oportunidad"></span></div><div class="mrow"><span class="mrow-l num">14 sep</span><span class="mk sm n" title="14 sep: sin oportunidad"></span><span class="mk sm v" title="15 sep: voto"></span><span class="mk sm m" title="16 sep: oportunidad sin voto"></span><span class="mk sm v" title="17 sep: voto"></span><span class="mk sm v2" title="18 sep: voto con la versión de 2 minutos"></span><span class="mk sm n" title="19 sep: sin oportunidad"></span><span class="mk sm n" title="20 sep: sin oportunidad"></span></div><div class="mrow"><span class="mrow-l num">21 sep</span><span class="mk sm n" title="21 sep: sin oportunidad"></span><span class="mk sm v" title="22 sep: voto"></span><span class="mk sm v" title="23 sep: voto"></span><span class="mk sm m" title="24 sep: oportunidad sin voto"></span><span class="mk sm v" title="25 sep: voto"></span><span class="mk sm n" title="26 sep: sin oportunidad"></span><span class="mk sm n" title="27 sep: sin oportunidad"></span></div></div>
+  </div>
+</section>
+<section class="idn" aria-labelledby="idn2">
+  <div class="idn-who">
+    <h2 id="idn2" class="stmt">“Soy alguien que duerme para rendir”</h2>
+    <p class="sm muted">Escrita en el hábito</p>
+    <ul class="feeds" aria-label="Hábitos que votan por esta identidad"><li><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m17 2 4 4-4 4"/><path d="M3 11v-1a4 4 0 0 1 4-4h14"/><path d="m7 22-4-4 4-4"/><path d="M21 13v1a4 4 0 0 1-4 4H3"/></svg><a href="#">Dormir 22:00</a></li></ul>
+  </div>
+  <div class="idn-7" role="group" aria-label="Últimos 7 días: 4 de 7 votos">
+    <p class="win">Últimos 7 días</p>
+    <p class="prop num"><b>4</b> de 7 votos</p>
+    <div class="wk" aria-hidden="true"><span class="mk m" title="L 21: oportunidad sin voto"></span><span class="mk v" title="M 22: voto"></span><span class="mk v" title="M 23: voto"></span><span class="mk v" title="J 24: voto"></span><span class="mk m" title="V 25: oportunidad sin voto"></span><span class="mk m" title="S 26: oportunidad sin voto"></span><span class="mk v" title="D 27: voto"></span></div><div class="wk-l" aria-hidden="true"><span>L<br><b class="num">21</b></span><span>M<br><b class="num">22</b></span><span>M<br><b class="num">23</b></span><span>J<br><b class="num">24</b></span><span>V<br><b class="num">25</b></span><span>S<br><b class="num">26</b></span><span>D<br><b class="num">27</b></span></div>
+    
+  </div>
+  <div class="idn-30" role="group" aria-label="Últimos 30 días: 19 de 30 votos">
+    <p class="win">Últimos 30 días</p>
+    <p class="prop num"><b>19</b> de 30 votos</p>
+    <div class="mgrid" aria-hidden="true"><div class="mrow mhead"><span class="mrow-l"></span><span class="mh">L</span><span class="mh">M</span><span class="mh">M</span><span class="mh">J</span><span class="mh">V</span><span class="mh">S</span><span class="mh">D</span></div><div class="mrow"><span class="mrow-l num">24 ago</span><span class="mk sm o" title="24 ago: "></span><span class="mk sm o" title="25 ago: "></span><span class="mk sm o" title="26 ago: "></span><span class="mk sm o" title="27 ago: "></span><span class="mk sm o" title="28 ago: "></span><span class="mk sm v" title="29 ago: voto"></span><span class="mk sm m" title="30 ago: oportunidad sin voto"></span></div><div class="mrow"><span class="mrow-l num">31 ago</span><span class="mk sm v" title="31 ago: voto"></span><span class="mk sm m" title="1 sep: oportunidad sin voto"></span><span class="mk sm v" title="2 sep: voto"></span><span class="mk sm v" title="3 sep: voto"></span><span class="mk sm v" title="4 sep: voto"></span><span class="mk sm m" title="5 sep: oportunidad sin voto"></span><span class="mk sm m" title="6 sep: oportunidad sin voto"></span></div><div class="mrow"><span class="mrow-l num">7 sep</span><span class="mk sm v" title="7 sep: voto"></span><span class="mk sm v" title="8 sep: voto"></span><span class="mk sm v" title="9 sep: voto"></span><span class="mk sm v" title="10 sep: voto"></span><span class="mk sm v" title="11 sep: voto"></span><span class="mk sm m" title="12 sep: oportunidad sin voto"></span><span class="mk sm m" title="13 sep: oportunidad sin voto"></span></div><div class="mrow"><span class="mrow-l num">14 sep</span><span class="mk sm v" title="14 sep: voto"></span><span class="mk sm v" title="15 sep: voto"></span><span class="mk sm v" title="16 sep: voto"></span><span class="mk sm v" title="17 sep: voto"></span><span class="mk sm v" title="18 sep: voto"></span><span class="mk sm m" title="19 sep: oportunidad sin voto"></span><span class="mk sm m" title="20 sep: oportunidad sin voto"></span></div><div class="mrow"><span class="mrow-l num">21 sep</span><span class="mk sm m" title="21 sep: oportunidad sin voto"></span><span class="mk sm v" title="22 sep: voto"></span><span class="mk sm v" title="23 sep: voto"></span><span class="mk sm v" title="24 sep: voto"></span><span class="mk sm m" title="25 sep: oportunidad sin voto"></span><span class="mk sm m" title="26 sep: oportunidad sin voto"></span><span class="mk sm v" title="27 sep: voto"></span></div></div>
+  </div>
+</section>
+  </div>
+  <p class="aside-note"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span>Las frases van en el orden en que las escribiste. Un voto es una oportunidad programada en la que apareciste; los días que no tocaba no cuentan para nada. La frase se edita desde su hábito o su objetivo.</span></p>
+
+  <div class="state-block">
+  <p class="state-tag"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Estado vacío: todavía no hay frases de identidad</p>
+  <div class="panel empty">
+    <div class="ghost" aria-hidden="true"><i class="mk m"></i><i class="mk m"></i><i class="mk m"></i></div>
+    <div>
+      <h2>Todavía no escribiste ninguna frase</h2>
+      <p class="muted" style="margin-top:8px">Una frase de identidad dice quién querés ser, no qué querés lograr. Se escribe en un hábito o en un objetivo, y desde ahí cada día que aparecés cuenta como voto.</p>
+      <a class="btn btn-primary" href="#"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>Escribir una frase en “Gimnasio 06:30”</a>
+    </div>
+  </div>
+  </div>
+</main>
+<aside class="design-note"><details><summary>Nota de diseño</summary><ul><li>Proporción textual (“6 de 7 votos”) y marcas, nunca porcentaje, puntaje ni nivel: la spec lo exige y Goodhart lo justifica.</li><li>Las frases no se ordenan por rendimiento sino por creación: no hay ranking implícito entre identidades.</li><li>Las oportunidades sin voto son huecos punteados en gris, no rojo ni tachado; el voto de 2 minutos se ve distinto pero cuenta igual (hacerlo fácil, Clear).</li><li>Nielsen 1 y 6: ventanas de 7 y 30 días visibles a la vez, con la fecha de hoy; los hábitos que votan están nombrados, no hay que recordarlos.</li><li>Estado vacío con una sola acción concreta en un hábito real (Fogg: el prompt es el botón).</li></ul></details></aside>
+
+</body>
+</html>

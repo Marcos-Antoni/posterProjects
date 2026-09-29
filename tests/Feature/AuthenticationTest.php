@@ -37,9 +37,10 @@ test('users can authenticate using the login screen', function () {
     ]);
 
     $this->assertAuthenticatedAs($user);
-    // Redirects straight to /projects (not /) so a fresh login doesn't need
-    // a second hop through the root's own auth-branching redirect.
-    $response->assertRedirect(route('projects.index', absolute: false));
+    // Redirects straight to /objectives (not /) so a fresh login doesn't need
+    // a second hop through the root's own auth-branching redirect. (Phase 3
+    // moves the landing to the Now screen.)
+    $response->assertRedirect(route('now', absolute: false));
 });
 
 test('users cannot authenticate with an invalid password', function () {
@@ -96,4 +97,16 @@ test('guests cannot logout', function () {
 
     $response->assertRedirect('/login');
     $this->assertGuest();
+});
+
+test('a failed web login shows the mockup copy while the api keeps its pinned message', function () {
+    $user = User::factory()->create();
+
+    $this->from('/login')
+        ->post('/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        ->assertSessionHasErrors(['email' => 'El correo o la contraseña no coinciden.']);
+
+    $this->postJson('/api/v1/login', ['email' => $user->email, 'password' => 'wrong-password'])
+        ->assertStatus(422)
+        ->assertJsonPath('message', 'Estas credenciales no coinciden con nuestros registros.');
 });

@@ -1,46 +1,45 @@
 <?php
 
-use App\Http\Controllers\BacklogController;
-use App\Http\Controllers\BoardColumnController;
-use App\Http\Controllers\BoardController;
-use App\Http\Controllers\CalendarController;
-use App\Http\Controllers\CommentController;
+use App\Http\Controllers\CaptureController;
+use App\Http\Controllers\ControlMapEntryController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitEntryController;
-use App\Http\Controllers\IssueController;
-use App\Http\Controllers\IssueLabelController;
-use App\Http\Controllers\IssueMoveController;
-use App\Http\Controllers\LabelController;
-use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ItemController;
+use App\Http\Controllers\ItemDependencyController;
+use App\Http\Controllers\ItemFocusController;
+use App\Http\Controllers\MilestoneSummitController;
+use App\Http\Controllers\NowController;
+use App\Http\Controllers\ObjectiveController;
+use App\Http\Controllers\PlanController;
+use App\Http\Controllers\RetiredController;
+use App\Http\Controllers\RetirementController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
 use App\Http\Controllers\Settings\MobileTokenQrController;
-use App\Http\Controllers\SprintController;
+use App\Http\Controllers\UnlockGraphController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function (Request $request) {
     return $request->user()
-        ? redirect()->route('projects.index')
+        ? redirect()->route('now') // phase 3: Now is the landing (auth spec)
         : redirect()->route('login');
 })->name('home');
 
 Route::middleware('auth')->group(function (): void {
-    Route::resource('projects', ProjectController::class)->only(['index', 'store', 'update', 'destroy']);
-
-    Route::get('projects/trash', [ProjectController::class, 'trash'])->name('projects.trash');
-    Route::post('projects/{project}/restore', [ProjectController::class, 'restore'])->name('projects.restore')->withTrashed();
-    Route::delete('projects/{project}/force', [ProjectController::class, 'forceDelete'])->name('projects.forceDelete')->withTrashed();
-
-    // Global, cross-project calendar — every issue with a due date across
-    // every project the authenticated user is a member of.
-    Route::get('calendar', [CalendarController::class, 'index'])->name('calendar');
-
     // Settings — currently only the MCP token page. The token is a
     // single Sanctum PAT: regenerating kills the previous one, and the
     // plain text travels in a one-shot session flash (never a prop).
     Route::get('settings/mcp-token', [McpTokenController::class, 'show'])->name('settings.mcp-token.show');
     Route::post('settings/mcp-token', [McpTokenController::class, 'store'])->name('settings.mcp-token.store');
+
+    // Appearance: the one theme selector (claro / oscuro / sistema), stored
+    // per user. There is deliberately no profile or password route: the
+    // password changes only via `php artisan marcos:set-password`.
+    Route::get('settings/appearance', [AppearanceController::class, 'show'])->name('settings.appearance.show');
+    Route::patch('settings/appearance', [AppearanceController::class, 'update'])->name('settings.appearance.update');
 
     // The mobile *token* is minted on the phone — via `POST /api/v1/login`
     // or by redeeming a QR *pass* (below) at `POST /api/v1/qr-login` — and
@@ -61,110 +60,145 @@ Route::middleware('auth')->group(function (): void {
     Route::get('settings/mobile-token/qr/status', [MobileTokenQrController::class, 'status'])
         ->name('settings.mobile-token.qr.status');
 
-    // Habits are personal to the authenticated user — never project
-    // scoped. There is intentionally NO destroy route: habits can only
-    // be archived (and reactivated), their history is never deleted.
+    // --- phase 4: habits ---
+    // Habits are personal to the authenticated user. There is intentionally
+    // NO destroy route: habits can only be retired (and restored from
+    // Retirados), their history is never deleted. Retire/restore routes live
+    // in the phase 6 block below. `{habit}` is numeric so the literal
+    // segments (manage, identity, create) never bind as a habit.
     Route::get('habits', [HabitController::class, 'today'])->name('habits.today');
     Route::get('habits/manage', [HabitController::class, 'index'])->name('habits.index');
-    Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
+    Route::get('habits/identity', [HabitController::class, 'identity'])->name('habits.identity');
+    Route::get('habits/create', [HabitController::class, 'create'])->name('habits.create');
     Route::post('habits', [HabitController::class, 'store'])->name('habits.store');
-    Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
-    Route::post('habits/{habit}/archive', [HabitController::class, 'archive'])->name('habits.archive');
-    Route::post('habits/{habit}/unarchive', [HabitController::class, 'unarchive'])->name('habits.unarchive');
-    Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
+    Route::whereNumber('habit')->group(function (): void {
+        Route::get('habits/{habit}', [HabitController::class, 'show'])->name('habits.show');
+        Route::patch('habits/{habit}', [HabitController::class, 'update'])->name('habits.update');
+        Route::post('habits/{habit}/level', [HabitController::class, 'level'])->name('habits.level.update');
+        Route::post('habits/{habit}/entries', [HabitEntryController::class, 'store'])->name('habits.entries.store');
+        Route::post('habits/{habit}/entries/decrement', [HabitEntryController::class, 'decrement'])->name('habits.entries.decrement');
+        Route::post('habits/{habit}/two-minute', [HabitEntryController::class, 'twoMinute'])->name('habits.two-minute.store');
+        Route::delete('habits/{habit}/two-minute', [HabitEntryController::class, 'undoTwoMinute'])->name('habits.two-minute.destroy');
+    });
+    // --- end phase 4 ---
 
-    // Bound by key (not id) — the board and its nested routes are
-    // addressed by the project's human-readable key, e.g. /projects/DEMO/board.
-    Route::get('projects/{project:key}/board', [BoardController::class, 'show'])->name('projects.board');
+    // --- phase 2: objectives, plans, items, dependencies ---
+    // Marcos OS objectives (projects spec). `{objective}` is the KEY and is
+    // resolved by the binder in AppServiceProvider among the owner's active
+    // and closed objectives only: another owner's key, a draft and a retired
+    // objective are all a plain 404. There is deliberately NO delete route for
+    // objectives, plans or items: nothing is deleted, it is retired (Phase 6).
+    Route::get('objectives', [ObjectiveController::class, 'index'])->name('objectives.index');
+    Route::get('objectives/create', [ObjectiveController::class, 'create'])->name('objectives.create');
+    Route::post('objectives', [ObjectiveController::class, 'store'])->name('objectives.store');
+    Route::get('objectives/{objective}', [ObjectiveController::class, 'show'])->name('objectives.show');
+    Route::get('objectives/{objective}/edit', [ObjectiveController::class, 'edit'])->name('objectives.edit');
+    Route::patch('objectives/{objective}', [ObjectiveController::class, 'update'])->name('objectives.update');
+    Route::post('objectives/{objective}/activate', [ObjectiveController::class, 'activate'])->name('objectives.activate');
+    Route::post('objectives/{objective}/reopen', [ObjectiveController::class, 'reopen'])->name('objectives.reopen');
 
-    // Read-only: sprints (collapsible, with story-point sums) + the
-    // Backlog section (sprint_id null). Reassigning an issue reuses
-    // `projects.issues.update` — see `BacklogController`.
-    Route::get('projects/{project:key}/backlog', [BacklogController::class, 'index'])->name('projects.backlog');
+    // Control map of the objective ({entry} is looked up inside it).
+    Route::post('objectives/{objective}/control-map', [ControlMapEntryController::class, 'store'])->name('objectives.control-map.store');
+    Route::patch('objectives/{objective}/control-map/{entry}', [ControlMapEntryController::class, 'update'])->name('objectives.control-map.update');
+    Route::delete('objectives/{objective}/control-map/{entry}', [ControlMapEntryController::class, 'destroy'])->name('objectives.control-map.destroy');
+    Route::post('objectives/{objective}/control-map/{entry}/convert', [ControlMapEntryController::class, 'convert'])->name('objectives.control-map.convert');
 
-    Route::post('projects/{project:key}/issues', [IssueController::class, 'store'])->name('projects.issues.store');
+    // Plans: `{plan}` is an id scoped to the objective (scopeBindings), and a
+    // retired plan never resolves.
+    Route::scopeBindings()->group(function (): void {
+        Route::get('objectives/{objective}/plans/create', [PlanController::class, 'create'])->name('objectives.plans.create');
+        Route::post('objectives/{objective}/plans', [PlanController::class, 'store'])->name('objectives.plans.store');
+        Route::get('objectives/{objective}/plans/{plan}', [PlanController::class, 'show'])->name('objectives.plans.show');
+        Route::get('objectives/{objective}/plans/{plan}/edit', [PlanController::class, 'edit'])->name('objectives.plans.edit');
+        Route::patch('objectives/{objective}/plans/{plan}', [PlanController::class, 'update'])->name('objectives.plans.update');
+        Route::post('objectives/{objective}/plans/{plan}/activate', [PlanController::class, 'activate'])->name('objectives.plans.activate');
+        Route::post('objectives/{objective}/plans/{plan}/move', [PlanController::class, 'move'])->name('objectives.plans.move');
+        Route::post('objectives/{objective}/plans/{plan}/items', [ItemController::class, 'store'])->name('objectives.plans.items.store');
 
-    // scopeBindings() ties {issue} to $project->issues() — an issue id
-    // belonging to a different project resolves to a 404 instead of
-    // silently operating on another project's data.
-    Route::patch('projects/{project:key}/issues/{issue}/move', [IssueMoveController::class, 'move'])
-        ->name('projects.issues.move')
-        ->scopeBindings();
+        Route::post('objectives/{objective}/plans/{plan}/control-map', [ControlMapEntryController::class, 'storeForPlan'])->name('objectives.plans.control-map.store');
+        Route::patch('objectives/{objective}/plans/{plan}/control-map/{entry}', [ControlMapEntryController::class, 'updateForPlan'])->name('objectives.plans.control-map.update');
+        Route::delete('objectives/{objective}/plans/{plan}/control-map/{entry}', [ControlMapEntryController::class, 'destroyForPlan'])->name('objectives.plans.control-map.destroy');
+    });
 
-    // {issueKey} is NOT a model-bound column — it's the Issue::key()
-    // accessor ("PROJ-123"). IssueController::show() parses it by hand
-    // (split on the last "-", validate the prefix matches the URL's
-    // project key, then resolve by project_id + number), 404-ing on any
-    // malformed or mismatched input instead of erroring.
-    Route::get('projects/{project:key}/issues/{issueKey}', [IssueController::class, 'show'])
-        ->name('projects.issues.show');
+    // Items: `{item}` is the public KEY ("SALUD-7"), never route-model
+    // bound. `Item::resolveByKey()` turns every malformed, mismatched,
+    // unknown or retired key into the same 404 (issues spec deep links).
+    Route::get('objectives/{objective}/items/{item}', [ItemController::class, 'show'])->name('objectives.items.show');
+    Route::patch('objectives/{objective}/items/{item}', [ItemController::class, 'update'])->name('objectives.items.update');
+    Route::post('objectives/{objective}/items/{item}/check', [ItemController::class, 'check'])->name('objectives.items.check');
+    Route::post('objectives/{objective}/items/{item}/uncheck', [ItemController::class, 'uncheck'])->name('objectives.items.uncheck');
+    Route::post('objectives/{objective}/items/{item}/move', [ItemController::class, 'move'])->name('objectives.items.move');
 
-    Route::patch('projects/{project:key}/issues/{issue}', [IssueController::class, 'update'])
-        ->name('projects.issues.update')
-        ->scopeBindings();
+    // Dependencies ("completing A unlocks B"); the other end is a key from
+    // any of the owner's objectives. Removing an edge is not a retirement.
+    Route::post('objectives/{objective}/items/{item}/prerequisites', [ItemDependencyController::class, 'storePrerequisite'])->name('objectives.items.prerequisites.store');
+    Route::delete('objectives/{objective}/items/{item}/prerequisites/{prerequisite}', [ItemDependencyController::class, 'destroyPrerequisite'])->name('objectives.items.prerequisites.destroy');
+    Route::post('objectives/{objective}/items/{item}/unlocks', [ItemDependencyController::class, 'storeUnlock'])->name('objectives.items.unlocks.store');
+    Route::delete('objectives/{objective}/items/{item}/unlocks/{dependent}', [ItemDependencyController::class, 'destroyUnlock'])->name('objectives.items.unlocks.destroy');
+    // --- end phase 2 ---
 
-    // Comments: any member may post, but only the comment's own author may
-    // edit/delete it (not even the project owner — see `CommentPolicy`).
-    // {comment} is scoped to $issue->comments() via scopeBindings(), same
-    // 3-level chaining as the labels routes below.
-    Route::post('projects/{project:key}/issues/{issue}/comments', [CommentController::class, 'store'])
-        ->name('projects.issues.comments.store')
-        ->scopeBindings();
-    Route::patch('projects/{project:key}/issues/{issue}/comments/{comment}', [CommentController::class, 'update'])
-        ->name('projects.issues.comments.update')
-        ->scopeBindings();
-    Route::delete('projects/{project:key}/issues/{issue}/comments/{comment}', [CommentController::class, 'destroy'])
-        ->name('projects.issues.comments.destroy')
-        ->scopeBindings();
+    // --- phase 3: now and execution ---
+    // "Ahora" (screen 2): the landing of every authenticated visit.
+    Route::get('now', [NowController::class, 'show'])->name('now');
+    Route::post('now/close-for-today', [NowController::class, 'closeForToday'])->name('now.close-for-today');
 
-    // Labels: any member may create a project label and attach/detach it
-    // on an issue; the management list, rename, and delete below are
-    // owner only (LabelPolicy). {label} on the detach route is scoped to
-    // $issue->labels() via scopeBindings() — a label belonging to this
-    // project but not currently attached to this issue 404s.
-    Route::get('projects/{project:key}/labels', [LabelController::class, 'index'])
-        ->name('projects.labels.index');
-    Route::post('projects/{project:key}/labels', [LabelController::class, 'store'])
-        ->name('projects.labels.store');
-    Route::patch('projects/{project:key}/labels/{label}', [LabelController::class, 'update'])
-        ->name('projects.labels.update')
-        ->scopeBindings();
-    Route::delete('projects/{project:key}/labels/{label}', [LabelController::class, 'destroy'])
-        ->name('projects.labels.destroy')
-        ->scopeBindings();
-    Route::post('projects/{project:key}/issues/{issue}/labels', [IssueLabelController::class, 'store'])
-        ->name('projects.issues.labels.store')
-        ->scopeBindings();
-    Route::delete('projects/{project:key}/issues/{issue}/labels/{label}', [IssueLabelController::class, 'destroy'])
-        ->name('projects.issues.labels.destroy')
-        ->scopeBindings();
+    // Execution on one item (now-focus): start it as THE active task, stop
+    // it for today, and the "estoy trabado" fallback. `{item}` is the public
+    // key, resolved with Item::resolveByKey() (404 when foreign or retired).
+    Route::post('objectives/{objective}/items/{item}/start', [ItemFocusController::class, 'start'])->name('objectives.items.start');
+    Route::post('objectives/{objective}/items/{item}/stop', [ItemFocusController::class, 'stop'])->name('objectives.items.stop');
+    Route::post('objectives/{objective}/items/{item}/two-minute', [ItemFocusController::class, 'shrink'])->name('objectives.items.two-minute');
+    // --- end phase 3 ---
+    // --- phase 5: unlock graphs ---
+    // The global map and one objective's track (screens 9 and 8). Under
+    // `/map` so the "Mapa" navigation entry covers both; `{objective}` is
+    // the KEY, resolved by the same binder as the objective screens.
+    Route::get('map', [UnlockGraphController::class, 'global'])->name('map.index');
+    Route::get('map/{objective}', [UnlockGraphController::class, 'objective'])->name('map.show');
+    // --- end phase 5 ---
+    // --- phase 6: retirement protocol and Retired view ---
+    // Nothing is deleted: every "remove" is "Retirar" (reason + content
+    // decision). The GET beside each POST feeds the retire dialog (JSON).
+    // Restoring happens only from the Retired view. Habit archive/unarchive
+    // routes are gone: habits retire here too (habits spec).
+    Route::get('retired', [RetiredController::class, 'index'])->name('retired.index');
+    Route::post('retired/{retirement}/restore', [RetiredController::class, 'restore'])->whereNumber('retirement')->name('retired.restore');
+    Route::get('objectives/{objective}/retire', [RetirementController::class, 'objectiveContext'])->name('objectives.retire-context');
+    Route::post('objectives/{objective}/retire', [RetirementController::class, 'retireObjective'])->name('objectives.retire');
+    Route::get('objectives/{objective}/items/{item}/retire', [RetirementController::class, 'itemContext'])->name('objectives.items.retire-context');
+    Route::post('objectives/{objective}/items/{item}/retire', [RetirementController::class, 'retireItem'])->name('objectives.items.retire');
+    Route::scopeBindings()->group(function (): void {
+        Route::get('objectives/{objective}/plans/{plan}/retire', [RetirementController::class, 'planContext'])->name('objectives.plans.retire-context');
+        Route::post('objectives/{objective}/plans/{plan}/retire', [RetirementController::class, 'retirePlan'])->name('objectives.plans.retire');
+    });
+    Route::get('habits/{habit}/retire', [RetirementController::class, 'habitContext'])->name('habits.retire-context');
+    Route::post('habits/{habit}/retire', [RetirementController::class, 'retireHabit'])->name('habits.retire');
+    // --- end phase 6 ---
 
-    // Sprint management (owner only, enforced by SprintPolicy). Deleting a
-    // sprint returns its issues to the backlog via `nullOnDelete()` on
-    // `issues.sprint_id` — see `SprintController::destroy()`.
-    Route::post('projects/{project:key}/sprints', [SprintController::class, 'store'])
-        ->name('projects.sprints.store');
-    Route::patch('projects/{project:key}/sprints/{sprint}', [SprintController::class, 'update'])
-        ->name('projects.sprints.update')
-        ->scopeBindings();
-    Route::delete('projects/{project:key}/sprints/{sprint}', [SprintController::class, 'destroy'])
-        ->name('projects.sprints.destroy')
-        ->scopeBindings();
+    // --- phase 7: capture inbox and reviews ---
+    // Capture (screens 16-17): one field, reachable from every screen, never
+    // touching Now or an objective until triaged.
+    Route::get('captures', [CaptureController::class, 'index'])->name('captures.index');
+    Route::post('captures', [CaptureController::class, 'store'])->name('captures.store');
+    Route::post('captures/{capture}/convert-to-item', [CaptureController::class, 'convertToItem'])->name('captures.convert-to-item');
+    Route::post('captures/{capture}/convert-to-habit', [CaptureController::class, 'convertToHabit'])->name('captures.convert-to-habit');
+    Route::post('captures/{capture}/convert-to-objective', [CaptureController::class, 'convertToObjective'])->name('captures.convert-to-objective');
+    Route::get('captures/{capture}/retire', [RetirementController::class, 'captureContext'])->name('captures.retire-context');
+    Route::post('captures/{capture}/retire', [RetirementController::class, 'retireCapture'])->name('captures.retire');
 
-    // Column management (owner only, enforced by BoardColumnPolicy).
-    // {boardColumn} is likewise scoped to $project->boardColumns() via
-    // scopeBindings(), so a column id from another project 404s.
-    Route::post('projects/{project:key}/board-columns', [BoardColumnController::class, 'store'])
-        ->name('projects.board-columns.store');
-    Route::patch('projects/{project:key}/board-columns/{boardColumn}', [BoardColumnController::class, 'update'])
-        ->name('projects.board-columns.update')
-        ->scopeBindings();
-    Route::patch('projects/{project:key}/board-columns/{boardColumn}/reorder', [BoardColumnController::class, 'reorder'])
-        ->name('projects.board-columns.reorder')
-        ->scopeBindings();
-    Route::delete('projects/{project:key}/board-columns/{boardColumn}', [BoardColumnController::class, 'destroy'])
-        ->name('projects.board-columns.destroy')
-        ->scopeBindings();
+    // The milestone summit (screen 12): its evidence form posts to the
+    // existing `objectives.items.check` route above.
+    Route::get('objectives/{objective}/items/{item}/summit', [MilestoneSummitController::class, 'show'])->name('objectives.items.summit');
+
+    // Objective close, the learning review (screen 13).
+    Route::get('objectives/{objective}/close', [ObjectiveController::class, 'closeShow'])->name('objectives.close.show');
+    Route::post('objectives/{objective}/close', [ObjectiveController::class, 'close'])->name('objectives.close.store');
+
+    // Weekly review (screen 14) and reviews history (screen 15).
+    Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/weekly', [ReviewController::class, 'weekly'])->name('reviews.weekly.show');
+    Route::post('reviews/weekly', [ReviewController::class, 'storeWeekly'])->name('reviews.weekly.store');
+    // --- end phase 7 ---
 });
 
 require __DIR__.'/auth.php';

@@ -1,0 +1,294 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Propuestas de la IA</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Overpass:wght@400;600;700&family=Zilla+Slab:wght@500;600&display=swap" rel="stylesheet">
+<script>
+(function(){
+  var q=new URLSearchParams(location.search).get('theme');
+  var t=q||(function(){try{return localStorage.getItem('mos-theme')}catch(e){return null}})();
+  if(t==='light'||t==='dark')document.documentElement.setAttribute('data-theme',t);
+  function cur(){var a=document.documentElement.getAttribute('data-theme');if(a)return a;return matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light'}
+  function paint(){var b=document.getElementById('themeBtn');if(!b)return;var d=cur()==='dark';b.setAttribute('aria-pressed',String(d));b.querySelector('span').textContent=d?'Pasar a claro':'Pasar a oscuro'}
+  document.addEventListener('DOMContentLoaded',function(){
+    paint();
+    document.getElementById('themeBtn').addEventListener('click',function(){
+      var n=cur()==='dark'?'light':'dark';document.documentElement.setAttribute('data-theme',n);
+      try{localStorage.setItem('mos-theme',n)}catch(e){}paint();
+    });
+  });
+})();
+</script>
+<style>
+:root{
+  --background:#EEF2EF; --surface:#FAFBF9; --sunken:#E3E9E5;
+  --foreground:#1B2A2A; --muted-fg:#56686A; --border:#C9D3CF; --input:#7D8C89;
+  --primary:#1D5E4E; --primary-fg:#FAFBF9;
+  --blaze:#E6AE1F; --blaze-fg:#1B2A2A; --blaze-ink:#8A6200;
+  --attention:#5B4E8C; --attention-bg:#ECE8F6;
+  --destructive:#A33B2B; --ring:#2B63D9;
+  --node-locked:#7D8C89; --node-available:#1D5E4E; --node-active:#E6AE1F; --node-done:#1D5E4E; --node-retired:#7D8C89;
+  --line-1:#1D5E4E; --line-2:#5B4E8C; --line-3:#9C4A6E;
+  --shadow-color:180 20% 14%;
+  --ease-paint:cubic-bezier(.65,0,.35,1); --ease-out-soft:cubic-bezier(.22,1,.36,1);
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+    --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+    --primary:#6CC3A6; --primary-fg:#142022;
+    --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+    --attention:#A99CE0; --attention-bg:#2A2A45;
+    --destructive:#F08A78; --ring:#7FA8FF;
+    --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+    --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+    --shadow-color:190 40% 3%; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --background:#142022; --surface:#1C2A2C; --sunken:#0F1819;
+  --foreground:#E3ECE8; --muted-fg:#9FB2AE; --border:#33464A; --input:#6F8581;
+  --primary:#6CC3A6; --primary-fg:#142022;
+  --blaze:#F0BF45; --blaze-fg:#142022; --blaze-ink:#F0BF45;
+  --attention:#A99CE0; --attention-bg:#2A2A45;
+  --destructive:#F08A78; --ring:#7FA8FF;
+  --node-locked:#6F8581; --node-available:#6CC3A6; --node-active:#F0BF45; --node-done:#6CC3A6; --node-retired:#6F8581;
+  --line-1:#6CC3A6; --line-2:#A99CE0; --line-3:#E08FB2;
+  --shadow-color:190 40% 3%; color-scheme:dark;
+}
+
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--background);color:var(--foreground);font:400 16px/24px "Overpass",system-ui,sans-serif;padding-top:44px}
+a{color:var(--primary);text-underline-offset:3px}
+:focus-visible{outline:2px solid var(--ring);outline-offset:2px}
+button,input,select,textarea{font:inherit;color:inherit}
+p{margin:0}
+.ic{flex:none;vertical-align:-3px}
+kbd{font:600 12px/16px "Overpass",sans-serif;padding:1px 6px;border-radius:4px;border:1px solid var(--border);background:var(--sunken);color:var(--muted-fg)}
+code{font:inherit;font-weight:600}
+.num{font-variant-numeric:tabular-nums}
+.muted{color:var(--muted-fg)}
+.sm{font-size:14px;line-height:20px}
+.xs{font-size:12px;line-height:16px;font-weight:600}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* mock chrome (not part of the product) */
+.mock-bar{position:fixed;top:0;left:0;right:0;height:44px;z-index:60;display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:0 12px;background:var(--sunken);border-bottom:1px dashed var(--border);font-size:13px;line-height:16px;color:var(--muted-fg)}
+.mock-bar .mock-name{margin-right:auto;font-weight:600}
+.mock-bar a,.mock-bar button{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--foreground);font:600 13px/16px "Overpass",sans-serif;text-decoration:none;cursor:pointer}
+
+/* app shell */
+.app-nav{display:flex;align-items:center;gap:24px;min-height:60px;padding:0 32px;background:var(--surface);border-bottom:1px solid var(--border)}
+.brand{display:inline-flex;align-items:center;gap:10px;font:700 17px/24px "Overpass",sans-serif;color:var(--foreground);text-decoration:none;flex:none}
+.brand-mark{width:18px;height:13px;background:var(--blaze);border:2px solid var(--blaze-ink);border-radius:2px}
+.app-nav nav{display:flex;gap:4px;overflow-x:auto;scrollbar-width:none;min-width:0}
+.app-nav nav a{position:relative;padding:18px 10px;font:600 14px/20px "Overpass",sans-serif;color:var(--muted-fg);text-decoration:none;white-space:nowrap}
+.app-nav nav a:hover{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]{color:var(--foreground)}
+.app-nav nav a[aria-current="page"]::after{content:"";position:absolute;left:10px;right:10px;bottom:10px;height:4px;background:var(--blaze);border:1px solid var(--blaze-ink);border-radius:2px}
+.nav-right{margin-left:auto;display:flex;align-items:center;gap:8px;flex:none}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-width:40px;min-height:40px;padding:0 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted-fg);text-decoration:none;cursor:pointer;font:600 13px/16px "Overpass"}
+.icon-btn:hover{background:var(--sunken);color:var(--foreground)}
+.icon-btn[aria-current="page"]{color:var(--foreground);background:var(--sunken)}
+
+.page{max-width:1200px;margin:0 auto;padding:40px 32px 64px}
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 32px;margin-bottom:32px}
+h1{font:700 30px/36px "Overpass",sans-serif;letter-spacing:-.01em;margin:0}
+.lede{color:var(--muted-fg);max-width:68ch;margin-top:8px}
+h2{font:700 20px/28px "Overpass",sans-serif;margin:0}
+h3{font:600 16px/24px "Overpass",sans-serif;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:40px;padding:8px 16px;border-radius:6px;border:2px solid transparent;font:600 15px/20px "Overpass",sans-serif;cursor:pointer;text-decoration:none;white-space:nowrap;transition:background-color 100ms ease-out,transform 100ms ease-out}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:var(--primary);color:var(--primary-fg)}
+.btn-primary:hover{background:color-mix(in srgb,var(--primary) 92%,var(--foreground))}
+.btn-outline{background:transparent;color:var(--foreground);border-color:var(--input)}
+.btn-outline:hover{background:var(--sunken)}
+.btn-ghost{background:transparent;color:var(--foreground);border-color:transparent;text-decoration:underline;text-underline-offset:3px}
+.btn-ghost:hover{background:var(--sunken)}
+.btn-danger{background:var(--destructive);color:var(--primary-fg)}
+.btn-sm{min-height:36px;padding:6px 12px;font-size:14px}
+.btn:disabled,.btn[aria-disabled="true"]{opacity:.5;cursor:not-allowed}
+
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:10px}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label,.label{font:600 14px/20px "Overpass",sans-serif}
+.help{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.input,textarea.input,select.input{width:100%;min-height:44px;padding:10px 14px;border-radius:6px;border:2px solid var(--input);background:var(--surface);color:var(--foreground);font:400 16px/24px "Overpass",sans-serif}
+textarea.input{resize:vertical;min-height:88px}
+.input::placeholder{color:var(--muted-fg)}
+
+/* alternate-state label */
+.state-tag{display:inline-flex;align-items:center;gap:8px;font:600 13px/16px "Overpass",sans-serif;color:var(--muted-fg);padding:6px 10px;border:1px dashed var(--input);border-radius:6px;margin:48px 0 16px;background:var(--background)}
+.state-block{border-top:1px dashed var(--border);margin-top:56px}
+.state-block>.state-tag{margin-top:24px}
+
+/* tiers (AI) */
+.tier{display:inline-flex;align-items:center;gap:6px;padding:2px 8px 2px 6px;border-radius:6px;font:600 13px/20px "Overpass",sans-serif;white-space:nowrap}
+.tier-minor{background:var(--sunken);color:var(--muted-fg)}
+.tier-major{background:var(--attention-bg);color:var(--attention)}
+.tier-grant{background:transparent;color:var(--primary);box-shadow:inset 0 0 0 1.5px var(--primary)}
+
+/* design note */
+.design-note{max-width:1200px;margin:0 auto 64px;padding:0 32px}
+.design-note details{border:1px dashed var(--input);border-radius:10px;background:var(--surface);padding:0 20px}
+.design-note summary{cursor:pointer;min-height:48px;display:flex;align-items:center;font:600 15px/20px "Overpass";color:var(--muted-fg)}
+.design-note ul{margin:0 0 20px;padding-left:20px;max-width:88ch;font-size:15px;line-height:24px}
+.design-note li+li{margin-top:6px}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (max-width:900px){
+  .app-nav{padding:0 16px;gap:12px}
+  .page{padding:28px 16px 48px}
+  .design-note{padding:0 16px}
+  .hide-md{display:none!important}
+}
+
+
+.tiers{display:grid;grid-template-columns:repeat(3,1fr);gap:0;border:1px solid var(--border);border-radius:10px;background:var(--surface);margin-bottom:32px;overflow:hidden}
+.tiers>div{padding:16px 20px;display:flex;flex-direction:column;gap:8px}
+.tiers>div+div{border-left:1px solid var(--border)}
+.tiers .tier{align-self:flex-start}
+.tiers p{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.tiers p b{color:var(--foreground);font-weight:600}
+.ai-sub{display:flex;gap:4px;margin:0 0 20px;padding:4px;background:var(--sunken);border-radius:10px;width:max-content;max-width:100%;flex-wrap:wrap}
+.ai-sub a{padding:6px 14px;min-height:36px;display:inline-flex;align-items:center;gap:8px;border-radius:6px;font:600 14px/20px "Overpass";color:var(--muted-fg);text-decoration:none}
+.ai-sub a[aria-current="page"]{background:var(--surface);color:var(--foreground);box-shadow:0 1px 2px hsl(var(--shadow-color)/.12)}
+.tiers .here{background:color-mix(in srgb,var(--attention-bg) 45%,var(--surface))}
+@media (max-width:900px){.tiers{grid-template-columns:1fr}.tiers>div+div{border-left:0;border-top:1px solid var(--border)}}
+
+.status-line{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;margin:-12px 0 24px;font-size:14px;line-height:20px;color:var(--muted-fg)}
+.status-line b{color:var(--foreground);font-weight:600}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-bottom:24px}
+.tabs a{position:relative;padding:10px 14px;font:600 15px/20px "Overpass";color:var(--muted-fg);text-decoration:none}
+.tabs a[aria-current="page"]{color:var(--foreground)}
+.tabs a[aria-current="page"]::after{content:"";position:absolute;left:14px;right:14px;bottom:-1px;height:3px;background:var(--foreground);border-radius:2px}
+.tabs .c{font-weight:400;margin-left:6px}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 320px;gap:40px;align-items:start}
+.props{display:flex;flex-direction:column;gap:20px}
+.prop{background:var(--surface);border:1px solid var(--border);border-left:4px solid var(--attention);border-radius:10px;padding:20px 24px}
+.prop.stale{border-left-color:var(--input)}
+.meta{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;font-size:13px;line-height:18px;color:var(--muted-fg)}
+.meta .src{display:inline-flex;gap:6px;align-items:center}
+.meta .exp{margin-left:auto}
+.prop h2{font:700 19px/26px "Overpass";margin:12px 0 4px}
+.prop .target{font-size:14px;line-height:20px;color:var(--muted-fg)}
+.diff{margin:16px 0;padding:14px 16px;border-radius:6px;background:var(--background);border:1px solid var(--border)}
+.diff .lbl{font:600 13px/18px "Overpass";color:var(--muted-fg);margin-bottom:8px}
+.path{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.nd{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:6px;font-size:14px;line-height:20px;background:var(--surface);border:1.5px solid var(--line-1)}
+.nd.lock{border-style:dashed;border-color:var(--node-locked)}
+.edge-new{display:inline-flex;align-items:center;gap:4px;color:var(--primary);font:600 13px/18px "Overpass"}
+.edge-new i{display:inline-block;width:44px;height:0;border-top:3px solid var(--primary)}
+.ba{display:grid;grid-template-columns:auto 1fr;gap:6px 16px;font-size:15px;line-height:22px}
+.ba dt{color:var(--muted-fg);font-size:14px}
+.ba dd{margin:0}
+.ba .old{color:var(--muted-fg);text-decoration:line-through}
+.ba .new{color:var(--primary);font-weight:700}
+.why{font-size:15px;line-height:22px;max-width:68ch}
+.why span{color:var(--muted-fg)}
+.acts{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+.editing{margin:16px 0;padding:16px;border-radius:6px;border:2px solid var(--ring);background:var(--surface);display:grid;grid-template-columns:1fr 1fr;gap:12px 16px}
+.editing .full{grid-column:1/-1}
+.stale-note{display:flex;gap:10px;align-items:flex-start;margin:16px 0 0;padding:12px 14px;border-radius:6px;background:var(--attention-bg);font-size:15px;line-height:22px}
+.stale-note svg{color:var(--attention);margin-top:3px}
+.stale .ret-detail{font-size:14px;line-height:20px;color:var(--muted-fg);margin-top:8px}
+aside.decided h2{font:700 16px/24px "Overpass";margin-bottom:4px}
+aside.decided>p{font-size:14px;line-height:20px;color:var(--muted-fg);margin-bottom:12px}
+.dlist{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}
+.dlist li{padding:12px 0;border-bottom:1px solid var(--border);font-size:14px;line-height:20px}
+.dlist .st{display:inline-flex;gap:6px;align-items:center;font-weight:600;font-size:13px;color:var(--muted-fg)}
+.dlist .st.ok{color:var(--primary)}
+.dlist b{display:block;font-weight:600;font-size:15px;line-height:22px;margin:2px 0}
+.dlist .when{color:var(--muted-fg)}
+.empty{display:flex;gap:16px;align-items:flex-start;padding:28px;max-width:760px}
+@media (max-width:1100px){.layout{grid-template-columns:1fr}}
+@media (max-width:640px){.editing{grid-template-columns:1fr}.meta .exp{margin-left:0}.prop{padding:16px}}
+
+</style>
+</head>
+<body>
+<div class="mock-bar" role="region" aria-label="Controles del mockup"><span class="mock-name">Pantalla 24 de 30 (web): Propuestas de la IA</span><button type="button" id="themeBtn" aria-pressed="false"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg><span>Tema</span></button><a href="index.html"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>Índice</a></div>
+<header class="app-nav"><a class="brand" href="#"><span class="brand-mark" aria-hidden="true"></span>Marcos OS</a><nav aria-label="Principal"><a href="02-now.html">Ahora</a><a href="03-objectives-index.html">Objetivos</a><a href="09-global-graph.html">Mapa</a><a href="18-habits-today.html">Hábitos</a><a href="15-reviews-history.html">Revisiones</a><a href="22-retired-view.html">Retirados</a><a href="24-ai-proposals.html" aria-current="page">IA</a></nav><div class="nav-right"><button class="btn btn-outline btn-sm" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/><path d="M12 5v14"/></svg><span class="hide-md">Capturar</span> <kbd>C</kbd></button><button class="icon-btn hide-md" type="button" aria-label="Buscar o ir a (Ctrl+K)"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><kbd>Ctrl K</kbd></button><a class="icon-btn" href="27-settings-mcp-token.html" aria-label="Ajustes"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="21" x2="14" y1="4" y2="4"/><line x1="10" x2="3" y1="4" y2="4"/><line x1="21" x2="12" y1="12" y2="12"/><line x1="8" x2="3" y1="12" y2="12"/><line x1="21" x2="16" y1="20" y2="20"/><line x1="12" x2="3" y1="20" y2="20"/><line x1="14" x2="14" y1="2" y2="6"/><line x1="8" x2="8" y1="10" y2="14"/><line x1="16" x2="16" y1="18" y2="22"/></svg></a></div></header>
+
+<main class="page">
+  <nav class="ai-sub" aria-label="Secciones de IA"><a href="#" aria-current="page"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>Propuestas</a><a href="#"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>Actividad y permiso</a><a href="#"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Puente al VPS</a></nav>
+  <div class="page-head">
+    <div>
+      <h1>Propuestas de la IA</h1>
+      <p class="lede">Lo que la IA quiere cambiar y no puede hacer sola. Nada de esto se aplicó: se aplica exactamente como está cuando lo aceptás.</p>
+    </div>
+  </div>
+  <section class="tiers" aria-label="Qué puede hacer la IA sola"><div><span class="tier tier-minor"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.5" fill="currentColor" stroke="none"/></svg>Menor</span><p><b>Se aplica sola</b> y queda en el registro. Solo cosas que nombraste vos: marcar hecho, registrar un hábito, capturar, achicar los 2 minutos.</p></div><div class="here"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><p><b>Te llega como propuesta.</b> Crear, retirar, cambiar fechas o dependencias, mover. No cambia nada hasta que aceptás.</p></div><div><span class="tier tier-grant"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z"/><circle cx="16.5" cy="7.5" r=".5" fill="currentColor"/></svg>Con permiso</span><p><b>Mayor, aplicada bajo tu permiso.</b> Solo mientras haya un permiso activo que cubra ese objetivo. Lo revocás cuando quieras.</p></div></section>
+  <p class="status-line"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span><b>Sin permiso activo.</b> Todo cambio mayor pasa por esta lista.</span><a href="#">Dar un permiso temporal</a></p>
+
+  <div class="layout">
+    <div>
+      <nav class="tabs" aria-label="Propuestas"><a href="#" aria-current="page">Pendientes<span class="c">3</span></a><a href="#">Decididas</a></nav>
+      <div class="props">
+
+        <article class="prop" aria-labelledby="p1">
+          <div class="meta"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><span class="src"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Desde el puente, corrida 42 (Negociar la siguiente capa)</span><span>hoy 19:21</span><span class="exp">Vence el 4 oct si no decidís</span></div>
+          <h2 id="p1">Agregar una dependencia</h2>
+          <p class="target">Marcos OS en uso diario, plan Semana 2</p>
+          <div class="diff">
+            <p class="lbl">Después de aceptar</p>
+            <div class="path"><span class="nd">Clasificar y elegir prioridad</span><span class="edge-new"><i></i>abre</span><span class="nd lock"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Elegir acción del lunes</span></div>
+          </div>
+          <p class="why"><span>Por qué lo propone:</span> no podés elegir la acción del lunes sin haber elegido antes la prioridad de la semana. No crea ciclos.</p>
+          <div class="acts"><button class="btn btn-primary" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Aceptar</button><button class="btn btn-outline" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>Editar y aceptar</button><button class="btn btn-outline" type="button">Descartar</button></div>
+        </article>
+
+        <article class="prop" aria-labelledby="p2">
+          <div class="meta"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><span class="src"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Desde Claude Code, por MCP</span><span>hoy 18:40</span><span class="exp">Vence el 4 oct si no decidís</span></div>
+          <h2 id="p2">Cambiar la fecha objetivo de “Física II: examen”</h2>
+          <p class="target">Aprobar finales, plan Física II</p>
+          <div class="editing" role="group" aria-label="Editando la propuesta">
+            <div class="field"><label>Fecha objetivo actual</label><p class="muted" style="line-height:44px">viernes 2 oct</p></div>
+            <div class="field"><label for="nd">Nueva fecha objetivo</label><input id="nd" class="input" value="viernes 9 oct"></div>
+            <p class="help full">Estás editando. Se aplica lo que dejes acá, no la propuesta original.</p>
+          </div>
+          <p class="why"><span>Por qué lo propone:</span> en la captura del 25 sep escribiste “la mesa de Física se movió al 9”.</p>
+          <div class="acts"><button class="btn btn-primary" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Aceptar con este cambio</button><button class="btn btn-outline" type="button">Volver a la propuesta original</button></div>
+        </article>
+
+        <article class="prop stale" aria-labelledby="p3">
+          <div class="meta"><span class="tier tier-major"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 21 12 12 21 3 12Z"/></svg>Mayor</span><span class="src"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="4 17 10 11 4 5"/><line x1="12" x2="20" y1="19" y2="19"/></svg>Desde Claude Code, por MCP</span><span>ayer 17:02</span><span class="exp">Vence el 3 oct</span></div>
+          <h2 id="p3">Retirar “Revisar fórmula cuadrática”</h2>
+          <p class="target">Marcos OS en uso diario, días 4 a 6</p>
+          <p class="ret-detail">Razón propuesta: “se superpone con Revisar video Física”. Decisión: archivar tal cual.</p>
+          <p class="stale-note"><svg class="ic" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg><span><b>No se aplicó.</b> La tarea cambió después de esta propuesta: la marcaste hecha ayer a las 20:10. La IA tiene que volver a proponer con el estado nuevo.</span></p>
+          <div class="acts"><button class="btn btn-outline" type="button"><svg class="ic" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg>Pedir que la vuelva a proponer</button><button class="btn btn-outline" type="button">Descartar</button></div>
+        </article>
+      </div>
+    </div>
+
+    <aside class="decided" aria-labelledby="dec-h">
+      <h2 id="dec-h">Decididas esta semana</h2>
+      <p>Todo lo aceptado queda también en la actividad de la IA.</p>
+      <ul class="dlist">
+        <li><span class="st ok"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>Aceptada</span><b>Crear la tarea “Tres fricciones”</b><span class="when">sáb 26 sep, 21:52</span></li>
+        <li><span class="st ok"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/></svg>Aceptada con cambios</span><b>Mover “Micro: resumen y examen” al 7 oct</b><span class="when">vie 25 sep, 10:15</span></li>
+        <li><span class="st"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>Descartada</span><b>Cambiar “Dormir 22:00” a las 22:30</b><span class="when">jue 24 sep, 22:04</span></li>
+        <li><span class="st"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Venció sin decidir</span><b>Crear el hito “Semana 2”</b><span class="when">mar 22 sep, a los 7 días</span></li>
+      </ul>
+      <p style="margin-top:12px"><a href="#" class="sm">Ver todas las decididas</a></p>
+    </aside>
+  </div>
+
+  <div class="state-block">
+    <p class="state-tag"><svg class="ic" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.062 12.348a1 1 0 0 1 0-.696 10.75 10.75 0 0 1 19.876 0 1 1 0 0 1 0 .696 10.75 10.75 0 0 1-19.876 0"/><circle cx="12" cy="12" r="3"/></svg>Estado vacío: no hay propuestas pendientes</p>
+    <div class="panel empty"><svg class="ic" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg><div><h2>No hay nada esperando tu decisión</h2><p class="muted" style="margin-top:6px;max-width:60ch">Cuando la IA quiera crear, retirar, mover o cambiar fechas, la propuesta aparece acá con su razón. Las cosas menores las hace sola y las ves en Actividad.</p></div></div>
+  </div>
+</main>
+<aside class="design-note"><details><summary>Nota de diseño</summary><ul><li>Los tres niveles se explican arriba con forma + color + texto (punto, rombo, llave), y el nivel activo de esta pantalla (Mayor) está resaltado: el modelo mental se aprende en una lectura.</li><li>Autonomía (SDT): Aceptar, Editar y aceptar y Descartar al mismo tamaño; solo Aceptar es primario porque es lo que aplica exactamente la propuesta.</li><li>Cada propuesta muestra el efecto como diff visual (tramo nuevo en pino, lo viejo tachado en gris, nunca rojo) y la razón de la IA con la evidencia de Marco.</li><li>La propuesta vieja falla segura y lo dice en lenguaje llano (Nielsen 9), en violeta de atención: no es un error de Marco.</li><li>El vencimiento de 7 días se muestra como fecha, no como cuenta regresiva; lo vencido se archiva sin aplicar.</li></ul></details></aside>
+
+</body>
+</html>

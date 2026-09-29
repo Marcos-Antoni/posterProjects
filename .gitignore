@@ -30,3 +30,6 @@ yarn-error.log
 
 .agents
 .claude
+
+# graphify knowledge graph (regenerable)
+graphify-out/

@@ -43,7 +43,7 @@ test('weekdays are cast to an array of iso weekday numbers', function () {
         ->and($habit->recurrence_type)->toBe(RecurrenceType::SpecificWeekdays);
 });
 
-test('unit, daily_target, weekdays, times_per_week, planned_time and archived_at are nullable', function () {
+test('unit, daily_target, weekdays, times_per_week, planned_time and retired_at are nullable', function () {
     $habit = Habit::factory()->create();
 
     expect($habit->unit)->toBeNull()
@@ -51,15 +51,15 @@ test('unit, daily_target, weekdays, times_per_week, planned_time and archived_at
         ->and($habit->weekdays)->toBeNull()
         ->and($habit->times_per_week)->toBeNull()
         ->and($habit->planned_time)->toBeNull()
-        ->and($habit->archived_at)->toBeNull();
+        ->and($habit->retired_at)->toBeNull();
 
     $this->assertModelExists($habit);
 });
 
-test('archived factory state sets archived_at', function () {
-    $habit = Habit::factory()->archived()->create();
+test('retired factory state sets retired_at', function () {
+    $habit = Habit::factory()->retired()->create();
 
-    expect($habit->archived_at)->not->toBeNull();
+    expect($habit->retired_at)->not->toBeNull();
 });
 
 test('planned time factory state persists a time of day', function () {

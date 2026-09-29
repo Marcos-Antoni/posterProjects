@@ -1,138 +1,352 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
+/* Marcos OS screens (phase 2+): mockup classes scoped under .mos / .mos-sNN. */
+@import './marcos-screens.css' layer(components);
 
 @custom-variant dark (&:is(.dark *));
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 
+/*
+ * Marcos OS design tokens — "Marcas de senda".
+ *
+ * Source of truth: openspec/changes/marcos-os-web/visual/marcos-os-design-proposal.md
+ * §4.1 (Tailwind v4 + shadcn block, ported as-is) and visual/marcos-os-styleguide.html.
+ * Contrast ratios are checked with visual/contrast.py; re-run it for any color change.
+ * `--surface` / `--sunken` are the proposal's names for `--card` / `--muted`.
+ */
+:root {
+    --background: #eef2ef;
+    --foreground: #1b2a2a;
+    --card: #fafbf9;
+    --card-foreground: #1b2a2a;
+    --popover: #fafbf9;
+    --popover-foreground: #1b2a2a;
+    --primary: #1d5e4e;
+    --primary-foreground: #fafbf9;
+    --secondary: #e3e9e5;
+    --secondary-foreground: #1b2a2a;
+    --muted: #e3e9e5;
+    --muted-foreground: #56686a;
+    --accent: #e3e9e5;
+    --accent-foreground: #1b2a2a;
+    --destructive: #a33b2b;
+    --destructive-foreground: #fafbf9;
+    --border: #c9d3cf;
+    --input: #7d8c89;
+    --ring: #2b63d9;
+    --blaze: #e6ae1f;
+    --blaze-foreground: #1b2a2a;
+    --blaze-ink: #8a6200;
+    --attention: #5b4e8c;
+    --attention-bg: #ece8f6;
+    --node-locked: #7d8c89;
+    --node-available: #1d5e4e;
+    --node-active: #e6ae1f;
+    --node-done: #1d5e4e;
+    --node-retired: #7d8c89;
+    --line-1: #1d5e4e;
+    --line-2: #5b4e8c;
+    --line-3: #9c4a6e;
+    --radius: 0.625rem;
+    --shadow-color: 180 20% 14%;
+
+    --surface: var(--card);
+    --sunken: var(--muted);
+
+    /* Legacy shadcn slots (sidebar, charts) mapped onto the same palette. */
+    --sidebar: var(--card);
+    --sidebar-foreground: var(--foreground);
+    --sidebar-primary: var(--primary);
+    --sidebar-primary-foreground: var(--primary-foreground);
+    --sidebar-accent: var(--muted);
+    --sidebar-accent-foreground: var(--foreground);
+    --sidebar-border: var(--border);
+    --sidebar-ring: var(--ring);
+    --chart-1: var(--line-1);
+    --chart-2: var(--line-2);
+    --chart-3: var(--line-3);
+    --chart-4: var(--blaze-ink);
+    --chart-5: var(--muted-foreground);
+
+    color-scheme: light;
+}
+
+.dark {
+    --background: #142022;
+    --foreground: #e3ece8;
+    --card: #1c2a2c;
+    --card-foreground: #e3ece8;
+    --popover: #1c2a2c;
+    --popover-foreground: #e3ece8;
+    --primary: #6cc3a6;
+    --primary-foreground: #142022;
+    --secondary: #0f1819;
+    --secondary-foreground: #e3ece8;
+    --muted: #0f1819;
+    --muted-foreground: #9fb2ae;
+    --accent: #0f1819;
+    --accent-foreground: #e3ece8;
+    --destructive: #f08a78;
+    --destructive-foreground: #142022;
+    --border: #33464a;
+    --input: #6f8581;
+    --ring: #7fa8ff;
+    --blaze: #f0bf45;
+    --blaze-foreground: #142022;
+    --blaze-ink: #f0bf45;
+    --attention: #a99ce0;
+    --attention-bg: #2a2a45;
+    --node-locked: #6f8581;
+    --node-available: #6cc3a6;
+    --node-active: #f0bf45;
+    --node-done: #6cc3a6;
+    --node-retired: #6f8581;
+    --line-1: #6cc3a6;
+    --line-2: #a99ce0;
+    --line-3: #e08fb2;
+    --shadow-color: 190 40% 3%;
+
+    color-scheme: dark;
+}
+
 @theme {
-    --font-sans:
-        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
-        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
-        'Noto Color Emoji';
+    --font-sans: 'Overpass', ui-sans-serif, system-ui, sans-serif;
+    --font-display: 'Zilla Slab', ui-serif, Georgia, serif;
+
+    /* Type scale §4.2 (major third, line-heights on the 4px grid). */
+    --text-xs: 0.75rem;
+    --text-xs--line-height: 1rem;
+    --text-sm: 0.875rem;
+    --text-sm--line-height: 1.25rem;
+    --text-base: 1rem;
+    --text-base--line-height: 1.5rem;
+    --text-lg: 1.25rem;
+    --text-lg--line-height: 1.75rem;
+    --text-xl: 1.5rem;
+    --text-xl--line-height: 2rem;
+    --text-2xl: 1.875rem;
+    --text-2xl--line-height: 2.25rem;
+
+    /* Motion §4.6. */
+    --ease-paint: cubic-bezier(0.65, 0, 0.35, 1);
+    --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
     --font-heading: var(--font-sans);
-    --color-sidebar-ring: var(--sidebar-ring);
-    --color-sidebar-border: var(--sidebar-border);
-    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-    --color-sidebar-accent: var(--sidebar-accent);
-    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-    --color-sidebar-primary: var(--sidebar-primary);
-    --color-sidebar-foreground: var(--sidebar-foreground);
-    --color-sidebar: var(--sidebar);
-    --color-chart-5: var(--chart-5);
-    --color-chart-4: var(--chart-4);
-    --color-chart-3: var(--chart-3);
-    --color-chart-2: var(--chart-2);
-    --color-chart-1: var(--chart-1);
-    --color-ring: var(--ring);
-    --color-input: var(--input);
-    --color-border: var(--border);
-    --color-destructive: var(--destructive);
-    --color-accent-foreground: var(--accent-foreground);
-    --color-accent: var(--accent);
-    --color-muted-foreground: var(--muted-foreground);
-    --color-muted: var(--muted);
-    --color-secondary-foreground: var(--secondary-foreground);
-    --color-secondary: var(--secondary);
-    --color-primary-foreground: var(--primary-foreground);
-    --color-primary: var(--primary);
-    --color-popover-foreground: var(--popover-foreground);
-    --color-popover: var(--popover);
-    --color-card-foreground: var(--card-foreground);
-    --color-card: var(--card);
-    --color-foreground: var(--foreground);
+
     --color-background: var(--background);
-    --radius-sm: calc(var(--radius) * 0.6);
-    --radius-md: calc(var(--radius) * 0.8);
-    --radius-lg: var(--radius);
-    --radius-xl: calc(var(--radius) * 1.4);
-    --radius-2xl: calc(var(--radius) * 1.8);
-    --radius-3xl: calc(var(--radius) * 2.2);
-    --radius-4xl: calc(var(--radius) * 2.6);
-}
+    --color-foreground: var(--foreground);
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+    --color-surface: var(--card);
+    --color-sunken: var(--muted);
+    --color-blaze: var(--blaze);
+    --color-blaze-foreground: var(--blaze-foreground);
+    --color-blaze-ink: var(--blaze-ink);
+    --color-attention: var(--attention);
+    --color-attention-bg: var(--attention-bg);
+    --color-node-locked: var(--node-locked);
+    --color-node-available: var(--node-available);
+    --color-node-active: var(--node-active);
+    --color-node-done: var(--node-done);
+    --color-node-retired: var(--node-retired);
+    --color-line-1: var(--line-1);
+    --color-line-2: var(--line-2);
+    --color-line-3: var(--line-3);
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
 
-:root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.708 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.708 0 0);
-}
+    /* Radii by hierarchy §4.4 — never `rounded-full` on buttons. */
+    --radius-xs: 2px; /* la marca, chips de marca, tira semanal */
+    --radius-sm: 6px; /* botones, inputs, chip de 2 minutos */
+    --radius-md: 10px; /* tarjetas, nodos */
+    --radius-lg: 16px; /* sheets, diálogos, panel de IA */
+    --radius-xl: 24px; /* sheet inferior en móvil */
+    --radius-2xl: 24px;
+    --radius-3xl: 24px;
+    --radius-4xl: 24px;
 
-.dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.205 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.205 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.922 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.704 0.191 22.216);
-    --border: oklch(1 0 0 / 10%);
-    --input: oklch(1 0 0 / 15%);
-    --ring: oklch(0.556 0 0);
-    --chart-1: oklch(0.87 0 0);
-    --chart-2: oklch(0.556 0 0);
-    --chart-3: oklch(0.439 0 0);
-    --chart-4: oklch(0.371 0 0);
-    --chart-5: oklch(0.269 0 0);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.488 0.243 264.376);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(1 0 0 / 10%);
-    --sidebar-ring: oklch(0.556 0 0);
+    /* Elevation §4.5 — basalt-tinted, never grey rgba. */
+    --shadow-elevation-1:
+        0 1px 2px hsl(var(--shadow-color) / 0.1),
+        0 4px 12px hsl(var(--shadow-color) / 0.06);
+    --shadow-elevation-2: 0 8px 24px hsl(var(--shadow-color) / 0.14);
+    --shadow-elevation-3: 0 16px 48px hsl(var(--shadow-color) / 0.2);
 }
 
 @layer base {
     * {
-        @apply border-border outline-ring/50;
+        @apply border-border outline-ring;
     }
-    body {
-        @apply bg-background text-foreground;
-    }
+
     html {
         @apply font-sans;
+        -webkit-text-size-adjust: 100%;
+    }
+
+    body {
+        @apply bg-background text-base text-foreground;
+    }
+
+    /* Focus §4.9: 2px ring + 2px offset, always visible from the keyboard. */
+    :focus-visible {
+        outline: 2px solid var(--ring);
+        outline-offset: 2px;
+    }
+
+    a {
+        text-underline-offset: 3px;
+    }
+
+    code,
+    kbd {
+        font: inherit;
+    }
+
+    code {
+        font-weight: 600;
+    }
+}
+
+@utility tabular {
+    font-variant-numeric: tabular-nums;
+}
+
+/* Display type §4.2 — Zilla Slab only for objectives, summits and reviews. */
+@utility display-sm {
+    font-family: var(--font-display);
+    font-size: 1.875rem;
+    line-height: 2.25rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+@utility display-md {
+    font-family: var(--font-display);
+    font-size: 2.375rem;
+    line-height: 2.75rem;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+}
+
+@utility display-lg {
+    font-family: var(--font-display);
+    font-size: 3rem;
+    line-height: 3.25rem;
+    font-weight: 500;
+    letter-spacing: -0.005em;
+}
+
+/* Overlay behind dialogs and sheets §4.5: basalt at 40%. */
+@utility overlay-basalt {
+    background-color: hsl(var(--shadow-color) / 0.4);
+}
+
+@layer components {
+    /*
+     * La marca (§5.1): the blaze paints left to right in 180ms, the check
+     * glyph appears at 120ms. A missed-but-repairable day is a dashed
+     * outline, never red.
+     */
+    .blaze-mark {
+        position: relative;
+        flex: none;
+        width: 28px;
+        height: 20px;
+        border: 2px solid var(--blaze-ink);
+        border-radius: var(--radius-xs);
+        overflow: hidden;
+    }
+
+    .blaze-mark::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: var(--blaze);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 180ms var(--ease-paint);
+    }
+
+    .blaze-mark > svg {
+        position: absolute;
+        inset: 0;
+        margin: auto;
+        width: 14px;
+        height: 14px;
+        color: var(--blaze-foreground);
+        opacity: 0;
+        transition: opacity 60ms linear 120ms;
+    }
+
+    .blaze-mark[data-gap='true'] {
+        border-style: dashed;
+    }
+
+    [aria-checked='true'] > .blaze-mark::before,
+    .blaze-mark[data-checked='true']::before {
+        transform: scaleX(1);
+    }
+
+    [aria-checked='true'] > .blaze-mark > svg,
+    .blaze-mark[data-checked='true'] > svg {
+        opacity: 1;
+    }
+
+    /* Mini blaze used inside the 2-minute chip and the brand mark. */
+    .blaze-mini {
+        flex: none;
+        width: 20px;
+        height: 14px;
+        background: var(--blaze);
+        border: 2px solid var(--blaze-ink);
+        border-radius: var(--radius-xs);
+    }
+}
+
+/* Reduced motion §4.6: paint instantly, sheets fade only. */
+@media (prefers-reduced-motion: reduce) {
+    .blaze-mark::before,
+    .blaze-mark > svg {
+        transition: none;
+    }
+
+    *,
+    ::before,
+    ::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 1ms !important;
+        scroll-behavior: auto !important;
     }
 }
