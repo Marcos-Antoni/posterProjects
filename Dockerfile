@@ -5,6 +5,21 @@ FROM serversideup/php:8.4-fpm-nginx
 USER root
 RUN install-php-extensions pdo_pgsql intl
 
+# marcos:export-legacy / marcos:rehearse-restore need pg_dump/pg_restore, which
+# this image does not ship. The client must match the production server's major
+# version (postgres:16-alpine): a v17 pg_dump writes `SET transaction_timeout`,
+# which a v16 server rejects on restore. Debian trixie only ships v17, so the
+# v16 client comes from the official PGDG repository.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 \
+    && rm -rf /var/lib/apt/lists/*
+
 # Node is needed at build time: the Wayfinder Vite plugin shells out to
 # `php artisan wayfinder:generate`, so assets must build inside the PHP image.
 COPY --from=node /usr/local/bin/node /usr/local/bin/node
