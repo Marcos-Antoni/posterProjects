@@ -188,6 +188,16 @@ test('a milestone completed with evidence keeps it', function () {
         ->and($milestone->evidence->link)->toBe('https://example.test/foto');
 });
 
+// Phase 7 — the milestone summit (screen 12, reviews spec "A Milestone
+// Summit Records Evidence"): evidence keeps an optional image path too.
+test('a milestone completed with an image keeps its path', function () {
+    $milestone = Item::factory()->milestone()->create();
+
+    app(CheckItem::class)(mosOwner($milestone), $milestone, 'Foto del pizarrón', null, 'milestone-evidence/abc.jpg');
+
+    expect($milestone->fresh()->evidence->image_path)->toBe('milestone-evidence/abc.jpg');
+});
+
 test('checking the active item ends its focus session', function () {
     $item = Item::factory()->active()->create();
     FocusSession::query()->create(['item_id' => $item->id, 'started_at' => now()->subMinutes(13)]);

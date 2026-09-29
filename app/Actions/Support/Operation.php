@@ -45,6 +45,15 @@ enum Operation: string
     case RetireElement = 'retire-element';
     case RestoreElement = 'restore-element';
     // --- end phase 6 ---
+    // --- phase 7: capture inbox and reviews ---
+    case CreateCapture = 'create-capture';
+    case ConvertCaptureToItem = 'convert-capture-to-item';
+    case ConvertCaptureToHabit = 'convert-capture-to-habit';
+    case ConvertCaptureToObjectiveDraft = 'convert-capture-to-objective-draft';
+    case CreateObjectiveDraft = 'create-objective-draft';
+    case SubmitWeeklyReview = 'submit-weekly-review';
+    case CloseObjective = 'close-objective';
+    // --- end phase 7 ---
 
     public function tier(): AiTier
     {
@@ -54,6 +63,7 @@ enum Operation: string
             self::UpdateMetricCurrent,
             self::ShrinkStep => AiTier::Minor,
             self::LogHabitEntry, self::LogHabitTwoMinute => AiTier::Minor, // phase 4
+            self::CreateCapture => AiTier::Minor, // phase 7: the AI may note something down while it works
             default => AiTier::Major,
         };
     }

@@ -35,6 +35,7 @@ test('the server lists exactly the Marcos OS tools of this phase plus the habit 
         'objective-graph', 'global-graph', // phase 5
         'create-habit', 'update-habit', 'retire-habit', 'restore-habit', 'retired-view', 'today-habits', 'list-habits', 'show-habit', 'log-habit-entry',
         'log-two-minute', // phase 4
+        'capture', 'list-inbox', // phase 7
     ])->sort()->values()->all())
         ->and($names)->not->toContain('board-view', 'backlog-view', 'calendar-view', 'create-sprint', 'create-label', 'create-comment', 'force-delete-project', 'move-issue', 'list-trashed-projects', 'create-project', 'show-issue');
 });

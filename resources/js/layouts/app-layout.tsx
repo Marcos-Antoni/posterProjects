@@ -3,6 +3,7 @@ import type { PropsWithChildren } from 'react';
 
 import { CommandPalette } from '@/components/marcos/command-palette';
 import { SettingsIcon } from '@/components/marcos/icons';
+import { QuickCapture } from '@/components/marcos/quick-capture';
 import { Toaster } from '@/components/ui/toast';
 import { useSyncAppearance } from '@/hooks/use-appearance';
 import { now } from '@/routes';
@@ -10,6 +11,7 @@ import { today as habitsToday } from '@/routes/habits';
 import { index as mapIndex } from '@/routes/map';
 import { index as objectivesIndex } from '@/routes/objectives';
 import { index as retiredIndex } from '@/routes/retired';
+import { index as reviewsIndex } from '@/routes/reviews';
 import { show as mcpTokenShow } from '@/routes/settings/mcp-token';
 
 type NavEntry = { label: string; href: string; match: string };
@@ -32,6 +34,11 @@ const NAV: NavEntry[] = [
         href: habitsToday().url,
         match: '/habits',
     } /* phase 2 (existing screen) */,
+    {
+        label: 'Revisiones',
+        href: reviewsIndex().url,
+        match: '/reviews',
+    } /* phase 7 */,
     {
         label: 'Retirados',
         href: retiredIndex().url,
@@ -88,6 +95,7 @@ export default function AppLayout({
                     ))}
                 </nav>
                 <div className="right">
+                    <QuickCapture /> {/* phase 7 */}
                     <CommandPalette />
                     <Link
                         className="btn-sm btn-ghost"

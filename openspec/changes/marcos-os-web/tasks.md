@@ -73,7 +73,7 @@
 ## 6. Phase 6 — Retirement protocol and Retired view
 
 - [x] 6.1 Test + implement `RetireElement` for item, milestone, plan, habit, objective, capture: reason ≥10 chars, move/split/archive-as-is, atomic, dependents recomputed (`retirement`, design D8)
-  - [ ] 6.1b Capture retirement — **waits for Phase 7** (no `captures` table yet): Phase 7 implements `App\Actions\Retirement\RetirementHandler` for `Capture` and registers it in `RetirementHandlers` (the `RetirableKind::Capture` kind, the Retired view filter and `RetireElement`'s signature already support it); see LOG NEED
+  - [x] 6.1b Capture retirement — done in Phase 7: `App\Actions\Retirement\CaptureRetirementHandler` registered on `RetirementHandlers` in `AppServiceProvider::boot()` (the `RetirableKind::Capture` kind, morph alias `capture`, Retired view filter and `RetireElement`'s signature already supported it)
 - [x] 6.2 Test + implement `NotRetired` global scope on all retirable models and the hidden-everywhere rule (web, API lists, MCP lists)
 - [x] 6.3 Test + implement restore (parent must not be retired, history kept)
 - [x] 6.4 Migrate habit archive/unarchive to retire/restore across web, API 404 set and MCP (`habits`)
@@ -82,14 +82,14 @@
 
 ## 7. Phase 7 — Capture inbox and reviews
 
-- [ ] 7.1 Migrations + models: captures, weekly_priorities, reviews
-- [ ] 7.2 Test + implement capture (one field, source, never on Now) and global quick-entry overlay with shortcut (`capture-inbox`, screens 16–17) (mockups: visual/screens/16-capture-inbox.html, 17-capture-quick-entry.html)
-- [ ] 7.3 Test + implement triage: convert to item/habit/objective draft or retire, link kept (mockup: visual/screens/16-capture-inbox.html)
-- [ ] 7.4 Test + implement weekly priority (1 main + ≤2 maintenance) feeding Now selection (`reviews`)
-- [ ] 7.5 Weekly review screen: progress first, then questions; skipping blocks nothing (screen 14) (mockup: visual/screens/14-weekly-review.html)
-- [ ] 7.6 Test + implement milestone summit with evidence text/link/image (≤5 MB, images only) (screen 12) (mockup: visual/screens/12-milestone-summit.html)
-- [ ] 7.7 Test + implement objective close: learning review + keep/retire decision per linked habit, saved atomically (screen 13) (mockup: visual/screens/13-objective-close.html)
-- [ ] 7.8 Reviews history screen (screen 15); MCP `capture` and `list-inbox` (mockup: visual/screens/15-reviews-history.html)
+- [x] 7.1 Migrations + models: captures, weekly_priorities, reviews
+- [x] 7.2 Test + implement capture (one field, source, never on Now) and global quick-entry overlay with shortcut (`capture-inbox`, screens 16–17) (mockups: visual/screens/16-capture-inbox.html, 17-capture-quick-entry.html)
+- [x] 7.3 Test + implement triage: convert to item/habit/objective draft or retire, link kept (mockup: visual/screens/16-capture-inbox.html)
+- [x] 7.4 Test + implement weekly priority (1 main + ≤2 maintenance) feeding Now selection (`reviews`)
+- [x] 7.5 Weekly review screen: progress first, then questions; skipping blocks nothing (screen 14) (mockup: visual/screens/14-weekly-review.html)
+- [x] 7.6 Test + implement milestone summit with evidence text/link/image (≤5 MB, images only) (screen 12) (mockup: visual/screens/12-milestone-summit.html)
+- [x] 7.7 Test + implement objective close: learning review + keep/retire decision per linked habit, saved atomically (screen 13) (mockup: visual/screens/13-objective-close.html)
+- [x] 7.8 Reviews history screen (screen 15); MCP `capture` and `list-inbox` (mockup: visual/screens/15-reviews-history.html)
 
 ## 8. Phase 8 — AI operations (tiers, proposals, grants, audit)
 

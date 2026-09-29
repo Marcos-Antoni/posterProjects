@@ -19,6 +19,7 @@ import {
     retireContext as objectiveRetireContext,
     update as objectiveUpdate,
 } from '@/routes/objectives';
+import { show as objectiveCloseForm } from '@/routes/objectives/close';
 import controlMap from '@/routes/objectives/control-map';
 import {
     create as planCreate,
@@ -114,6 +115,15 @@ export default function ObjectiveShow({
                             href={objectiveEdit(objective.key)}
                         >
                             Editar el objetivo
+                        </Link>
+                    )}
+                    {writable && (
+                        /* phase 7 */
+                        <Link
+                            className="btn-sm btn-ghost"
+                            href={objectiveCloseForm(objective.key)}
+                        >
+                            Cerrar objetivo
                         </Link>
                     )}
                     {writable && (

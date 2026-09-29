@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Enums\ItemKind;
 use App\Models\Item;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Storage;
 
 /**
  * Loads and presents one item with everything its screens need, in a fixed
@@ -59,6 +60,7 @@ final class ItemDetails
             'evidence' => $item->kind === ItemKind::Milestone && $item->evidence !== null ? [
                 'text' => $item->evidence->text,
                 'link' => $item->evidence->link,
+                'image_url' => $item->evidence->image_path !== null ? Storage::disk('public')->url($item->evidence->image_path) : null,
             ] : null,
             'updated_at' => $item->updated_at?->toIso8601String(),
         ];

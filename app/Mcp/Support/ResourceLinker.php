@@ -56,4 +56,12 @@ class ResourceLinker
     {
         return route('habits.show', ['habit' => $habit->id]);
     }
+
+    /**
+     * The capture inbox (phase 7).
+     */
+    public function inbox(): string
+    {
+        return route('captures.index');
+    }
 }

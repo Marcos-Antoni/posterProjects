@@ -1,16 +1,19 @@
 <?php
 
+use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\ControlMapEntryController;
 use App\Http\Controllers\HabitController;
 use App\Http\Controllers\HabitEntryController;
 use App\Http\Controllers\ItemController;
 use App\Http\Controllers\ItemDependencyController;
 use App\Http\Controllers\ItemFocusController;
+use App\Http\Controllers\MilestoneSummitController;
 use App\Http\Controllers\NowController;
 use App\Http\Controllers\ObjectiveController;
 use App\Http\Controllers\PlanController;
 use App\Http\Controllers\RetiredController;
 use App\Http\Controllers\RetirementController;
+use App\Http\Controllers\ReviewController;
 use App\Http\Controllers\Settings\AppearanceController;
 use App\Http\Controllers\Settings\McpTokenController;
 use App\Http\Controllers\Settings\MobileTokenController;
@@ -171,6 +174,31 @@ Route::middleware('auth')->group(function (): void {
     Route::get('habits/{habit}/retire', [RetirementController::class, 'habitContext'])->name('habits.retire-context');
     Route::post('habits/{habit}/retire', [RetirementController::class, 'retireHabit'])->name('habits.retire');
     // --- end phase 6 ---
+
+    // --- phase 7: capture inbox and reviews ---
+    // Capture (screens 16-17): one field, reachable from every screen, never
+    // touching Now or an objective until triaged.
+    Route::get('captures', [CaptureController::class, 'index'])->name('captures.index');
+    Route::post('captures', [CaptureController::class, 'store'])->name('captures.store');
+    Route::post('captures/{capture}/convert-to-item', [CaptureController::class, 'convertToItem'])->name('captures.convert-to-item');
+    Route::post('captures/{capture}/convert-to-habit', [CaptureController::class, 'convertToHabit'])->name('captures.convert-to-habit');
+    Route::post('captures/{capture}/convert-to-objective', [CaptureController::class, 'convertToObjective'])->name('captures.convert-to-objective');
+    Route::get('captures/{capture}/retire', [RetirementController::class, 'captureContext'])->name('captures.retire-context');
+    Route::post('captures/{capture}/retire', [RetirementController::class, 'retireCapture'])->name('captures.retire');
+
+    // The milestone summit (screen 12): its evidence form posts to the
+    // existing `objectives.items.check` route above.
+    Route::get('objectives/{objective}/items/{item}/summit', [MilestoneSummitController::class, 'show'])->name('objectives.items.summit');
+
+    // Objective close, the learning review (screen 13).
+    Route::get('objectives/{objective}/close', [ObjectiveController::class, 'closeShow'])->name('objectives.close.show');
+    Route::post('objectives/{objective}/close', [ObjectiveController::class, 'close'])->name('objectives.close.store');
+
+    // Weekly review (screen 14) and reviews history (screen 15).
+    Route::get('reviews', [ReviewController::class, 'index'])->name('reviews.index');
+    Route::get('reviews/weekly', [ReviewController::class, 'weekly'])->name('reviews.weekly.show');
+    Route::post('reviews/weekly', [ReviewController::class, 'storeWeekly'])->name('reviews.weekly.store');
+    // --- end phase 7 ---
 });
 
 require __DIR__.'/auth.php';

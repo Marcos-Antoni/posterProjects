@@ -30,7 +30,7 @@ class CheckItem
         private PlanStateRecalculator $planStates,
     ) {}
 
-    public function __invoke(Actor $actor, Item $item, ?string $evidence = null, ?string $link = null): CheckResult
+    public function __invoke(Actor $actor, Item $item, ?string $evidence = null, ?string $link = null, ?string $imagePath = null): CheckResult
     {
         $this->ensureItemWritable($actor, $item);
 
@@ -58,7 +58,7 @@ class CheckItem
             throw ValidationException::withMessages(['evidence' => self::MISSING_EVIDENCE]);
         }
 
-        return $this->transaction->run($actor, Operation::CheckItem, $item, function () use ($item, $evidence, $link): CheckResult {
+        return $this->transaction->run($actor, Operation::CheckItem, $item, function () use ($item, $evidence, $link, $imagePath): CheckResult {
             $lockedBefore = $this->lockedDependentIds($item);
 
             $item->update(['completed_at' => now(), 'is_active' => false]);
@@ -66,7 +66,11 @@ class CheckItem
             $item->focusSessions()->whereNull('ended_at')->update(['ended_at' => now(), 'end_reason' => 'done']);
 
             if ($item->kind === ItemKind::Milestone) {
-                $item->evidence()->updateOrCreate([], ['text' => $evidence, 'link' => filled($link) ? $link : null]);
+                $item->evidence()->updateOrCreate([], [
+                    'text' => $evidence,
+                    'link' => filled($link) ? $link : null,
+                    'image_path' => $imagePath,
+                ]);
             }
 
             $this->planStates->recalculate($item->plan);

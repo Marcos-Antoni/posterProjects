@@ -2,8 +2,8 @@
 
 use App\Actions\Items\StartItem;
 use App\Actions\Support\Actor;
-use App\Actions\Support\NoWeeklyMainPriority;
 use App\Actions\Support\WeeklyMainPriority;
+use App\Actions\Support\WeeklyPriorityReader;
 use App\Http\Resources\NowView;
 use App\Models\Item;
 use App\Models\ItemDependency;
@@ -40,8 +40,8 @@ function p3Objective(User $owner, string $key, int $position = 0, array $attribu
     return Objective::factory()->for($owner)->withControlPlan()->create(['key' => $key, 'position' => $position, ...$attributes]);
 }
 
-test('without a phase 7 binding there is no weekly main priority', function () {
-    expect(app(WeeklyMainPriority::class))->toBeInstanceOf(NoWeeklyMainPriority::class)
+test('with no weekly review submitted, there is no weekly main priority (phase 7 default)', function () {
+    expect(app(WeeklyMainPriority::class))->toBeInstanceOf(WeeklyPriorityReader::class)
         ->and(app(WeeklyMainPriority::class)->currentFor(User::factory()->create()))->toBeNull();
 });
 
@@ -179,5 +179,8 @@ test('the selection runs in a constant number of queries, however many objective
 
     $many = mosQueryCount(fn () => app(NowView::class)->select($owner));
 
-    expect($many)->toBe($few)->and($few)->toBeLessThanOrEqual(4);
+    // 5, not 4: phase 7's real `WeeklyPriorityReader` adds one fixed query
+    // (the current ISO week's `weekly_priorities` row) over the old
+    // zero-query `NoWeeklyMainPriority` null object — still constant.
+    expect($many)->toBe($few)->and($few)->toBeLessThanOrEqual(5);
 });

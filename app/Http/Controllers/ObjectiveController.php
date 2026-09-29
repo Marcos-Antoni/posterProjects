@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Objectives\ActivateObjective;
+use App\Actions\Objectives\CloseObjective;
 use App\Actions\Objectives\CreateObjective;
 use App\Actions\Objectives\ReopenObjective;
 use App\Actions\Objectives\UpdateObjective;
 use App\Actions\Support\Actor;
+use App\Enums\ItemKind;
 use App\Enums\ItemState;
 use App\Enums\ObjectiveState;
 use App\Enums\PlanState;
+use App\Http\Requests\Objectives\CloseObjectiveRequest;
 use App\Http\Requests\StoreObjectiveRequest;
 use App\Http\Requests\UpdateObjectiveRequest;
 use App\Http\Resources\ObjectiveTree;
 use App\Models\ControlMapEntry;
+use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
 use Illuminate\Http\RedirectResponse;
@@ -142,6 +146,73 @@ class ObjectiveController extends Controller
         $reopenObjective(Actor::ownerWeb($request->user()), $objective);
 
         return redirect()->route('objectives.show', $objective->key);
+    }
+
+    /**
+     * Screen 13: the learning review form, with the objective's progress and
+     * every habit linked to it (with its current streak) so the owner
+     * decides keep/retire with the full picture, not by impulse.
+     */
+    public function closeShow(Objective $objective): Response
+    {
+        $objective->load('controlPlan');
+
+        $items = Item::query()->withState()->where('objective_id', $objective->id)->get();
+
+        return Inertia::render('objectives/close', [
+            'objective' => $this->presentObjective($objective),
+            'control_plan' => ObjectiveTree::controlPlan($objective->controlPlan),
+            'progress' => [
+                'done' => $items->where('state', ItemState::Done)->count(),
+                'total' => $items->count(),
+                'milestones_done' => $items->filter(fn (Item $item): bool => $item->kind === ItemKind::Milestone && $item->state === ItemState::Done)->count(),
+            ],
+            'habits' => $objective->habits()->get()->map(fn (Habit $habit): array => [
+                'id' => $habit->id,
+                'name' => $habit->name,
+                'two_minute_version' => $habit->two_minute_version,
+                'current_streak' => $habit->currentStreak(),
+            ])->all(),
+        ]);
+    }
+
+    public function close(CloseObjectiveRequest $request, Objective $objective, CloseObjective $closeObjective): RedirectResponse
+    {
+        $closeObjective(
+            Actor::ownerWeb($request->user()),
+            $objective,
+            [
+                'what_learned' => (string) $request->validated('what_learned'),
+                'what_repeat' => (string) $request->validated('what_repeat'),
+                'what_change' => (string) $request->validated('what_change'),
+            ],
+            $this->habitDecisions($request),
+        );
+
+        return redirect()->route('objectives.index');
+    }
+
+    /**
+     * @return list<array{habit_id: int, decision: string, reason?: string|null, relink_objective_id?: int|null}>
+     */
+    private function habitDecisions(CloseObjectiveRequest $request): array
+    {
+        $decisions = [];
+
+        foreach ((array) $request->validated('habits', []) as $entry) {
+            if (! is_array($entry)) {
+                continue;
+            }
+
+            $decisions[] = [
+                'habit_id' => (int) ($entry['habit_id'] ?? 0),
+                'decision' => (string) ($entry['decision'] ?? ''),
+                'reason' => isset($entry['reason']) ? (string) $entry['reason'] : null,
+                'relink_objective_id' => isset($entry['relink_objective_id']) ? (int) $entry['relink_objective_id'] : null,
+            ];
+        }
+
+        return $decisions;
     }
 
     /**

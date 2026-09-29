@@ -7,6 +7,7 @@ use App\Enums\ItemKind;
 use App\Enums\ItemState;
 use App\Enums\ObjectiveState;
 use App\Enums\RetirementDecision;
+use App\Models\Capture;
 use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
@@ -45,6 +46,7 @@ final class RetireContext
             $element instanceof Plan => $this->plan($element),
             $element instanceof Objective => $this->objective($owner, $element),
             $element instanceof Habit => ['Hábito, con todo su historial.', [], [], null],
+            $element instanceof Capture => ['Captura sin triar.', [], [], null], // phase 7
             default => ['', [], [], null],
         };
 
@@ -183,6 +185,7 @@ final class RetireContext
                 RetirementDecision::Split => '',
                 RetirementDecision::ArchiveAsIs => $contentCount === 0 ? 'Se retira solo.' : 'Sus planes y tareas se retiran con la misma razón. Los hábitos no se tocan.',
             },
+            $element instanceof Capture => 'Se retira sola; deja la lista de sin decidir.', // phase 7
             default => 'Se retira con todo su historial y deja de pedir registros.',
         };
     }

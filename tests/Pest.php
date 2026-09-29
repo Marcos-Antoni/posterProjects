@@ -2,6 +2,7 @@
 
 use App\Actions\Support\Actor;
 use App\Enums\TokenName;
+use App\Models\Capture;
 use App\Models\Item;
 use App\Models\Objective;
 use App\Models\Plan;
@@ -100,10 +101,15 @@ function mosErrors(Closure $callback): array
 }
 
 /**
- * The owner-web actor of the objective an item, plan or objective belongs to.
+ * The owner-web actor of the objective an item, plan or objective belongs to
+ * (a capture's own `user_id`, phase 7).
  */
-function mosOwner(Item|Plan|Objective $model): Actor
+function mosOwner(Item|Plan|Objective|Capture $model): Actor
 {
+    if ($model instanceof Capture) {
+        return Actor::ownerWeb($model->user);
+    }
+
     $objective = $model instanceof Objective ? $model : $model->objective;
 
     return Actor::ownerWeb($objective->user);

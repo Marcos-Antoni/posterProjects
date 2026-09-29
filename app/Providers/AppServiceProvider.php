@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Actions\Retirement\CaptureRetirementHandler;
 use App\Actions\Retirement\RetirementHandlers;
 use App\Actions\Support\AuditWriter;
 use App\Actions\Support\DatabaseLastActivity;
@@ -9,6 +10,8 @@ use App\Actions\Support\LastActivity;
 use App\Actions\Support\LogAuditWriter;
 use App\Actions\Support\NoWeeklyMainPriority;
 use App\Actions\Support\WeeklyMainPriority;
+use App\Actions\Support\WeeklyPriorityReader;
+use App\Models\Capture;
 use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
@@ -40,16 +43,18 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(AuditWriter::class, LogAuditWriter::class);
 
         // --- phase 3: now ---
-        // The weekly main priority that drives the Now suggestion; Phase 7
-        // (weekly reviews) rebinds it to its `weekly_priorities` reader.
+        // The weekly main priority that drives the Now suggestion; rebound
+        // to its `weekly_priorities` reader below (phase 7).
         $this->app->bind(WeeklyMainPriority::class, NoWeeklyMainPriority::class);
         // Last showing-up moment for the restart offer; Phase 4 extends it
         // with habit_days.two_minute_logged.
         $this->app->bind(LastActivity::class, DatabaseLastActivity::class);
         // --- end phase 3 ---
-        // Phase 6 (design D8): one registry of retirement handlers per model;
-        // Phase 7 registers captures on it.
+        // Phase 6 (design D8): one registry of retirement handlers per model.
         $this->app->singleton(RetirementHandlers::class);
+        // --- phase 7: capture inbox and reviews ---
+        $this->app->bind(WeeklyMainPriority::class, WeeklyPriorityReader::class);
+        // --- end phase 7 ---
     }
 
     /**
@@ -61,6 +66,10 @@ class AppServiceProvider extends ServiceProvider
         $this->configureRateLimiting();
         $this->configureMorphMap();
         $this->configureRouteBindings();
+
+        // --- phase 7: captures plug into the retirement protocol ---
+        $this->app->make(RetirementHandlers::class)->register(Capture::class, CaptureRetirementHandler::class);
+        // --- end phase 7 ---
     }
 
     /**
@@ -118,6 +127,7 @@ class AppServiceProvider extends ServiceProvider
             'plan' => Plan::class,
             'item' => Item::class,
             'habit' => Habit::class, // phase 6
+            'capture' => Capture::class, // phase 7
         ]);
     }
 

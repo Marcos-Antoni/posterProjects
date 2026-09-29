@@ -80,11 +80,15 @@ class ItemController extends Controller
 
     public function check(CheckItemRequest $request, Objective $objective, string $item, CheckItem $checkItem): RedirectResponse
     {
+        $storedPath = $request->file('image')?->store('milestone-evidence', 'public');
+        $imagePath = is_string($storedPath) ? $storedPath : null;
+
         $result = $checkItem(
             Actor::ownerWeb($request->user()),
             $this->resolve($objective, $item),
             $request->validated('evidence'),
             $request->validated('link'),
+            $imagePath,
         );
 
         return back()->with('unlocked', $result->unlocked->map(fn (Item $unlocked): array => [

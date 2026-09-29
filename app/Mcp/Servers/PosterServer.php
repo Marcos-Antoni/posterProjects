@@ -2,6 +2,8 @@
 
 namespace App\Mcp\Servers;
 
+use App\Mcp\Tools\Captures\Capture;
+use App\Mcp\Tools\Captures\ListInbox;
 use App\Mcp\Tools\Graphs\GlobalGraph;
 use App\Mcp\Tools\Graphs\ObjectiveGraph;
 use App\Mcp\Tools\Habits\CreateHabit;
@@ -65,5 +67,9 @@ class PosterServer extends Server
         RestoreHabit::class,
         RetiredView::class,
         // --- end phase 6 ---
+        // --- phase 7: capture inbox and reviews ---
+        Capture::class,
+        ListInbox::class,
+        // --- end phase 7 ---
     ];
 }

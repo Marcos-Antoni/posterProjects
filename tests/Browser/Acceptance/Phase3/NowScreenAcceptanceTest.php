@@ -127,8 +127,10 @@ test('the cue never moves focus the owner placed, and a real Tab sequence reache
         JS);
     $page->keys('a.brand', 'Tab');
     // Each press goes to the element that has focus now, so this is the
-    // browser's own tab order from the brand onwards.
-    foreach (range(1, 10) as $step) {
+    // browser's own tab order from the brand onwards. 12, not 10: phase 7
+    // added two tab stops before the Now card itself — the "Revisiones" nav
+    // entry and the appbar's "Capturar" button.
+    foreach (range(1, 12) as $step) {
         $page->keys(':focus', 'Tab');
     }
 
@@ -163,7 +165,7 @@ test('"Sigo" hides the cue only until the next tramo, where it comes back', func
     expect($task->refresh()->is_active)->toBeTrue();
 });
 
-test('"Terminé" on an active milestone opens the summit ask for evidence instead of checking it blindly', function () {
+test('"Terminé" on an active milestone opens the summit (screen 12) instead of checking it blindly', function () {
     [$owner, $task, $next, $milestone] = p3tSeed();
     $task->update(['completed_at' => now()]);
     $next->update(['completed_at' => now()]);
@@ -174,14 +176,14 @@ test('"Terminé" on an active milestone opens the summit ask for evidence instea
 
     $page->assertPresent('[data-testid="focus-cue"]')
         ->click('Terminé')
-        ->assertSee('Cumbre.')
-        ->assertPresent('#evidence-text');
+        ->waitForText('Evidencia del hito')
+        ->assertNoJavascriptErrors();
 
     expect($milestone->refresh()->completed_at)->toBeNull();
 
-    $page->fill('#evidence-text', 'El boceto de Ahora está en uso')
-        ->click('Marcar el hito')
-        ->waitForText('Cerrar por hoy')
+    $page->fill('evidence', 'El boceto de Ahora está en uso')
+        ->click('Guardar y cerrar por hoy')
+        ->waitForText('Listo por hoy')
         ->assertNoJavascriptErrors();
 
     expect($milestone->refresh()->completed_at)->not->toBeNull()

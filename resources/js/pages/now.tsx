@@ -22,6 +22,7 @@ import { index as objectivesIndex } from '@/routes/objectives';
 import {
     check as itemCheck,
     start as itemStart,
+    summit as itemSummit,
     twoMinute as itemTwoMinute,
     uncheck as itemUncheck,
 } from '@/routes/objectives/items';
@@ -56,7 +57,7 @@ type Props = {
 };
 
 /** What the card is showing besides the task itself. */
-type Panel = 'none' | 'stuck' | 'two-minutes' | 'evidence';
+type Panel = 'none' | 'stuck' | 'two-minutes';
 
 type JustDone = {
     item: ItemRef;
@@ -104,7 +105,9 @@ export default function Now({
         }
 
         if (now.kind === 'milestone') {
-            setPanel('evidence');
+            // The summit (screen 12) is the milestone completion moment:
+            // it collects the evidence there, not inline on Now.
+            router.visit(itemSummit([now.objective.key, now.key]).url);
 
             return;
         }
@@ -280,14 +283,6 @@ export default function Now({
                                 onClose={() => setPanel('none')}
                             />
                         )}
-                        {panel === 'evidence' && (
-                            <MilestoneEvidence
-                                item={now}
-                                onDone={setJustDone}
-                                onClose={() => setPanel('none')}
-                            />
-                        )}
-
                         <Opens item={now} />
 
                         <div className="actions">
@@ -598,94 +593,6 @@ function StuckFallback({
                 Sin IA en este momento: la escribís vos. Si la probás, reemplaza
                 la versión de 2 minutos y la anterior queda en el historial.
             </p>
-        </form>
-    );
-}
-
-/**
- * A milestone is marked with one line of evidence (issues spec). The full
- * summit moment (screen 12) is Phase 7's; until then the line is asked here.
- */
-function MilestoneEvidence({
-    item,
-    onDone,
-    onClose,
-}: {
-    item: NowItem;
-    onDone: (done: JustDone) => void;
-    onClose: () => void;
-}) {
-    const [evidence, setEvidence] = useState('');
-    const [link, setLink] = useState('');
-    const [errors, setErrors] = useState<Record<string, string>>({});
-    const [processing, setProcessing] = useState(false);
-
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
-        setProcessing(true);
-        complete(
-            item,
-            { evidence, link },
-            onDone,
-            () => setProcessing(false),
-            setErrors,
-        );
-    };
-
-    return (
-        <form
-            className="stuck-result"
-            onSubmit={submit}
-            aria-labelledby="evidence-h"
-        >
-            <p id="evidence-h">
-                <b>Cumbre.</b> ¿Qué quedó hecho y dónde se ve?
-            </p>
-            <label className="sr" htmlFor="evidence-text">
-                Evidencia del hito
-            </label>
-            <textarea
-                id="evidence-text"
-                name="evidence"
-                className="in"
-                rows={2}
-                autoFocus
-                value={evidence}
-                onChange={(event) => setEvidence(event.target.value)}
-            />
-            <label className="sr" htmlFor="evidence-link">
-                Enlace (opcional)
-            </label>
-            <input
-                id="evidence-link"
-                name="link"
-                className="in"
-                type="url"
-                placeholder="Enlace (opcional)"
-                value={link}
-                onChange={(event) => setLink(event.target.value)}
-            />
-            {(errors.evidence || errors.link || errors.item) && (
-                <p className="msg-attn">
-                    {errors.evidence ?? errors.link ?? errors.item}
-                </p>
-            )}
-            <div className="btns">
-                <button
-                    className="btn btn-outline"
-                    type="submit"
-                    disabled={processing || evidence.trim() === ''}
-                >
-                    Marcar el hito
-                </button>
-                <button
-                    className="btn btn-outline"
-                    type="button"
-                    onClick={onClose}
-                >
-                    Ahora no
-                </button>
-            </div>
         </form>
     );
 }

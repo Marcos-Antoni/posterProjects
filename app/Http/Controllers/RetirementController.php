@@ -7,6 +7,7 @@ use App\Actions\Retirement\RetirementResult;
 use App\Actions\Support\Actor;
 use App\Http\Requests\RetireElementRequest;
 use App\Http\Resources\RetireContext;
+use App\Models\Capture;
 use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
@@ -76,6 +77,22 @@ class RetirementController extends Controller
 
         return redirect()->route('habits.index');
     }
+
+    // --- phase 7: capture inbox ---
+    public function captureContext(Request $request, Capture $capture, RetireContext $context): JsonResponse
+    {
+        abort_unless($capture->user_id === $request->user()->id, 404);
+
+        return response()->json($context->for($request->user(), $capture));
+    }
+
+    public function retireCapture(RetireElementRequest $request, Capture $capture, RetireElement $retire): RedirectResponse
+    {
+        $this->retire($request, $capture, $retire);
+
+        return redirect()->route('captures.index');
+    }
+    // --- end phase 7 ---
 
     private function retire(RetireElementRequest $request, Model $element, RetireElement $retire): RetirementResult
     {

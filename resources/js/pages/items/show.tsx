@@ -26,6 +26,7 @@ import {
     retire as itemRetire,
     retireContext as itemRetireContext,
     show as itemShow,
+    summit as itemSummit,
     uncheck as itemUncheck,
     update as itemUpdate,
 } from '@/routes/objectives/items';
@@ -51,7 +52,11 @@ type ItemPayload = {
     unlocks: ItemRef[];
     completed_at: string | null;
     created_at: string | null;
-    evidence: { text: string; link: string | null } | null;
+    evidence: {
+        text: string;
+        link: string | null;
+        image_url: string | null;
+    } | null;
 };
 
 type Version = {
@@ -233,7 +238,20 @@ export default function ItemShow({
                     )}
 
                     {checkable && item.kind === 'milestone' && (
-                        <SummitAsk objectiveKey={objective.key} item={item} />
+                        <section className="box" aria-labelledby="summit">
+                            <h2 id="summit">Marcar el hito</h2>
+                            <p className="small muted" style={{ margin: 0 }}>
+                                La cumbre pide una línea de evidencia y muestra
+                                lo que se abre.
+                            </p>
+                            <Link
+                                className="btn btn-primary"
+                                style={{ marginTop: 12 }}
+                                href={itemSummit([objective.key, item.key])}
+                            >
+                                Ir a la cumbre
+                            </Link>
+                        </section>
                     )}
 
                     {item.kind === 'milestone' && item.evidence && (
@@ -253,6 +271,17 @@ export default function ItemShow({
                                         {item.evidence.link}
                                     </a>
                                 </p>
+                            )}
+                            {item.evidence.image_url && (
+                                <img
+                                    src={item.evidence.image_url}
+                                    alt=""
+                                    style={{
+                                        marginTop: 12,
+                                        maxWidth: '100%',
+                                        borderRadius: 10,
+                                    }}
+                                />
                             )}
                         </section>
                     )}
@@ -359,73 +388,6 @@ function versionSource(version: Version): string {
     const who = version.source === 'ai' ? 'IA' : 'Vos';
 
     return version.at ? `${who}, ${formatMoment(version.at)}` : who;
-}
-
-function SummitAsk({
-    objectiveKey,
-    item,
-}: {
-    objectiveKey: string;
-    item: ItemPayload;
-}) {
-    const form = useForm({ evidence: '', link: '' });
-
-    const submit = (event: FormEvent) => {
-        event.preventDefault();
-        form.transform((data) => ({
-            evidence: data.evidence,
-            link: data.link || null,
-        }));
-        form.post(itemCheck([objectiveKey, item.key]).url, {
-            preserveScroll: true,
-        });
-    };
-
-    return (
-        <form
-            className="box summit-ask"
-            onSubmit={submit}
-            aria-labelledby="summit"
-        >
-            <h2 id="summit">Marcar el hito</h2>
-            <label className="fld" style={{ margin: 0 }}>
-                <span className="l">Una línea de evidencia</span>
-                <input
-                    className="in"
-                    placeholder="Qué quedó hecho y dónde se ve"
-                    value={form.data.evidence}
-                    onChange={(e) => form.setData('evidence', e.target.value)}
-                />
-            </label>
-            <label className="fld" style={{ margin: 0 }}>
-                <span className="l">Enlace (opcional)</span>
-                <input
-                    className="in"
-                    type="url"
-                    placeholder="https://…"
-                    value={form.data.link}
-                    onChange={(e) => form.setData('link', e.target.value)}
-                />
-            </label>
-            {(form.errors.evidence || form.errors.link) && (
-                <p className="attn" role="alert">
-                    {form.errors.evidence ?? form.errors.link}
-                </p>
-            )}
-            <button
-                className="btn btn-primary"
-                type="submit"
-                disabled={form.data.evidence.trim() === '' || form.processing}
-            >
-                Marcar el hito
-            </button>
-            {form.data.evidence.trim() === '' && (
-                <span className="small muted" style={{ marginLeft: 12 }}>
-                    Se habilita con la evidencia.
-                </span>
-            )}
-        </form>
-    );
 }
 
 function TwoMinuteBox({
