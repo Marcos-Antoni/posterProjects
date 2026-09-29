@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AiProposalController;
 use App\Http\Controllers\CaptureController;
 use App\Http\Controllers\ControlMapEntryController;
 use App\Http\Controllers\HabitController;
@@ -199,6 +200,20 @@ Route::middleware('auth')->group(function (): void {
     Route::get('reviews/weekly', [ReviewController::class, 'weekly'])->name('reviews.weekly.show');
     Route::post('reviews/weekly', [ReviewController::class, 'storeWeekly'])->name('reviews.weekly.store');
     // --- end phase 7 ---
+
+    // --- phase 8: AI proposals (trimmed slice) ---
+    // "Propuestas" (screen 24): pending proposals Marco accepts or rejects,
+    // a short decided history, and the last ~20 AI audit entries.
+    // `{proposal}` is numeric and NOT scope-bound to the owner: a stranger's
+    // id resolves the row (any user's) and the action itself refuses it
+    // (ModelNotFoundException, the same "not found, never forbidden"
+    // pattern retirements already use).
+    Route::get('ai/proposals', [AiProposalController::class, 'index'])->name('ai.proposals.index');
+    Route::whereNumber('proposal')->group(function (): void {
+        Route::post('ai/proposals/{proposal}/accept', [AiProposalController::class, 'accept'])->name('ai.proposals.accept');
+        Route::post('ai/proposals/{proposal}/reject', [AiProposalController::class, 'reject'])->name('ai.proposals.reject');
+    });
+    // --- end phase 8 ---
 });
 
 require __DIR__.'/auth.php';

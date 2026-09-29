@@ -111,7 +111,7 @@ test('create-habit and update-habit validate the 2-minute version and are major 
 
     PosterServer::actingAs($user)->tool(CreateHabit::class, [
         'name' => 'Estirar', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'two_minute_version' => 'Tocarme los pies',
-    ])->assertHasErrors(['propose-change']);
+    ])->assertHasErrors(['propose']);
 
     expect(Habit::query()->count())->toBe(0);
 
@@ -119,7 +119,7 @@ test('create-habit and update-habit validate the 2-minute version and are major 
 
     PosterServer::actingAs($user)->tool(UpdateHabit::class, [
         'habit_id' => $habit->id, 'name' => 'Leer más', 'habit_type' => 'yes_no', 'recurrence_type' => 'daily', 'two_minute_version' => 'Abrir el libro',
-    ])->assertHasErrors(['propose-change']);
+    ])->assertHasErrors(['propose']);
 
     expect($habit->fresh()->name)->toBe('Leer');
 });

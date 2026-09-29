@@ -16,7 +16,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: major-proposal. Restore a retired personal habit: it re-enables entries and keeps its history; the retirement stays as history. Restoring is a MAJOR operation: the AI never applies it directly — without an accepted proposal or a permission grant (Phase 8) the call is refused and nothing changes; ask Marco, who can restore it from Retirados.')]
+#[Description('Nivel IA: major-proposal. Restore a retired personal habit: it re-enables entries and keeps its history; the retirement stays as history. Restoring is a MAJOR operation: the AI never applies it directly, and this slice has no `propose` kind for it either — ask Marco, who restores it from Retirados on the web.')]
 class RestoreHabit extends Tool
 {
     use ResolvesAuthenticatedUser;

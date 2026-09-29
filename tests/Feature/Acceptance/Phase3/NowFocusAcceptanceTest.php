@@ -466,7 +466,9 @@ describe('MCP now-view', function () {
 
         expect($tools)->toHaveKey('now-view')
             ->and($tools['now-view']['description'])->toStartWith('Nivel IA: read')
-            ->and($tools->keys()->filter(fn ($name) => str_contains($name, 'start') || str_contains($name, 'stop'))->all())->toBe([]);
+            // Phase 8 (ai-operations spec) adds `start-item` as a minor,
+            // audited tool — the one exception to "no start/stop tool".
+            ->and($tools->keys()->filter(fn ($name) => ($name !== 'start-item') && (str_contains($name, 'start') || str_contains($name, 'stop')))->all())->toBe([]);
     });
 
     test('returns exactly what the web Now screen gets, for an active task and for a suggestion', function (bool $active) {

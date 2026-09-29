@@ -36,6 +36,10 @@ test('the server lists exactly the Marcos OS tools of this phase plus the habit 
         'create-habit', 'update-habit', 'retire-habit', 'restore-habit', 'retired-view', 'today-habits', 'list-habits', 'show-habit', 'log-habit-entry',
         'log-two-minute', // phase 4
         'capture', 'list-inbox', // phase 7
+        'propose', 'start-item', 'replace-two-minute', 'triage-capture', // phase 8
+        // 2026-09-29 decision: the AI creates/edits structure directly (audited).
+        'create-objective', 'update-objective', 'create-plan', 'update-plan',
+        'add-items', 'update-item', 'add-dependency', 'remove-dependency',
     ])->sort()->values()->all())
         ->and($names)->not->toContain('board-view', 'backlog-view', 'calendar-view', 'create-sprint', 'create-label', 'create-comment', 'force-delete-project', 'move-issue', 'list-trashed-projects', 'create-project', 'show-issue');
 });

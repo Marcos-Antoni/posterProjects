@@ -4,7 +4,6 @@ use App\Actions\Items\CheckItem;
 use App\Actions\Items\StartItem;
 use App\Actions\Items\StopItem;
 use App\Actions\Support\Actor;
-use App\Actions\Support\MajorOperationRequiresProposal;
 use App\Enums\ItemState;
 use App\Models\FocusSession;
 use App\Models\Item;
@@ -180,12 +179,13 @@ test('the owner column of an item is filled from its objective, even on raw inse
         ->and(DB::table('items')->where('number', 99)->value('user_id'))->toBe($owner->id);
 });
 
-test('an AI actor cannot start an item without a proposal (major operation)', function () {
+test('an AI actor can start an item directly: it is a minor operation (ai-operations spec, phase 8)', function () {
     $owner = User::factory()->create();
     $item = p3Item($owner);
 
-    expect(fn () => app(StartItem::class)(Actor::aiMcp($owner), $item))->toThrow(MajorOperationRequiresProposal::class)
-        ->and($item->refresh()->is_active)->toBeFalse();
+    $started = app(StartItem::class)(Actor::aiMcp($owner), $item);
+
+    expect($started->refresh()->is_active)->toBeTrue();
 });
 
 test('checking the active item closes its focus session and leaves no active item', function () {

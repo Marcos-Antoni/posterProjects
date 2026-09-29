@@ -33,7 +33,7 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
 
     $names = collect($response->json('result.tools'))->pluck('name');
 
-    expect($names)->toHaveCount(20) // 13 + phase 3 now-view + phase 4 log-two-minute + phase 5 graph tools + phase 6 (retire-habit, restore-habit, retired-view replace archive/unarchive) + phase 7 (capture, list-inbox)
+    expect($names)->toHaveCount(24) // 13 + phase 3 now-view + phase 4 log-two-minute + phase 5 graph tools + phase 6 (retire-habit, restore-habit, retired-view replace archive/unarchive) + phase 7 (capture, list-inbox) + phase 8 (propose, start-item, replace-two-minute, triage-capture)
         ->and($names)->toContain(
             'list-objectives',
             'show-objective',
@@ -52,6 +52,10 @@ test('the http endpoint exposes every registered tool by its kebab-case name', f
             'retired-view',
             'capture',
             'list-inbox',
+            'propose',
+            'start-item',
+            'replace-two-minute',
+            'triage-capture',
         );
 });
 
