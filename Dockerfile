@@ -6,12 +6,18 @@ USER root
 RUN install-php-extensions pdo_pgsql intl
 
 # marcos:export-legacy / marcos:rehearse-restore need pg_dump/pg_restore, which
-# this image does not ship. Debian trixie's own repo (already configured, no
-# PGDG needed) carries postgresql-client 17, whose major version is >= the
-# production server's (postgres:16-alpine) — the minimum config/legacy_backup.php
-# documents for a working dump/restore.
+# this image does not ship. The client must match the production server's major
+# version (postgres:16-alpine): a v17 pg_dump writes `SET transaction_timeout`,
+# which a v16 server rejects on restore. Debian trixie only ships v17, so the
+# v16 client comes from the official PGDG repository.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-client \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && install -d /usr/share/postgresql-common/pgdg \
+    && curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc \
+    && . /etc/os-release \
+    && echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt ${VERSION_CODENAME}-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-16 \
     && rm -rf /var/lib/apt/lists/*
 
 # Node is needed at build time: the Wayfinder Vite plugin shells out to
