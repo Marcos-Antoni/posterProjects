@@ -20,6 +20,7 @@ use App\Mcp\Tools\Items\ShowItem;
 use App\Mcp\Tools\Items\UncheckItem;
 use App\Mcp\Tools\Objectives\ListObjectives;
 use App\Mcp\Tools\Objectives\ShowObjective;
+use App\Mcp\Tools\Proposals\Propose;
 use App\Mcp\Tools\Views\NowView;
 use App\Mcp\Tools\Views\RetiredView;
 use Laravel\Mcp\Server;
@@ -71,5 +72,8 @@ class PosterServer extends Server
         Capture::class,
         ListInbox::class,
         // --- end phase 7 ---
+        // --- phase 8: AI proposals (trimmed slice) ---
+        Propose::class,
+        // --- end phase 8 ---
     ];
 }

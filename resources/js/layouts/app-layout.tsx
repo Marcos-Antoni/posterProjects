@@ -7,6 +7,7 @@ import { QuickCapture } from '@/components/marcos/quick-capture';
 import { Toaster } from '@/components/ui/toast';
 import { useSyncAppearance } from '@/hooks/use-appearance';
 import { now } from '@/routes';
+import { index as proposalsIndex } from '@/routes/ai/proposals';
 import { today as habitsToday } from '@/routes/habits';
 import { index as mapIndex } from '@/routes/map';
 import { index as objectivesIndex } from '@/routes/objectives';
@@ -44,6 +45,11 @@ const NAV: NavEntry[] = [
         href: retiredIndex().url,
         match: '/retired',
     } /* phase 6 */,
+    {
+        label: 'IA',
+        href: proposalsIndex().url,
+        match: '/ai',
+    } /* phase 8 (trimmed slice) */,
 ];
 
 /**

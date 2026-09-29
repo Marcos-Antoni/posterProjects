@@ -5,9 +5,9 @@ namespace App\Providers;
 use App\Actions\Retirement\CaptureRetirementHandler;
 use App\Actions\Retirement\RetirementHandlers;
 use App\Actions\Support\AuditWriter;
+use App\Actions\Support\DatabaseAuditWriter;
 use App\Actions\Support\DatabaseLastActivity;
 use App\Actions\Support\LastActivity;
-use App\Actions\Support\LogAuditWriter;
 use App\Actions\Support\NoWeeklyMainPriority;
 use App\Actions\Support\WeeklyMainPriority;
 use App\Actions\Support\WeeklyPriorityReader;
@@ -38,9 +38,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Phase 2 skeleton (design D3): AI-applied changes are recorded in the
-        // log until Phase 8 adds `ai_audit_entries` and binds its writer here.
-        $this->app->bind(AuditWriter::class, LogAuditWriter::class);
+        // Phase 8 (design D3, ai-operations spec): AI-applied changes are
+        // persisted to `ai_audit_log` (the Phase 2 skeleton only logged them).
+        $this->app->bind(AuditWriter::class, DatabaseAuditWriter::class);
 
         // --- phase 3: now ---
         // The weekly main priority that drives the Now suggestion; rebound

@@ -2,6 +2,7 @@
 
 namespace App\Mcp\Support;
 
+use App\Models\AiProposal;
 use App\Models\Habit;
 use App\Models\Item;
 use App\Models\Objective;
@@ -63,5 +64,14 @@ class ResourceLinker
     public function inbox(): string
     {
         return route('captures.index');
+    }
+
+    /**
+     * A proposal's deep link on the "Propuestas" screen (phase 8, trimmed
+     * slice): the single list page, anchored to that proposal's row.
+     */
+    public function proposal(AiProposal $proposal): string
+    {
+        return route('ai.proposals.index').'#proposal-'.$proposal->id;
     }
 }
