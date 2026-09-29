@@ -28,7 +28,7 @@ test('create-habit is a major AI operation: refused, nothing created', function 
         'two_minute_version' => 'Sentarme en el piso',
     ]);
 
-    $response->assertHasErrors(['propose-change']);
+    $response->assertHasErrors(['propose']);
 
     expect(Habit::query()->where('user_id', $user->id)->exists())->toBeFalse();
 });
@@ -63,7 +63,7 @@ test('update-habit is a major AI operation: refused, the habit is unchanged', fu
         'two_minute_version' => 'Sentarme',
     ]);
 
-    $response->assertHasErrors(['propose-change']);
+    $response->assertHasErrors(['propose']);
 
     $habit->refresh();
     expect($habit->name)->toBe('Read')
@@ -91,7 +91,7 @@ test('retire-habit and restore-habit replace archive/unarchive and are major: re
     $habit = Habit::factory()->for($user)->create();
 
     PosterServer::actingAs($user)->tool(RetireHabit::class, ['habit_id' => $habit->id, 'reason' => 'ya no me sirve este hábito'])
-        ->assertHasErrors(['propose-change']);
+        ->assertHasErrors(['propose']);
 
     expect($habit->refresh()->retired_at)->toBeNull();
 });

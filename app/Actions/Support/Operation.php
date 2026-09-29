@@ -64,6 +64,10 @@ enum Operation: string
             self::ShrinkStep => AiTier::Minor,
             self::LogHabitEntry, self::LogHabitTwoMinute => AiTier::Minor, // phase 4
             self::CreateCapture => AiTier::Minor, // phase 7: the AI may note something down while it works
+            // phase 8 (ai-operations spec): applied directly and audited, only
+            // for what Marco explicitly named — starting the item he asked
+            // for, or triaging the capture he asked to convert.
+            self::StartItem, self::ConvertCaptureToItem => AiTier::Minor,
             default => AiTier::Major,
         };
     }

@@ -10,4 +10,8 @@ enum ProposalKind: string
 {
     case CreatePlan = 'create_plan';
     case Retire = 'retire';
+    case CreateObjective = 'create_objective';
+    case AddItems = 'add_items';
+    case UpdateItem = 'update_item';
+    case AddDependency = 'add_dependency';
 }

@@ -86,6 +86,7 @@ class AiProposalController extends Controller
             'id' => $proposal->id,
             'kind' => $proposal->kind,
             'summary' => $proposal->summary,
+            'payload' => $proposal->payload,
             'status' => $proposal->status->value,
             'status_label' => $proposal->status->label(),
             'source' => $proposal->source,

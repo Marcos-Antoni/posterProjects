@@ -15,7 +15,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: minor (applied directly and audited). Note an idea down for Marco to triage later, exactly like the web quick-capture (one field, max 500 characters): it never carries priority, objective, plan or date, and it never appears on Now. Use this while working on something else, to park an idea without derailing the current task — never to record structured work (use propose-change or the relevant minor tool for that).')]
+#[Description('Nivel IA: minor (applied directly and audited). Note an idea down for Marco to triage later, exactly like the web quick-capture (one field, max 500 characters): it never carries priority, objective, plan or date, and it never appears on Now. Use this while working on something else, to park an idea without derailing the current task — never to record structured work (use `propose` or the relevant minor tool for that).')]
 class Capture extends Tool
 {
     use ResolvesAuthenticatedUser;

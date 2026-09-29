@@ -14,7 +14,7 @@ use Laravel\Mcp\Response;
 use Laravel\Mcp\Server\Attributes\Description;
 use Laravel\Mcp\Server\Tool;
 
-#[Description('Nivel IA: major-proposal. Retire a personal habit through the retirement protocol: a written reason of at least 10 characters; the habit keeps its full history, disappears from today and rejects entries until restored from Retirados. Retiring is a MAJOR operation: the AI never applies it directly — without an accepted proposal or a permission grant (Phase 8) the call is refused and nothing changes; ask Marco. There is no delete.')]
+#[Description('Nivel IA: major-proposal. Retire a personal habit through the retirement protocol: a written reason of at least 10 characters; the habit keeps its full history, disappears from today and rejects entries until restored from Retirados. Retiring is a MAJOR operation: the AI never applies it directly — without an accepted proposal the call is refused and nothing changes; use `propose` (kind "retire", target_type "habit") so Marco can accept it at /ai/proposals. There is no delete.')]
 class RetireHabit extends Tool
 {
     use ResolvesAuthenticatedUser;

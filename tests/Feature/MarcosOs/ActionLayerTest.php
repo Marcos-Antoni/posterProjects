@@ -81,7 +81,7 @@ test('an AI actor may apply a minor operation', function () {
 
 test('an AI actor cannot apply a major operation without a grant', function () {
     app(TierGate::class)->authorize(Actor::aiMcp(User::factory()->make()), Operation::AddItem);
-})->throws(MajorOperationRequiresProposal::class, 'propose-change');
+})->throws(MajorOperationRequiresProposal::class, 'propose');
 
 test('an AI-applied change is audited with before and after, inside the transaction', function () {
     $audit = mosFakeAuditWriter();

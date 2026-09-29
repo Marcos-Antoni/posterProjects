@@ -8,10 +8,47 @@ import { accept, reject } from '@/routes/ai/proposals';
 
 type ProposalStatus = 'pending' | 'accepted' | 'rejected';
 
+type ItemPayload = {
+    title?: string;
+    kind?: string;
+    two_minute_version?: string;
+    description?: string;
+    target_date?: string;
+};
+
+type PlanPayload = {
+    title?: string;
+    level?: number;
+    items?: ItemPayload[];
+};
+
+type DependencyPayload = {
+    prerequisite?: number;
+    dependent?: number;
+};
+
+type ProposalPayload = {
+    key?: string;
+    objective_key?: string;
+    title?: string;
+    plans?: PlanPayload[];
+    items?: ItemPayload[];
+    dependencies?: DependencyPayload[];
+    item_key?: string;
+    two_minute_version?: string;
+    description?: string;
+    target_date?: string;
+    plan_id?: number;
+    position?: number;
+    prerequisite_key?: string;
+    dependent_key?: string;
+};
+
 type Proposal = {
     id: number;
     kind: string;
     summary: string;
+    payload: ProposalPayload;
     status: ProposalStatus;
     status_label: string;
     source: string;
@@ -36,12 +73,120 @@ type Props = {
 };
 
 const KIND_LABELS: Record<string, string> = {
+    create_objective: 'Crear objetivo',
+    add_items: 'Agregar tareas',
+    update_item: 'Actualizar tarea',
+    add_dependency: 'Agregar dependencia',
     create_plan: 'Crear plan',
     retire: 'Retirar',
 };
 
 function when(iso: string | null): string {
     return iso ? new Date(iso).toLocaleString('es') : '';
+}
+
+function itemLabel(item: ItemPayload): string {
+    return item.kind === 'milestone' ? 'Hito' : 'Tarea';
+}
+
+/**
+ * Screen 24's preview for the structural kinds (ai-operations spec): an
+ * objective → plans → items tree, exactly as it would be created if
+ * accepted — nothing here is applied, it only reads `proposal.payload`.
+ */
+function ProposalPreview({ proposal }: { proposal: Proposal }) {
+    const payload = proposal.payload ?? {};
+
+    if (proposal.kind === 'create_objective') {
+        const plans = payload.plans ?? [];
+        const dependencies = payload.dependencies ?? [];
+
+        return (
+            <div className="meta" style={{ marginTop: 4 }}>
+                <p style={{ margin: '2px 0' }}>
+                    <span className="pill">{payload.key}</span> {payload.title}
+                </p>
+                {plans.length > 0 && (
+                    <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+                        {plans.map((plan, planIndex) => (
+                            <li key={planIndex}>
+                                {plan.title}
+                                {plan.level ? ` (nivel ${plan.level})` : ''}
+                                {(plan.items ?? []).length > 0 && (
+                                    <ul style={{ margin: '2px 0', paddingLeft: 20 }}>
+                                        {(plan.items ?? []).map((item, itemIndex) => (
+                                            <li key={itemIndex}>
+                                                <span className="pill">{itemLabel(item)}</span> {item.title}
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {dependencies.length > 0 && (
+                    <p style={{ margin: '2px 0' }}>
+                        {dependencies.length} dependencia{dependencies.length === 1 ? '' : 's'} entre tareas de esta propuesta.
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    if (proposal.kind === 'add_items') {
+        const items = payload.items ?? [];
+        const dependencies = payload.dependencies ?? [];
+
+        return (
+            <div className="meta" style={{ marginTop: 4 }}>
+                <p style={{ margin: '2px 0' }}>
+                    Al plan #{payload.plan_id} de <span className="pill">{payload.objective_key}</span>
+                </p>
+                {items.length > 0 && (
+                    <ul style={{ margin: '4px 0', paddingLeft: 20 }}>
+                        {items.map((item, itemIndex) => (
+                            <li key={itemIndex}>
+                                <span className="pill">{itemLabel(item)}</span> {item.title}
+                            </li>
+                        ))}
+                    </ul>
+                )}
+                {dependencies.length > 0 && (
+                    <p style={{ margin: '2px 0' }}>
+                        {dependencies.length} dependencia{dependencies.length === 1 ? '' : 's'} entre tareas de esta propuesta.
+                    </p>
+                )}
+            </div>
+        );
+    }
+
+    if (proposal.kind === 'update_item') {
+        const changes: string[] = [];
+        if (payload.title !== undefined) changes.push(`título → "${payload.title}"`);
+        if (payload.two_minute_version !== undefined) changes.push(`2 minutos → "${payload.two_minute_version}"`);
+        if (payload.description !== undefined) changes.push('descripción');
+        if (payload.target_date !== undefined) changes.push(`fecha → ${payload.target_date}`);
+        if (payload.plan_id !== undefined) changes.push(`mover al plan #${payload.plan_id}`);
+        if (payload.position !== undefined) changes.push(`posición ${payload.position}`);
+
+        return (
+            <p className="meta" style={{ marginTop: 4 }}>
+                <span className="pill">{payload.item_key}</span> {changes.join(', ')}
+            </p>
+        );
+    }
+
+    if (proposal.kind === 'add_dependency') {
+        return (
+            <p className="meta" style={{ marginTop: 4 }}>
+                <span className="pill">{payload.prerequisite_key}</span> abre{' '}
+                <span className="pill">{payload.dependent_key}</span>
+            </p>
+        );
+    }
+
+    return null;
 }
 
 /**
@@ -129,11 +274,13 @@ export default function AiProposalsIndex({ pending, decided, audit }: Props) {
                             >
                                 {proposal.summary}
                             </p>
+                            <ProposalPreview proposal={proposal} />
                             <div
                                 style={{
                                     display: 'flex',
                                     gap: 8,
                                     flexWrap: 'wrap',
+                                    marginTop: 8,
                                 }}
                             >
                                 <button

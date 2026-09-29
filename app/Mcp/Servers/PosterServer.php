@@ -4,6 +4,7 @@ namespace App\Mcp\Servers;
 
 use App\Mcp\Tools\Captures\Capture;
 use App\Mcp\Tools\Captures\ListInbox;
+use App\Mcp\Tools\Captures\TriageCapture;
 use App\Mcp\Tools\Graphs\GlobalGraph;
 use App\Mcp\Tools\Graphs\ObjectiveGraph;
 use App\Mcp\Tools\Habits\CreateHabit;
@@ -16,7 +17,9 @@ use App\Mcp\Tools\Habits\ShowHabit;
 use App\Mcp\Tools\Habits\TodayHabits;
 use App\Mcp\Tools\Habits\UpdateHabit;
 use App\Mcp\Tools\Items\CheckItem;
+use App\Mcp\Tools\Items\ReplaceTwoMinute;
 use App\Mcp\Tools\Items\ShowItem;
+use App\Mcp\Tools\Items\StartItem;
 use App\Mcp\Tools\Items\UncheckItem;
 use App\Mcp\Tools\Objectives\ListObjectives;
 use App\Mcp\Tools\Objectives\ShowObjective;
@@ -31,7 +34,7 @@ use Laravel\Mcp\Server\Tool;
 
 #[Name('Poster Projects')]
 #[Version('2.0.0')]
-#[Instructions('Marcos OS: Marco\'s single-user system of objectives, plans, tasks/milestones with 2-minute versions and "completing A unlocks B" dependencies, plus his habits. The JIRA surface (projects, board, backlog, sprints, labels, comments, calendar, trash) no longer exists. Every tool states its AI tier: `read` changes nothing; `minor` is applied directly and audited, and only for what Marco explicitly named; anything else is major and must be proposed to Marco, never applied. Every response includes the absolute web URL of the resource.')]
+#[Instructions('Marcos OS: Marco\'s single-user system of objectives, plans, tasks/milestones with 2-minute versions and "completing A unlocks B" dependencies, plus his habits. The JIRA surface (projects, board, backlog, sprints, labels, comments, calendar, trash) no longer exists. Read tools (list/show/graph/now-view/retired-view and the like) never change anything. Minor tools — check-item, uncheck-item, log-habit-entry, log-two-minute, capture, start-item, replace-two-minute, triage-capture — are applied directly and audited, only for what Marco explicitly named. Everything else is major and structural (creating or changing an objective, a plan, an item beyond its own fields, or a dependency; retiring or restoring anything): the AI never applies it, only proposes it with `propose`, which Marco accepts or rejects from "Propuestas" (`/ai/proposals`) and which then applies exactly as proposed, in one transaction. Every response includes the absolute web URL of the resource.')]
 class PosterServer extends Server
 {
     /**
@@ -74,6 +77,9 @@ class PosterServer extends Server
         // --- end phase 7 ---
         // --- phase 8: AI proposals (trimmed slice) ---
         Propose::class,
+        StartItem::class,
+        ReplaceTwoMinute::class,
+        TriageCapture::class,
         // --- end phase 8 ---
     ];
 }
